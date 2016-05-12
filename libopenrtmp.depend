@@ -1,0 +1,19 @@
+# depslib dependency file v1.0
+1463095790 source:/home/matt/Documents/libopenrtmp/lipopenrtmp.cpp
+	"includes/libopenrtmp.hpp"
+	"includes/OpenRTMPClient.hpp"
+	"includes/OpenRTMPServer.hpp"
+
+1463095521 /home/matt/Documents/libopenrtmp/includes/libopenrtmp.hpp
+	<cstdint>
+
+1463095946 /home/matt/Documents/libopenrtmp/includes/OpenRTMPClient.hpp
+
+1463096018 /home/matt/Documents/libopenrtmp/includes/OpenRTMPServer.hpp
+
+1463095996 source:/home/matt/Documents/libopenrtmp/OpenRTMPClient.cpp
+	"includes/OpenRTMPClient.hpp"
+
+1463096300 source:/home/matt/Documents/libopenrtmp/OpenRTMPServer.cpp
+	"includes/OpenRTMPServer.hpp"
+
