@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "memutil.h"
 
 //memcpy that will reverse byte order if the machine is little endian
@@ -43,4 +44,29 @@ unsigned int ntoh_read_ud(const void *src){
     unsigned int value;
     ntoh_memcpy( &value, src, 4 );
     return value;
+}
+
+//Write a short to a buffer based on endianess
+void ntoh_write_s(void *src, short value){
+    ntoh_memcpy( src, &value, sizeof( value ) );
+}
+
+//Write an int to a buffer based on endianess
+void ntoh_write_d(void *src, int value){
+    ntoh_memcpy( src, &value, sizeof( value ) );
+}
+
+//Write a short to a buffer based on endianess
+void ntoh_write_us(void *src, unsigned short value){
+    ntoh_memcpy( src, &value, sizeof( value ) );
+}
+
+//Write an int to a buffer based on endianess
+void ntoh_write_ud(void *src, unsigned int value){
+    ntoh_memcpy( src, &value, sizeof( value ) );
+}
+
+
+void emit_err(const char* err){
+    printf("%s\n", err);
 }

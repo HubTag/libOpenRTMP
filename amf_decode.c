@@ -5,9 +5,6 @@
 #include "amf.h"
 #include "data_stream.h"
 
-void emit_err(const char* err){
-    printf("%s\n", err);
-}
 
 
 
@@ -74,7 +71,7 @@ amf_err_t amf_get_string_length( ors_data_t* source, size_t *value ){
 }
 
 //String functions are used for normal and long strings, as well as XML documents
-amf_err_t amf_get_string( ors_data_t* source, char *value, int value_len ){
+amf_err_t amf_get_string( ors_data_t* source, void *value, size_t value_len ){
     if( value_len > 0 ){
         value_len--;
     }
@@ -87,7 +84,7 @@ amf_err_t amf_get_string( ors_data_t* source, char *value, int value_len ){
     value_len = len > value_len ? value_len : len;
     ors_data_read( source, scrap, offset );
     ors_data_read( source, value, value_len );
-    value[value_len] = 0;
+    ((char*)value)[value_len] = 0;
     return offset + len;
 }
 
@@ -106,12 +103,12 @@ amf_err_t amf_get_prop_length( ors_data_t* source, size_t *value ){
 }
 
 //If inside an object, use this to obtain a copy of the property name
-amf_err_t amf_get_prop_name( ors_data_t* source, char* value, int value_len ){
+amf_err_t amf_get_prop_name( ors_data_t* source, void *value, int value_len ){
     AMF_HARVEST_LENGTH(source, 2);
     size_t len = ntoh_read_us(buffer);
     value_len = len > value_len ? value_len : len;
     ors_data_read( source, value, value_len );
-    value[value_len] = 0;
+    ((char*)value)[value_len] = 0;
     return 2 + len;
 }
 
@@ -183,7 +180,7 @@ amf_err_t amf_get_long_string_length( ors_data_t* source, size_t *value){
     return amf_get_string_length(source, value);
 }
 //Alias around amf_get_string
-amf_err_t amf_get_long_string( ors_data_t* source, char* value, size_t value_len){
+amf_err_t amf_get_long_string( ors_data_t* source, void *value, size_t value_len){
     return amf_get_string(source, value, value_len);
 }
 
@@ -192,7 +189,7 @@ amf_err_t amf_get_xmldocument_length( ors_data_t* source, size_t *value){
     return amf_get_string_length(source, value);
 }
 //Alias around amf_get_string
-amf_err_t amf_get_xmldocument( ors_data_t* source, char* value, size_t value_len){
+amf_err_t amf_get_xmldocument( ors_data_t* source, void *value, size_t value_len){
     return amf_get_string(source, value, value_len);
 }
 
@@ -207,46 +204,14 @@ amf_err_t amf_get_typed_object( ors_data_t* source ){
     return 0;
 }
 
-
-
-int main(){
-    byte test_data[] = {
-        0x02, 0x00, 0x0d, 0x40, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 0x46, 0x72, 0x61, 0x6d,
-        0x65, 0x02, 0x00, 0x0a, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x44, 0x61, 0x74, 0x61, 0x03,
-        0x00, 0x08, 0x64, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x66, 0x69, 0x6c, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68,
-        0x00, 0x40, 0x9e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x68, 0x65, 0x69, 0x67,
-        0x68, 0x74, 0x00, 0x40, 0x90, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x76, 0x69,
-        0x64, 0x65, 0x6f, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x69, 0x64, 0x02, 0x00, 0x04, 0x61, 0x76,
-        0x63, 0x31, 0x00, 0x0d, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x64, 0x61, 0x74, 0x61, 0x72, 0x61,
-        0x74, 0x65, 0x00, 0x40, 0x8f, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x66, 0x72,
-        0x61, 0x6d, 0x65, 0x72, 0x61, 0x74, 0x65, 0x00, 0x40, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x0c, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x63, 0x6f, 0x64, 0x65, 0x63, 0x69, 0x64,
-        0x02, 0x00, 0x04, 0x6d, 0x70, 0x34, 0x61, 0x00, 0x0d, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x64,
-        0x61, 0x74, 0x61, 0x72, 0x61, 0x74, 0x65, 0x00, 0x40, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x0f, 0x61, 0x75, 0x64, 0x69, 0x6f, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x72,
-        0x61, 0x74, 0x65, 0x00, 0x40, 0xe7, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x61,
-        0x75, 0x64, 0x69, 0x6f, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x73, 0x69, 0x7a, 0x65, 0x00,
-        0x40, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x61, 0x75, 0x64, 0x69, 0x6f,
-        0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x73, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x06, 0x73, 0x74, 0x65, 0x72, 0x65, 0x6f, 0x01, 0x01, 0x00, 0x07, 0x65,
-        0x6e, 0x63, 0x6f, 0x64, 0x65, 0x72, 0x02, 0x00, 0x21, 0x4f, 0x70, 0x65, 0x6e, 0x20, 0x42,
-        0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x65, 0x72, 0x20, 0x53, 0x6f, 0x66, 0x74,
-        0x77, 0x61, 0x72, 0x65, 0x20, 0x76, 0x30, 0x2e, 0x36, 0x35, 0x37, 0x62, 0x00, 0x00, 0x09
-    };
-    size_t test_data_len = sizeof( test_data ) / sizeof( test_data[0] );
-
-    ors_data_t data = ors_data_create_memsrc( test_data, test_data_len );
-
-
+void amf_print( ors_data_t* data ){
     double num;
     int integer;
+    unsigned int uinteger;
     char str[1000];
     int object_layer = 0;
-    size_t offset = 0;
 
-    while( offset < test_data_len ){
+    while( ors_data_get_remainder(data) > 0 ){
         for( int i = 0; i < object_layer; ++i ){
             printf("    ");
         }
@@ -288,8 +253,8 @@ int main(){
                 printf("Undefined\n");
                 break;
             case AMF_TYPE_REFERENCE:
-                amf_get_reference( data, &integer);
-                printf("Reference to %d\n", integer );
+                amf_get_reference( data, &uinteger);
+                printf("Reference to %u\n", uinteger );
                 break;
             case AMF_TYPE_ECMA_ARRAY:
                 amf_get_ecma_array( data);
@@ -331,4 +296,47 @@ int main(){
 
         }
     }
+}
+
+#include <time.h>
+
+int main(){
+    ors_data_t data = ors_data_create_memsnk( 500 );
+
+    amf_write_boolean( data, 1 );
+    amf_write_boolean( data, 0 );
+    char *str = "Well hello there, everyone!";
+    amf_write_string( data, str, strlen( str ) );
+    amf_write_object( data );
+        str = "Item 1";
+        amf_write_prop_name( data, str, strlen( str ) );
+        amf_write_number( data, 1337 );
+        str = "Foobar";
+        amf_write_prop_name( data, str, strlen( str ) );
+        amf_write_null( data );
+        str = "Nested";
+        amf_write_prop_name( data, str, strlen( str ) );
+        amf_write_object( data );
+            str = "The Time";
+            amf_write_prop_name( data, str, strlen( str ) );
+            amf_write_date( data, 0, time(0) );
+            str = "Name";
+            amf_write_prop_name( data, str, strlen( str ) );
+            str = "Droogie";
+            amf_write_string( data, str, strlen( str ) );
+            amf_write_prop_name( data, "", 0 );
+            amf_write_object_end( data );
+        str = "Item 3";
+        amf_write_prop_name( data, str, strlen( str ) );
+        amf_write_number( data, 123456.789 );
+        amf_write_prop_name( data, "", 0 );
+    amf_write_object_end( data );
+    str = "Last";
+    amf_write_string( data, str, strlen( str ) );
+
+    ors_data_seek( data, 0, ORS_SEEK_START );
+    amf_print( data );
+    ors_data_close( data );
+    ors_data_destroy( data );
+    return 0;
 }

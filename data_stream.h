@@ -1,3 +1,5 @@
+#pragma once
+
 #include "memutil.h"
 
 enum ORS_SEEK {
