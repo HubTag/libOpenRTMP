@@ -1,3 +1,26 @@
+/*
+    amf_decode.c
+
+    Copyright (C) 2016 Hubtag LLC.
+
+    ----------------------------------------
+
+    This file is part of libOpenRTMP.
+
+    libOpenRTMP is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    libOpenRTMP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with libOpenRTMP.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,14 +32,14 @@
 
 
 
+#define AMF_HARVEST_LENGTH(in, len) byte buffer[len]; if( ors_data_read( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
+#define AMF_PEEK_LENGTH(in, len) byte buffer[len]; if( ors_data_peek( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
+
 //Provide safety macros that may be disabled if the user promises to be really really nice
 
 #ifndef AMF_CONFIG_UNSAFE
-#   define AMF_HARVEST_LENGTH(in, len) byte buffer[len]; if( ors_data_read( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
-#   define AMF_PEEK_LENGTH(in, len) byte buffer[len]; if( ors_data_peek( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
 #   define AMF_CHECK_TYPE(buffer, type, ret) if( *buffer != type ){ return ret; }
 #else
-#   define AMF_CHECK_LENGTH(lenvar, len, ret)
 #   define AMF_CHECK_TYPE(buffer, type, ret)
 #endif // AMF_CONFIG_UNSAFE
 
