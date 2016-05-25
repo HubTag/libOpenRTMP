@@ -1,112 +1,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "memutil.h"
+#include "amf.h"
+#include "data_stream.h"
 
 void emit_err(const char* err){
     printf("%s\n", err);
 }
 
-typedef unsigned char byte;
-typedef unsigned long size_t;
 
-typedef enum AMF_TYPE{
-    AMF_TYPE_NUMBER,
-    AMF_TYPE_BOOLEAN,
-    AMF_TYPE_STRING,
-    AMF_TYPE_OBJECT,
-    AMF_TYPE_MOVIECLIP,
-    AMF_TYPE_NULL,
-    AMF_TYPE_UNDEFINED,
-    AMF_TYPE_REFERENCE,
-    AMF_TYPE_ECMA_ARRAY,
-    AMF_TYPE_OBJECT_END,
-    AMF_TYPE_STRICT_ARRAY,
-    AMF_TYPE_DATE,
-    AMF_TYPE_LONG_STRING,
-    AMF_TYPE_UNSUPPORTED,
-    AMF_TYPE_RECORDSET,
-    AMF_TYPE_XML_DOCUMENT,
-    AMF_TYPE_TYPED_OBJECT,
-    AMF_TYPE_AVMPLUS
-} amf_type_t;
 
-typedef enum AMF_ERR {
-    AMF_ERR_NONE,
-    AMF_ERR_INVALID_DATA = -1
-} amf_err_t;
-
-//memcpy that will reverse byte order if the machine is little endian
-static void ntoh_memcpy(void *dst, const void *src, size_t len){
-    #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-        byte *output = dst;
-        const byte *input = src;
-        while( len --> 0 ){
-            *(output++) = input[len];
-        }
-    #elif __BYTE_ORDER__ == __ORDER_PDP_ENDIAN__
-        #error "Intentionally unsupported"
-    #else
-        memcpy( dst, src, len );
-    #endif
-}
-
-//Read a short from a buffer based on endianess
-static short ntoh_read_s(const void *src){
-    short value;
-    ntoh_memcpy( &value, src, 2 );
-    return value;
-}
-
-//Read an int from a buffer based on endianess
-static int ntoh_read_d(const void *src){
-    int value;
-    ntoh_memcpy( &value, src, 4 );
-    return value;
-}
-
-//Read a short from a buffer based on endianess
-static unsigned short ntoh_read_us(const void *src){
-    unsigned short value;
-    ntoh_memcpy( &value, src, 2 );
-    return value;
-}
-
-//Read an int from a buffer based on endianess
-static unsigned int ntoh_read_ud(const void *src){
-    unsigned int value;
-    ntoh_memcpy( &value, src, 4 );
-    return value;
-}
 
 //Provide safety macros that may be disabled if the user promises to be really really nice
 
 #ifndef AMF_CONFIG_UNSAFE
-#   define AMF_CHECK_LENGTH(lenvar, len, ret) if( length < len ){ return ret; }
+#   define AMF_HARVEST_LENGTH(in, len) byte buffer[len]; if( ors_data_read( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
+#   define AMF_PEEK_LENGTH(in, len) byte buffer[len]; if( ors_data_peek( in, buffer, len ) < len ){ return AMF_ERR_INCOMPLETE; }
 #   define AMF_CHECK_TYPE(buffer, type, ret) if( *buffer != type ){ return ret; }
 #else
 #   define AMF_CHECK_LENGTH(lenvar, len, ret)
 #   define AMF_CHECK_TYPE(buffer, type, ret)
 #endif // AMF_CONFIG_UNSAFE
 
+
 //Return the type of the next item in the message
-amf_type_t amf_next_type( const byte *buffer, size_t length ){
-    AMF_CHECK_LENGTH(length, 1, AMF_TYPE_UNDEFINED);
-    if( *buffer <= AMF_TYPE_AVMPLUS ){
-        return *buffer;
+amf_type_t amf_next_type( ors_data_t* source ){
+    byte type;
+    if( ors_data_peek( source, &type, 1 ) < 1 ){
+        return AMF_TYPE_UNSUPPORTED;
+    }
+    if( type <= AMF_TYPE_AVMPLUS ){
+        return type;
     }
     return AMF_TYPE_UNSUPPORTED;
 }
 
 //Returns an IEEE 754 float from the data
-amf_err_t amf_get_number( const byte *buffer, size_t length, double *value ){
-    AMF_CHECK_LENGTH(length, 9, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_number( ors_data_t* source, double *value ){
+    AMF_HARVEST_LENGTH(source, 9);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_NUMBER, AMF_ERR_INVALID_DATA );
     ntoh_memcpy( value, buffer + 1, 8 );
     return 9;
 }
 
-amf_err_t amf_get_boolean( const byte *buffer, size_t length, int *value ){
-    AMF_CHECK_LENGTH(length, 2, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_boolean( ors_data_t* source, int *value ){
+    AMF_HARVEST_LENGTH(source, 2);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_BOOLEAN, AMF_ERR_INVALID_DATA );
     *value = buffer[1];
     return 2;
@@ -114,15 +53,20 @@ amf_err_t amf_get_boolean( const byte *buffer, size_t length, int *value ){
 
 //String functions are used for normal and long strings, as well as XML documents
 //Used to verify how much storage to allocate for the upcoming string.
-amf_err_t amf_get_string_length( const byte *buffer, size_t length, size_t *value ){
-    AMF_CHECK_LENGTH(length, 1, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_string_length( ors_data_t* source, size_t *value ){
+    byte buffer[5];
+    int len = ors_data_peek( source, buffer, 5 );
+    if( len < 3 ){
+        return AMF_ERR_INCOMPLETE;
+    }
     if( *buffer == AMF_TYPE_STRING ){
-        AMF_CHECK_LENGTH(length, 3, AMF_ERR_INVALID_DATA);
         *value = ntoh_read_us(buffer + 1);
         return 3;
     }
+    if( len < 5 ){
+        return AMF_ERR_INCOMPLETE;
+    }
     if( *buffer == AMF_TYPE_LONG_STRING || *buffer == AMF_TYPE_XML_DOCUMENT ){
-        AMF_CHECK_LENGTH(length, 5, AMF_ERR_INVALID_DATA);
         *value = ntoh_read_ud(buffer + 1);
         return 5;
     }
@@ -130,96 +74,98 @@ amf_err_t amf_get_string_length( const byte *buffer, size_t length, size_t *valu
 }
 
 //String functions are used for normal and long strings, as well as XML documents
-amf_err_t amf_get_string( const byte *buffer, size_t length, char *value, int value_len ){
+amf_err_t amf_get_string( ors_data_t* source, char *value, int value_len ){
+    if( value_len > 0 ){
+        value_len--;
+    }
     size_t len;
-    int offset = amf_get_string_length(buffer, length, &len);
+    byte scrap[5];
+    int offset = amf_get_string_length(source, &len);
     if( offset < 0 ){
         return offset;
     }
     value_len = len > value_len ? value_len : len;
-    memcpy( value, buffer + offset, value_len );
+    ors_data_read( source, scrap, offset );
+    ors_data_read( source, value, value_len );
     value[value_len] = 0;
     return offset + len;
 }
 
 //Mostly a dummy; this is used to verify and skip an object start marker
-amf_err_t amf_get_object( const byte *buffer, size_t length){
-    AMF_CHECK_LENGTH(length, 1, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_object( ors_data_t* source){
+    AMF_HARVEST_LENGTH(source, 1);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_OBJECT, AMF_ERR_INVALID_DATA );
     return 1;
 }
 
 //If inside an object, use this to obtain the length of a property name
-amf_err_t amf_get_prop_length( const byte *buffer, size_t length, size_t *value ){
-    AMF_CHECK_LENGTH(length, 2, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_prop_length( ors_data_t* source, size_t *value ){
+    AMF_PEEK_LENGTH(source, 2);
     *value = ntoh_read_us(buffer);
     return 0;
 }
 
 //If inside an object, use this to obtain a copy of the property name
-amf_err_t amf_get_prop_name( const byte *buffer, size_t length, char* value, int value_len ){
-    AMF_CHECK_LENGTH(length, 2, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_prop_name( ors_data_t* source, char* value, int value_len ){
+    AMF_HARVEST_LENGTH(source, 2);
     size_t len = ntoh_read_us(buffer);
-    if( len >= length + 2 ){
-        return AMF_ERR_INVALID_DATA;
-    }
     value_len = len > value_len ? value_len : len;
-    memcpy( value, buffer + 2, value_len );
+    ors_data_read( source, value, value_len );
     value[value_len] = 0;
     return 2 + len;
 }
 
 //Dummy; do not use.
-amf_err_t amf_get_movieclip( const byte *buffer, size_t length ){
+amf_err_t amf_get_movieclip( ors_data_t* source ){
     emit_err("[Erroneous Data] Trying to read movieclip from AMF!");
     return AMF_ERR_INVALID_DATA;
 }
 
 //Basically a dummy; used to verify that the next item is indeed a null value.
-amf_err_t amf_get_null( const byte *buffer, size_t length){
-    AMF_CHECK_LENGTH(length, 1, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_null( ors_data_t* source ){
+    AMF_HARVEST_LENGTH(source, 1);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_NULL, AMF_ERR_INVALID_DATA );
     return 1;
 }
 
 
 //Basically a dummy; used to verify that the next item is indeed an undefined value.
-amf_err_t amf_get_undefined( const byte *buffer, size_t length){
-    AMF_CHECK_LENGTH(length, 1, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_undefined( ors_data_t* source ){
+    AMF_HARVEST_LENGTH(source, 1);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_UNDEFINED, AMF_ERR_INVALID_DATA );
     return 1;
 }
 
-amf_err_t amf_get_reference( const byte *buffer, size_t length, unsigned int *value){
-    AMF_CHECK_LENGTH(length, 3, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_reference( ors_data_t* source, unsigned int *value){
+    AMF_HARVEST_LENGTH(source, 3);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_REFERENCE, AMF_ERR_INVALID_DATA );
     *value = ntoh_read_us(buffer);
     return 3;
 }
 
 //Unimplemented. Will implement if necessary.
-amf_err_t amf_get_ecma_array( const byte *buffer, size_t length){
+amf_err_t amf_get_ecma_array( ors_data_t* source ){
     emit_err("[Unimplemented] Trying to read ECMA Array from AMF!");
     return 0;
 }
 
 //Mostly a dummy; this is used to verify and skip an object end marker
-amf_err_t amf_get_object_end( const byte *buffer, size_t length){
-    AMF_CHECK_LENGTH(length, 1, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_object_end( ors_data_t* source ){
+    AMF_HARVEST_LENGTH(source, 1);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_OBJECT_END, AMF_ERR_INVALID_DATA );
     return 1;
 }
 
 //Unimplemented. Will implement if necessary.
-amf_err_t amf_get_strict_array( const byte *buffer, size_t length){
+amf_err_t amf_get_strict_array( ors_data_t* source ){
     emit_err("[Unimplemented] Trying to read Strict Array from AMF!");
     return 0;
 }
 
 //Returns a timezone offset as well as a double essentially representing a Unix timestamp
 //(Resolution is 1:1 with seconds, epoch is 1970 Jan 1 00:00:00.000)
-amf_err_t amf_get_date( const byte *buffer, size_t length, int* timezone, double* timestamp ){
-    AMF_CHECK_LENGTH(length, 11, AMF_ERR_INVALID_DATA);
+amf_err_t amf_get_date( ors_data_t* source, int* timezone, double* timestamp ){
+    AMF_HARVEST_LENGTH(source, 11);
     AMF_CHECK_TYPE( buffer, AMF_TYPE_DATE, AMF_ERR_INVALID_DATA );
     *timezone = ntoh_read_s(buffer+1);
     ntoh_memcpy(timestamp, buffer + 3, 8);
@@ -227,36 +173,36 @@ amf_err_t amf_get_date( const byte *buffer, size_t length, int* timezone, double
 }
 
 //Dummy
-amf_err_t amf_get_unsupported( const byte *buffer, size_t length){
+amf_err_t amf_get_unsupported( ors_data_t* source ){
     emit_err("[Error] Trying to read an unsupported type from AMF!");
     return 0;
 }
 
 //Alias around amf_get_string_length
-amf_err_t amf_get_long_string_length( const byte *buffer, size_t length, size_t *value){
-    return amf_get_string_length(buffer, length, value);
+amf_err_t amf_get_long_string_length( ors_data_t* source, size_t *value){
+    return amf_get_string_length(source, value);
 }
 //Alias around amf_get_string
-amf_err_t amf_get_long_string( const byte *buffer, size_t length, char* value, size_t value_len){
-    return amf_get_string(buffer, length, value, value_len);
+amf_err_t amf_get_long_string( ors_data_t* source, char* value, size_t value_len){
+    return amf_get_string(source, value, value_len);
 }
 
 //Alias around amf_get_string_length
-amf_err_t amf_get_xmldocument_length( const byte *buffer, size_t length, size_t *value){
-    return amf_get_string_length(buffer, length, value);
+amf_err_t amf_get_xmldocument_length( ors_data_t* source, size_t *value){
+    return amf_get_string_length(source, value);
 }
 //Alias around amf_get_string
-amf_err_t amf_get_xmldocument( const byte *buffer, size_t length, char* value, size_t value_len){
-    return amf_get_string(buffer, length, value, value_len);
+amf_err_t amf_get_xmldocument( ors_data_t* source, char* value, size_t value_len){
+    return amf_get_string(source, value, value_len);
 }
 
 //Unimplemented. Will implement if necessary.
-amf_err_t amf_get_recordset( const byte *buffer, size_t length){
+amf_err_t amf_get_recordset( ors_data_t* source ){
     emit_err("[Unimplemented] Trying to read Record Set from AMF!");
     return 0;
 }
 //Unimplemented. Will implement if necessary.
-amf_err_t amf_get_typed_object( const byte *buffer, size_t length){
+amf_err_t amf_get_typed_object( ors_data_t* source ){
     emit_err("[Unimplemented] Trying to read Typed Object from AMF!");
     return 0;
 }
@@ -290,8 +236,9 @@ int main(){
         0x77, 0x61, 0x72, 0x65, 0x20, 0x76, 0x30, 0x2e, 0x36, 0x35, 0x37, 0x62, 0x00, 0x00, 0x09
     };
     size_t test_data_len = sizeof( test_data ) / sizeof( test_data[0] );
-    byte* data = test_data;
-    size_t len = test_data_len;
+
+    ors_data_t data = ors_data_create_memsrc( test_data, test_data_len );
+
 
     double num;
     int integer;
@@ -304,80 +251,84 @@ int main(){
             printf("    ");
         }
         if( object_layer > 0 ){
-            offset += amf_get_prop_name( data + offset, len - offset, str, 1000);
+            amf_get_prop_name( data, str, 1000);
             printf("\"%s\": ", str);
         }
-        byte type = amf_next_type( data + offset, len - offset );
+        byte type = amf_next_type( data );
+        if( type == AMF_TYPE_UNSUPPORTED){
+            break;
+        }
         switch( type ){
             case AMF_TYPE_NUMBER:
-                offset += amf_get_number( data + offset, len - offset, &num);
+                amf_get_number( data, &num);
                 printf("Number: %f\n", num);
                 break;
             case AMF_TYPE_BOOLEAN:
-                offset += amf_get_boolean( data + offset, len - offset, &integer);
+                amf_get_boolean( data, &integer);
                 printf("Boolean: %d\n", integer);
                 break;
             case AMF_TYPE_STRING:
-                offset += amf_get_string( data + offset, len - offset, str, 1000);
+                amf_get_string( data, str, 1000);
                 printf("String: %s\n", str);
                 break;
             case AMF_TYPE_OBJECT:
-                offset += amf_get_object( data + offset, len - offset );
+                amf_get_object( data );
                 printf("New Object\n");
                 object_layer++;
                 break;
             case AMF_TYPE_MOVIECLIP:
-                offset += amf_get_movieclip( data + offset, len - offset );
+                amf_get_movieclip( data );
                 break;
             case AMF_TYPE_NULL:
-                offset += amf_get_null( data + offset, len - offset);
+                amf_get_null( data);
                 printf("Null\n");
                 break;
             case AMF_TYPE_UNDEFINED:
-                offset += amf_get_undefined( data + offset, len - offset);
+                amf_get_undefined( data );
                 printf("Undefined\n");
                 break;
             case AMF_TYPE_REFERENCE:
-                offset += amf_get_reference( data + offset, len - offset, &integer);
+                amf_get_reference( data, &integer);
                 printf("Reference to %d\n", integer );
                 break;
             case AMF_TYPE_ECMA_ARRAY:
-                offset += amf_get_ecma_array( data + offset, len - offset);
+                amf_get_ecma_array( data);
                 printf("ECMA Array\n");
                 break;
             case AMF_TYPE_OBJECT_END:
-                offset += amf_get_object_end( data + offset, len - offset);
+                amf_get_object_end( data );
                 printf("End Object\n");
                 -- object_layer;
                 break;
             case AMF_TYPE_STRICT_ARRAY:
-                offset += amf_get_strict_array( data + offset, len - offset);
+                amf_get_strict_array( data );
                 printf("Strict Array\n");
                 break;
             case AMF_TYPE_DATE:
-                offset += amf_get_date( data + offset, len - offset, &integer, &num);
+                amf_get_date( data, &integer, &num);
                 printf("Date: %f +%d \n", num, integer);
                 break;
             case AMF_TYPE_LONG_STRING:
-                offset += amf_get_string( data + offset, len - offset, str, 1000);
+                amf_get_string( data, str, 1000 );
                 printf("Long String: %s\n", str);
                 break;
             case AMF_TYPE_UNSUPPORTED:
-                offset += amf_get_unsupported( data + offset, len - offset);
+                amf_get_unsupported( data );
                 printf("Unsupported\n");
                 break;
             case AMF_TYPE_RECORDSET:
-                offset += amf_get_recordset( data + offset, len - offset);
+                amf_get_recordset( data );
                 printf("Record Set\n");
                 break;
             case AMF_TYPE_XML_DOCUMENT:
-                offset += amf_get_string( data + offset, len - offset, str, 1000);
+                amf_get_string( data, str, 1000);
                 printf("XML Document: %s\n", str);
                 break;
             case AMF_TYPE_TYPED_OBJECT:
-                offset += amf_get_typed_object( data + offset, len - offset);
+                amf_get_typed_object( data );
                 printf("Typed Object\n");
                 break;
+
         }
     }
 }

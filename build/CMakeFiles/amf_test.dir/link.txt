@@ -1,0 +1,1 @@
+/usr/bin/cc   -std=c99 -g     CMakeFiles/amf_test.dir/amf_decode.c.o CMakeFiles/amf_test.dir/data_stream.c.o CMakeFiles/amf_test.dir/memutil.c.o CMakeFiles/amf_test.dir/amf_encode.c.o  -o amf_test -rdynamic 
