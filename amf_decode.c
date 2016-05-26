@@ -331,6 +331,7 @@ int main(){
     char *str = "Well hello there, everyone!";
     amf_write_string( data, str, strlen( str ) );
     amf_write_object( data );
+    {
         str = "Item 1";
         amf_write_prop_name( data, str, strlen( str ) );
         amf_write_number( data, 1337 );
@@ -340,6 +341,7 @@ int main(){
         str = "Nested";
         amf_write_prop_name( data, str, strlen( str ) );
         amf_write_object( data );
+        {
             str = "The Time";
             amf_write_prop_name( data, str, strlen( str ) );
             amf_write_date( data, 0, time(0) );
@@ -349,10 +351,12 @@ int main(){
             amf_write_string( data, str, strlen( str ) );
             amf_write_prop_name( data, "", 0 );
             amf_write_object_end( data );
+        }
         str = "Item 3";
         amf_write_prop_name( data, str, strlen( str ) );
         amf_write_number( data, 123456.789 );
         amf_write_prop_name( data, "", 0 );
+    }
     amf_write_object_end( data );
     str = "Last";
     amf_write_string( data, str, strlen( str ) );
