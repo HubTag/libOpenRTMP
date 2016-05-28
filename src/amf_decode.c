@@ -322,48 +322,46 @@ void amf_print( ors_data_t* data ){
 }
 
 #include <time.h>
+#include "rtmp_chunk_flow.h"
+
+int check( int value ){
+    if( value < 0 ){
+        printf("Failed!\n");
+    }
+    return value;
+}
+int check_chunk( int value, rtmp_chunk_stream_message_t **message ){
+    rtmp_chunk_stream_message_t *msg = *message;
+    if( value < 0 ){
+        printf("Failed!\n");
+        return -1;
+    }
+    printf( "Chunk Stream: %d\nTimestamp: %d\nMessage Length: %d\nMessage Type: %d\nSteam ID: %d\n\n", msg->chunk_stream_id, msg->timestamp, msg->message_length, msg->message_type, msg->message_stream_id);
+    return value;
+}
+
 
 int main(){
-    ors_data_t data = ors_data_create_memsnk( 500 );
+    ors_data_t client_out = ors_data_create_file("data2", "rb");
+    char nonce1[1528], nonce2[1528];
+    unsigned int time1, time2;
+    rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX];
+    memset( cache, 0, sizeof( cache ) );
 
-    amf_write_boolean( data, 1 );
-    amf_write_boolean( data, 0 );
-    char *str = "Well hello there, everyone!";
-    amf_write_string( data, str, strlen( str ) );
-    amf_write_object( data );
-    {
-        str = "Item 1";
-        amf_write_prop_name( data, str, strlen( str ) );
-        amf_write_number( data, 1337 );
-        str = "Foobar";
-        amf_write_prop_name( data, str, strlen( str ) );
-        amf_write_null( data );
-        str = "Nested";
-        amf_write_prop_name( data, str, strlen( str ) );
-        amf_write_object( data );
-        {
-            str = "The Time";
-            amf_write_prop_name( data, str, strlen( str ) );
-            amf_write_date( data, 0, time(0) );
-            str = "Name";
-            amf_write_prop_name( data, str, strlen( str ) );
-            str = "Droogie";
-            amf_write_string( data, str, strlen( str ) );
-            amf_write_prop_name( data, "", 0 );
-            amf_write_object_end( data );
+    check( rtmp_chunk_read_shake_0( client_out ) );
+    check( rtmp_chunk_read_shake_1( client_out, &time1, nonce1, 1528 ) );
+    check( rtmp_chunk_read_shake_2( client_out, &time1, &time2, nonce2, 1528 ) );
+    rtmp_chunk_stream_message_t *msg;
+    while( ors_data_eof( client_out ) == 0 ){
+        check_chunk( rtmp_chunk_read_hdr( client_out, &msg, cache ), &msg );
+        byte buf[msg->message_length];
+
+        ors_data_read( client_out, buf, msg->message_length);
+        for( int i = 0; i < msg->message_length; ++i){
+            printf("%02X ", buf[i]);
         }
-        str = "Item 3";
-        amf_write_prop_name( data, str, strlen( str ) );
-        amf_write_number( data, 123456.789 );
-        amf_write_prop_name( data, "", 0 );
+        printf( "\n");
+        //ors_data_seek( client_out, msg->message_length - count, ORS_SEEK_OFFSET );
     }
-    amf_write_object_end( data );
-    str = "Last";
-    amf_write_string( data, str, strlen( str ) );
-
-    ors_data_seek( data, 0, ORS_SEEK_START );
-    amf_print( data );
-    ors_data_close( data );
-    ors_data_destroy( data );
     return 0;
 }

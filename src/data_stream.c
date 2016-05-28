@@ -41,7 +41,10 @@ struct ors_data {
 
 #define C(d) ((struct ors_data*)d)
 
-int dummy_read_write(void *data, byte *out, unsigned int out_len){
+int dummy_write(void *data, const byte *out, unsigned int out_len){
+    return -1;
+}
+int dummy_read(void *data, byte *out, unsigned int out_len){
     return -1;
 }
 int dummy_single(void *data){
@@ -52,8 +55,8 @@ int dummy_seek(void *data, int amount, enum ORS_SEEK whence ){
 }
 
 void ors_io_prepare( ors_io_t *io ){
-    io->do_read = dummy_read_write;
-    io->do_write = dummy_read_write;
+    io->do_read = dummy_read;
+    io->do_write = dummy_write;
     io->do_close = dummy_single;
     io->is_eof = dummy_single;
     io->get_remainder = dummy_single;
@@ -88,7 +91,7 @@ int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
     ) + len;
 }
 
-int ors_data_write( ors_data_t descriptor, byte *in, unsigned int in_len ){
+int ors_data_write( ors_data_t descriptor, const byte *in, unsigned int in_len ){
     return C(descriptor)->vtable->do_write(
         descriptor,
         in,
@@ -203,7 +206,7 @@ static int ors_data_memsrc_seek(void *data, int amount, enum ORS_SEEK whence){
 
 ors_io_t ors_memsrc_vtable = {
     .do_read = ors_data_memsrc_read,
-    .do_write = dummy_read_write,
+    .do_write = dummy_write,
     .do_close = dummy_single,
     .is_eof = ors_data_memsrc_eof,
     .get_remainder = ors_data_memsrc_get_remainder,
@@ -215,13 +218,14 @@ ors_io_t ors_memsrc_vtable = {
 ors_data_t ors_data_create_memsrc(void *memory, unsigned int length){
     struct ors_data_memsrc *data = malloc( sizeof( struct ors_data_memsrc ) );
     data->data.vtable = &ors_memsrc_vtable;
+    data->data.peek_len = 0;
     data->ptr = memory;
     data->offset = 0;
     data->length = length;
     return data;
 }
 
-static int ors_data_memsnk_write(void *data, byte *in, unsigned int in_len){
+static int ors_data_memsnk_write(void *data, const byte *in, unsigned int in_len){
     struct ors_data_memsnk *this = data;
     const int newlen = this->parent.offset + in_len;
     if( newlen >= this->reserve ){
@@ -261,9 +265,77 @@ ors_io_t ors_memsnk_vtable = {
 ors_data_t ors_data_create_memsnk(size_t reserve){
     struct ors_data_memsnk *data = malloc( sizeof( struct ors_data_memsnk ) );
     data->parent.data.vtable = &ors_memsnk_vtable;
+    data->parent.data.peek_len = 0;
     data->reserve = max( 1, reserve );
     data->parent.ptr = malloc(reserve * sizeof(byte));
     data->parent.offset = 0;
     data->parent.length = 0;
+    return data;
+}
+
+#include<stdio.h>
+
+struct ors_data_file{
+    struct ors_data data;
+    FILE *file;
+};
+
+static int ors_data_file_read(void *data, byte *out, unsigned int out_len){
+    struct ors_data_file *this = data;
+    return fread( out, 1, out_len, this->file );
+}
+
+static int ors_data_file_eof(void *data){
+    struct ors_data_file *this = data;
+    return feof( this->file );
+}
+
+static int ors_data_file_tell(void *data){
+    struct ors_data_file *this = data;
+    return ftell( this->file );
+}
+
+
+static int ors_data_file_seek(void *data, int amount, enum ORS_SEEK whence){
+    struct ors_data_file *this = data;
+    switch( whence ){
+        case ORS_SEEK_START:
+            fseek( this->file, amount, SEEK_SET );
+            break;
+        case ORS_SEEK_OFFSET:
+            fseek( this->file, amount, SEEK_CUR );
+            break;
+        case ORS_SEEK_END:
+            fseek( this->file, amount, SEEK_END );
+            break;
+    }
+    return ors_data_file_tell( data );
+}
+static int ors_data_file_write(void *data, const byte *in, unsigned int in_len){
+    struct ors_data_file *this = data;
+    return fwrite( in, 1, in_len, this->file );
+}
+
+static int ors_data_file_close(void *data){
+    struct ors_data_file *this = data;
+    fclose( this->file );
+    return 0;
+}
+
+ors_io_t ors_file_vtable = {
+    .do_read = ors_data_file_read,
+    .do_write = ors_data_file_write,
+    .do_close = ors_data_file_close,
+    .is_eof = ors_data_file_eof,
+    .get_remainder = dummy_single,
+    .do_tell = ors_data_file_tell,
+    .do_seek = ors_data_file_seek
+};
+
+ors_data_t ors_data_create_file(const char* fname, const char* mode){
+    struct ors_data_file *data = malloc( sizeof( struct ors_data_file ) );
+    data->data.vtable = &ors_file_vtable;
+    data->data.peek_len = 0;
+    data->file = fopen(fname, mode);
     return data;
 }

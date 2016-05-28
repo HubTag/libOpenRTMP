@@ -33,7 +33,7 @@ enum ORS_SEEK {
 
 typedef struct ors_io{
     int (*do_read)(void *data, byte *out, unsigned int out_len);
-    int (*do_write)(void *data, byte *in, unsigned int in_len);
+    int (*do_write)(void *data, const byte *in, unsigned int in_len);
     int (*do_close)(void *data);
     int (*is_eof)(void *data);
     int (*get_remainder)(void *data);
@@ -46,7 +46,7 @@ typedef void* ors_data_t;
 void ors_io_prepare( ors_io_t *io );
 
 int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len );
-int ors_data_write( ors_data_t descriptor, byte *in, unsigned int in_len );
+int ors_data_write( ors_data_t descriptor, const byte *in, unsigned int in_len );
 int ors_data_close( ors_data_t descriptor );
 int ors_data_eof( ors_data_t descriptor );
 int ors_data_get_remainder( ors_data_t descriptor );
@@ -58,3 +58,5 @@ void ors_data_destroy(ors_data_t descriptor);
 
 ors_data_t ors_data_create_memsrc(void *memory, unsigned int length);
 ors_data_t ors_data_create_memsnk(size_t reserve);
+ors_data_t ors_data_create_file(const char* fname, const char* mode);
+

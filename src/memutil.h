@@ -41,16 +41,27 @@ unsigned short ntoh_read_us(const void *src);
 unsigned int ntoh_read_ud(const void *src);
 
 //Write a short to a buffer based on endianess
-void ntoh_write_s(void *src, short value);
+void ntoh_write_s(void *dst, short value);
 
 //Write an int to a buffer based on endianess
-void ntoh_write_d(void *src, int value);
+void ntoh_write_d(void *dst, int value);
 
 //Write a short to a buffer based on endianess
-void ntoh_write_us(void *src, unsigned short value);
+void ntoh_write_us(void *dst, unsigned short value);
 
 //Write an int to a buffer based on endianess
-void ntoh_write_ud(void *src, unsigned int value);
+void ntoh_write_ud(void *dst, unsigned int value);
 
+void htol_write_ud(void *dst, unsigned int value);
+unsigned int ltoh_read_ud(void *src);
+
+
+//Write a 3 byte int to a buffer based on endianess
+void ntoh_write_ud3(void *dst, unsigned int value);
+//Read a 3 byte int from a buffer based on endianess
+unsigned int ntoh_read_ud3(void *dst);
 
 void emit_err(const char* err);
+
+int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 );
+

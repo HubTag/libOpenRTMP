@@ -88,7 +88,39 @@ void ntoh_write_ud(void *src, unsigned int value){
     ntoh_memcpy( src, &value, sizeof( value ) );
 }
 
+void htol_write_ud(void *dst, unsigned int value){
+    memcpy( dst, &value, sizeof( value ));
+}
+unsigned int ltoh_read_ud(void *src){
+    unsigned int value;
+    memcpy( &value, src, sizeof( unsigned int ));
+    return value;
+}
+
+//Write an int to a buffer based on endianess
+void ntoh_write_ud3(void *dst, unsigned int value){
+    byte *dstb = dst;
+    dstb[0] = (value >> 16 ) & 255;
+    dstb[1] = (value >> 8 ) & 255;
+    dstb[2] = (value ) & 255;
+}
+//Read a 3 byte int from a buffer based on endianess
+unsigned int ntoh_read_ud3(void *src){
+    unsigned int ret;
+    byte *srcb = src;
+    ret = srcb[0];
+    ret <<= 8;
+    ret |= srcb[1];
+    ret <<= 8;
+    ret |= srcb[2];
+    return ret;
+}
+
 
 void emit_err(const char* err){
     printf("%s\n", err);
+}
+
+int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 ){
+    return (int) (stamp2 - stamp1);
 }
