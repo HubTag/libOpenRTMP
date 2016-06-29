@@ -54,6 +54,7 @@ int ors_data_tell( ors_data_t descriptor );
 int ors_data_seek( ors_data_t descriptor, int amount, enum ORS_SEEK whence );
 int ors_data_peek( ors_data_t descriptor, byte *out, unsigned int out_len );
 int ors_data_flush_peek( ors_data_t descriptor );
+int ors_data_cap( ors_data_t descriptor, size_t len );
 void ors_data_destroy(ors_data_t descriptor);
 
 ors_data_t ors_data_create_memsrc(void *memory, unsigned int length);

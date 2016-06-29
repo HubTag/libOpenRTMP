@@ -35,6 +35,7 @@
 
 struct ors_data {
     ors_io_t *vtable;
+    size_t cap;
     byte peek_buf[PEEK_MAX];
     PEEK_TYPE peek_len;
 };
@@ -64,6 +65,11 @@ void ors_io_prepare( ors_io_t *io ){
     io->do_seek = dummy_seek;
 }
 
+int ors_data_cap( ors_data_t descriptor, size_t len ){
+    C(descriptor)->cap = len;
+    return 1;
+}
+
 int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
     int len = 0;
     if( C(descriptor)->peek_len > 0 ){
@@ -83,6 +89,18 @@ int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
     }
     if( out_len == 0 ){
         return 0;
+    }
+    if( C(descriptor)->cap != -1 && C(descriptor)->cap < out_len ){
+        out_len = C(descriptor)->cap;
+        int ret = C(descriptor)->vtable->do_read(
+            descriptor,
+            out,
+            out_len
+        ) + len;
+        if( ret > 0 ){
+            C(descriptor)->cap -= ret;
+        }
+        return ret;
     }
     return C(descriptor)->vtable->do_read(
         descriptor,
@@ -136,6 +154,9 @@ void ors_data_destroy(ors_data_t descriptor){
 }
 
 int ors_data_peek( ors_data_t descriptor, byte *out, unsigned int out_len ){
+    if( C(descriptor)->cap != -1 && C(descriptor)->cap < out_len ){
+        out_len = C(descriptor)->cap;
+    }
     out_len = min( PEEK_MAX, out_len );
     int amt = ors_data_read( descriptor, C(descriptor)->peek_buf, out_len);
     C(descriptor)->peek_len = max( 0, amt );
@@ -219,6 +240,7 @@ ors_data_t ors_data_create_memsrc(void *memory, unsigned int length){
     struct ors_data_memsrc *data = malloc( sizeof( struct ors_data_memsrc ) );
     data->data.vtable = &ors_memsrc_vtable;
     data->data.peek_len = 0;
+    data->data.cap = -1;
     data->ptr = memory;
     data->offset = 0;
     data->length = length;
@@ -266,6 +288,7 @@ ors_data_t ors_data_create_memsnk(size_t reserve){
     struct ors_data_memsnk *data = malloc( sizeof( struct ors_data_memsnk ) );
     data->parent.data.vtable = &ors_memsnk_vtable;
     data->parent.data.peek_len = 0;
+    data->parent.data.cap = -1;
     data->reserve = max( 1, reserve );
     data->parent.ptr = malloc(reserve * sizeof(byte));
     data->parent.offset = 0;
@@ -335,6 +358,7 @@ ors_io_t ors_file_vtable = {
 ors_data_t ors_data_create_file(const char* fname, const char* mode){
     struct ors_data_file *data = malloc( sizeof( struct ors_data_file ) );
     data->data.vtable = &ors_file_vtable;
+    data->data.cap = -1;
     data->data.peek_len = 0;
     data->file = fopen(fname, mode);
     return data;
