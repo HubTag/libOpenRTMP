@@ -31,6 +31,7 @@
     Date: June 29th, 2016
 */
 
+#pragma once
 
 //Set Peer Bandwidth Limit Type         //Page 21, §5.4.5
 typedef enum{
@@ -39,13 +40,13 @@ typedef enum{
     RTMP_LIMIT_DYNAMIC
 } rtmp_limit_t;
 
-//RTMO Chunk Stream Message Types       //Page 18
+//RTMP Chunk Stream Message Types       //Page 18
 typedef enum{
     //Chunk Control Messages            //Page 18, §5.4
     RTMP_MSG_SET_CHUNK_SIZE = 1,        //Page 19, §5.4.1
     RTMP_MSG_ABORT = 2,                 //Page 19, §5.4.2
     RTMP_MSG_ACK = 3,                   //Page 20, §5.4.3
-    RTMP_MSG_WIN_ACK_SIZE = 3,          //Page 20, §5.4.4
+    RTMP_MSG_WIN_ACK_SIZE = 5,          //Page 20, §5.4.4
     RTMP_MSG_SET_PEER_BWIDTH = 6,       //Page 21, §5.4.5
 
     //User Control Messages             //Page 23, §6.2

@@ -24,6 +24,7 @@
 #pragma once
 #include "amf_constants.h"
 #include "data_stream.h"
+#include "rtmp_debug.h"
 
 amf_err_t amf0_write_number( ors_data_t* dest, double value );
 amf_err_t amf0_write_boolean( ors_data_t* dest, int value );
@@ -70,4 +71,4 @@ amf_err_t amf0_get_xmldocument( ors_data_t* source, void *value, size_t value_le
 amf_err_t amf0_get_recordset( ors_data_t* source );
 amf_err_t amf0_get_typed_object( ors_data_t* source );
 
-void amf0_print( ors_data_t* data );
+void amf0_print( ors_data_t* data, size_t len, rtmp_printer_t printer );

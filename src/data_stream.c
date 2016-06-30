@@ -88,7 +88,7 @@ int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
         C(descriptor)->peek_len -= len;
     }
     if( out_len == 0 ){
-        return 0;
+        return len;
     }
     if( C(descriptor)->cap != -1 && C(descriptor)->cap < out_len ){
         out_len = C(descriptor)->cap;
@@ -124,6 +124,9 @@ int ors_data_close( ors_data_t descriptor ){
 }
 
 int ors_data_eof( ors_data_t descriptor ){
+    if( C(descriptor)->cap == 0 ){
+        return 1;
+    }
     return C(descriptor)->vtable->is_eof(
         descriptor
     );

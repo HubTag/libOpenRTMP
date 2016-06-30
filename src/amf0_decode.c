@@ -21,7 +21,6 @@
     along with libOpenRTMP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "memutil.h"
@@ -227,20 +226,23 @@ amf_err_t amf0_get_typed_object( ors_data_t* source ){
     return 0;
 }
 
-void amf0_print( ors_data_t* data ){
+void amf0_print( ors_data_t* data, size_t len, rtmp_printer_t printer ){
     double num;
     int integer;
     unsigned int uinteger;
     char str[1000];
     int object_layer = 0;
+    size_t r = 0;
 
-    while( ors_data_get_remainder(data) > 0 ){
+    while( !ors_data_eof(data) && r < len ){
         for( int i = 0; i < object_layer; ++i ){
-            printf("    ");
+            printer->s("    ");
         }
         if( object_layer > 0 ){
-            amf0_get_prop_name( data, str, 1000);
-            printf("\"%s\": ", str);
+            r += amf0_get_prop_name( data, str, 1000);
+            printer->s("\"");
+            printer->s(str);
+            printer->s("\": ");
         }
         byte type = amf0_next_type( data );
         if( type == AMF0_TYPE_UNSUPPORTED){
@@ -248,123 +250,85 @@ void amf0_print( ors_data_t* data ){
         }
         switch( type ){
             case AMF0_TYPE_NUMBER:
-                amf0_get_number( data, &num);
-                printf("Number: %f\n", num);
+                r += amf0_get_number( data, &num);
+                printer->s("Number: ");
+                printer->f( num );
                 break;
             case AMF0_TYPE_BOOLEAN:
-                amf0_get_boolean( data, &integer);
-                printf("Boolean: %d\n", integer);
+                r += amf0_get_boolean( data, &integer);
+                printer->s("Boolean: ");
+                printer->d( integer );
                 break;
             case AMF0_TYPE_STRING:
-                amf0_get_string( data, str, 1000);
-                printf("String: %s\n", str);
+                r += amf0_get_string( data, str, 1000);
+                printer->s( "String: " );
+                printer->s( str );
                 break;
             case AMF0_TYPE_OBJECT:
-                amf0_get_object( data );
-                printf("New Object\n");
+                r += amf0_get_object( data );
+                printer->s("New Object");
                 object_layer++;
                 break;
             case AMF0_TYPE_MOVIECLIP:
-                amf0_get_movieclip( data );
+                r += amf0_get_movieclip( data );
                 break;
             case AMF0_TYPE_NULL:
-                amf0_get_null( data);
-                printf("Null\n");
+                r += amf0_get_null( data);
+                printer->s("Null");
                 break;
             case AMF0_TYPE_UNDEFINED:
-                amf0_get_undefined( data );
-                printf("Undefined\n");
+                r += amf0_get_undefined( data );
+                printer->s("Undefined");
                 break;
             case AMF0_TYPE_REFERENCE:
-                amf0_get_reference( data, &uinteger);
-                printf("Reference to %u\n", uinteger );
+                r += amf0_get_reference( data, &uinteger);
+                printer->s( "Reference to " );
+                printer->u( uinteger );
                 break;
             case AMF0_TYPE_ECMA_ARRAY:
-                amf0_get_ecma_array( data);
-                printf("ECMA Array\n");
+                r += amf0_get_ecma_array( data);
+                printer->s("ECMA Array");
                 break;
             case AMF0_TYPE_OBJECT_END:
-                amf0_get_object_end( data );
-                printf("End Object\n");
+                r += amf0_get_object_end( data );
+                printer->s("End Object");
                 -- object_layer;
                 break;
             case AMF0_TYPE_STRICT_ARRAY:
-                amf0_get_strict_array( data );
-                printf("Strict Array\n");
+                r += amf0_get_strict_array( data );
+                printer->s("Strict Array");
                 break;
             case AMF0_TYPE_DATE:
-                amf0_get_date( data, &integer, &num);
-                printf("Date: %f +%d \n", num, integer);
+                r += amf0_get_date( data, &integer, &num);
+                printer->s( "Date: " );
+                printer->f( num );
+                printer->s( " +" );
+                printer->d( integer );
                 break;
             case AMF0_TYPE_LONG_STRING:
-                amf0_get_string( data, str, 1000 );
-                printf("Long String: %s\n", str);
+                r += amf0_get_string( data, str, 1000 );
+                printer->s("Long String: ");
+                printer->s(str);
                 break;
             case AMF0_TYPE_UNSUPPORTED:
-                amf0_get_unsupported( data );
-                printf("Unsupported\n");
+                r += amf0_get_unsupported( data );
+                printer->s("Unsupported");
                 break;
             case AMF0_TYPE_RECORDSET:
-                amf0_get_recordset( data );
-                printf("Record Set\n");
+                r += amf0_get_recordset( data );
+                printer->s("Record Set");
                 break;
             case AMF0_TYPE_XML_DOCUMENT:
-                amf0_get_string( data, str, 1000);
-                printf("XML Document: %s\n", str);
+                r += amf0_get_string( data, str, 1000);
+                printer->s("XML Document: ");
+                printer->s(str);
                 break;
             case AMF0_TYPE_TYPED_OBJECT:
-                amf0_get_typed_object( data );
-                printf("Typed Object\n");
+                r += amf0_get_typed_object( data );
+                printer->s("Typed Object");
                 break;
 
         }
+        printer->s("\n");
     }
-}
-
-#include <time.h>
-#include "rtmp_chunk_flow.h"
-
-int check( int value ){
-    if( value < 0 ){
-        printf("Failed!\n");
-    }
-    return value;
-}
-int check_chunk( int value, rtmp_chunk_stream_message_t **message ){
-    rtmp_chunk_stream_message_t *msg = *message;
-    if( value < 0 ){
-        printf("Failed!\n");
-        return -1;
-    }
-    printf( "Chunk Stream: %d\nTimestamp: %d\nMessage Length: %d\nMessage Type: %d\nSteam ID: %d\n\n", msg->chunk_stream_id, msg->timestamp, msg->message_length, msg->message_type, msg->message_stream_id);
-    return value;
-}
-
-
-int main(){
-    ors_data_t client_out = ors_data_create_file("data2", "rb");
-    char nonce1[1528], nonce2[1528];
-    unsigned int time1, time2;
-    rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX];
-    memset( cache, 0, sizeof( cache ) );
-
-    check( rtmp_chunk_read_shake_0( client_out ) );
-    check( rtmp_chunk_read_shake_1( client_out, &time1, nonce1, 1528 ) );
-    check( rtmp_chunk_read_shake_2( client_out, &time1, &time2, nonce2, 1528 ) );
-    rtmp_chunk_stream_message_t *msg;
-    while( ors_data_eof( client_out ) == 0 ){
-        check_chunk( rtmp_chunk_read_hdr( client_out, &msg, cache ), &msg );
-        if( !msg ){
-            continue;
-        }
-        byte buf[msg->message_length];
-
-        ors_data_read( client_out, buf, msg->message_length);
-        for( int i = 0; i < msg->message_length; ++i){
-            //printf("%02X ", buf[i]);
-        }
-        printf( "\n");
-        //ors_data_seek( client_out, msg->message_length - count, ORS_SEEK_OFFSET );
-    }
-    return 0;
 }
