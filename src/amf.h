@@ -22,35 +22,7 @@
 */
 
 #pragma once
-
-typedef enum AMF0_TYPE{
-    AMF0_TYPE_NUMBER,
-    AMF0_TYPE_BOOLEAN,
-    AMF0_TYPE_STRING,
-    AMF0_TYPE_OBJECT,
-    AMF0_TYPE_MOVIECLIP,
-    AMF0_TYPE_NULL,
-    AMF0_TYPE_UNDEFINED,
-    AMF0_TYPE_REFERENCE,
-    AMF0_TYPE_ECMA_ARRAY,
-    AMF0_TYPE_OBJECT_END,
-    AMF0_TYPE_STRICT_ARRAY,
-    AMF0_TYPE_DATE,
-    AMF0_TYPE_LONG_STRING,
-    AMF0_TYPE_UNSUPPORTED,
-    AMF0_TYPE_RECORDSET,
-    AMF0_TYPE_XML_DOCUMENT,
-    AMF0_TYPE_TYPED_OBJECT,
-    AMF0_TYPE_AVMPLUS
-} amf0_type_t;
-
-typedef enum AMF_ERR {
-    AMF_ERR_NONE,
-    AMF_ERR_INVALID_DATA = -10,
-    AMF_ERR_INCOMPLETE
-} amf_err_t;
-
-
+#include "amf_constants.h"
 #include "data_stream.h"
 
 amf_err_t amf0_write_number( ors_data_t* dest, double value );
