@@ -72,3 +72,6 @@ amf_err_t amf0_get_recordset( ors_data_t* source );
 amf_err_t amf0_get_typed_object( ors_data_t* source );
 
 void amf0_print( ors_data_t* data, size_t len, rtmp_printer_t printer );
+
+int read_var_int(ors_data_t* source, int *value);
+int write_var_int(ors_data_t* dest, int value);
