@@ -22,6 +22,8 @@
 */
 
 #pragma once
+
+#include "rtmp_types.h"
 #include "rtmp_constants.h"
 
 typedef struct{
@@ -40,6 +42,8 @@ const char* rtmp_get_snd_codec_flag_list( rtmp_support_codec_snd_t mtype );
 const char* rtmp_get_vid_codec_flag_name( rtmp_support_codec_vid_t mtype );
 const char* rtmp_get_vid_codec_flag_list( rtmp_support_codec_vid_t mtype );
 const char* rtmp_get_vid_func_flag_name( rtmp_support_func_vid_t mtype );
-const char* rtmp_get_vid_func_flag_list( rtmp_support_codec_vid_t mtype );
+const char* rtmp_get_vid_func_flag_list( rtmp_support_func_vid_t mtype );
 const char* rtmp_get_so_evt_type_name( rtmp_so_evt_t mtype );
 const char* rtmp_get_usr_evt_type_name( rtmp_usr_evt_t mtype );
+
+const char* rtmp_get_err_name( rtmp_err_t err );

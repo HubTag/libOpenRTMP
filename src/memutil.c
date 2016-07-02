@@ -21,10 +21,32 @@
     along with libOpenRTMP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "memutil.h"
+#include <sys/stat.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/epoll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <signal.h>
+
+#include <curl/curl.h>
+#include <time.h>
+
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void *dst, const void *src, size_t len){
@@ -124,4 +146,78 @@ void emit_err(const char* err){
 
 int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 ){
     return (int) (stamp2 - stamp1);
+}
+
+rtmp_err_t rtmp_nonce_gen(void **nonce, size_t length){
+    if( rtmp_nonce_alloc( nonce, length ) >= RTMP_ERR_ERROR ){
+        return RTMP_ERR_OOM;
+    }
+    char* dst = *nonce;
+    while( length --> 0 ){
+        *dst = rand() % 256;
+        ++dst;
+    }
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_nonce_del(void **nonce){
+    if( *nonce != nullptr ){
+        free(*nonce);
+        *nonce = nullptr;
+    }
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length){
+    rtmp_nonce_del(nonce);
+    *nonce = malloc(length * sizeof(char));
+    if( *nonce == nullptr ){
+        return RTMP_ERR_OOM;
+    }
+    return RTMP_ERR_NONE;
+}
+
+
+rtmp_time_t rtmp_get_time(){
+    unsigned long long s = clock();
+    s *= 1000;
+    s /= CLOCKS_PER_SEC;
+    return s;
+}
+
+
+static const unsigned long long pow10[] = {
+    1ull,
+    10ull,
+    100ull,
+    1000ull,
+    10000ull,
+    100000ull,
+    1000000ull,
+    10000000ull,
+    100000000ull,
+    1000000000ull,
+    10000000000ull,
+    100000000000ull,
+    1000000000000ull,
+    10000000000000ull,
+    100000000000000ull,
+    1000000000000000ull,
+    10000000000000000ull,
+    100000000000000000ull,
+    1000000000000000000ull,
+    10000000000000000000ull
+};
+unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to){
+    int change = from - to;
+    if( change < 0 ){
+        if( change < -20 ){
+            change = -20;
+        }
+        return number / pow10[-change];
+    }
+    if( change > 20 ){
+        change = 20;
+    }
+    return number * pow10[change];
 }

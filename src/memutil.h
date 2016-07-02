@@ -23,8 +23,9 @@
 
 #pragma once
 
-typedef unsigned char byte;
-typedef unsigned long size_t;
+#include "rtmp_types.h"
+#include "rtmp_constants.h"
+
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void *dst, const void *src, size_t len);
@@ -66,3 +67,10 @@ void emit_err(const char* err);
 
 int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 );
 
+rtmp_err_t rtmp_nonce_gen(void **nonce, size_t length);
+rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length);
+rtmp_err_t rtmp_nonce_del(void **nonce);
+
+rtmp_time_t rtmp_get_time();
+
+unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to);

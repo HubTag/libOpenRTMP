@@ -21,32 +21,45 @@
     along with libOpenRTMP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
+#include "rtmp_types.h"
 #include "data_stream.h"
+#include "rtmp_constants.h"
 #include "rtmp_chunk_flow.h"
 
 #define RTMP_STREAM_CACHE_MAX 10
 
-typedef int (*rtmp_chunk_proc)(ors_data_t contents, unsigned int chunk_stream_id, unsigned int message_stream_id, unsigned int timestamp, byte message_type );
+typedef int (*rtmp_chunk_proc)(
+    ors_data_t contents,
+    unsigned int chunk_stream_id,
+    unsigned int message_stream_id,
+    unsigned int timestamp, byte message_type
+);
 
-typedef rtmp_chunk_conn {
+typedef struct rtmp_chunk_conn {
     ors_data_t inflow, outflow;
     rtmp_chunk_stream_message_t stream_cache[RTMP_STREAM_CACHE_MAX];
-    void *nonce_a, *nonce_b;
+    void *nonce_c, *nonce_s;
+    rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;
     rtmp_chunk_proc callback;
+    rtmp_chunk_conn_status_t status;
 
-    unsigned int chunk_size;
-    unsigned int recieved_size;
-    unsigned int window_size;
-    unsigned int peer_bandwidth_size;
-    byte peer_bandwidth_type;
+    unsigned int self_chunk_size;
+    unsigned int peer_chunk_size;
+    unsigned int self_window_size;
+    unsigned int peer_window_size;
+    rtmp_limit_t peer_bandwidth_type;
 } *rtmp_chunk_conn_t;
 
 
-rtmp_chunk_conn_t rtmp_chunk_conn_create( byte client, ors_data_t inflow, ors_data_t outflow, rtmp_chunk_proc callback );
-void rtmp_chunk_conn_close( rtmp_chunk_conn_t conn );
+rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client, ors_data_t inflow, ors_data_t outflow, rtmp_chunk_proc callback );
+rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn, bool close_pipes );
 
-int rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size );
-int rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_stream );
-int rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn );
-int rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, unsigned int size );
-int rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, unsigned int size, rtmp_limit_type_t limit_type );
+rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status );
+
+rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size );
+rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_stream );
+rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn );
+rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, unsigned int size );
+rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, unsigned int size, rtmp_limit_t limit_type );

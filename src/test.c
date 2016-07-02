@@ -24,7 +24,7 @@
 #include <time.h>
 #include <stdio.h>
 #include "amf.h"
-#include "rtmp_chunk_flow.h"
+#include "rtmp_chunk_conn.h"
 #include "rtmp_constants.h"
 
 int check( int value ){
@@ -52,8 +52,42 @@ int check_chunk( int value, rtmp_chunk_stream_message_t **message ){
     return value;
 }
 
+void check_conn_err( rtmp_err_t err ){
+    if( err != RTMP_ERR_NONE ){
+        printf("Error - %s\n", rtmp_get_err_name( err ) );
+    }
+}
 
 int main(){
+    ors_data_t client_to_server = ors_data_create_memsnk(10000);
+    ors_data_t server_to_client = ors_data_create_memsnk(10000);
+
+    rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true, server_to_client, client_to_server, nullptr );
+    rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false, client_to_server, server_to_client, nullptr );
+
+    size_t client_to_server_read, server_to_client_read;
+    client_to_server_read = server_to_client_read = 0;
+
+    while( true ){
+        ors_data_seek( client_to_server, client_to_server_read, ORS_SEEK_START );
+        ors_data_seek( server_to_client, server_to_client_read, ORS_SEEK_START );
+        if( !ors_data_eof( client_to_server ) ){
+            check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_IN ) );
+        }
+        if( !ors_data_eof( server_to_client ) ){
+            check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_IN ) );
+        }
+        client_to_server_read = ors_data_tell( client_to_server );
+        server_to_client_read = ors_data_tell( server_to_client );
+        ors_data_seek( client_to_server, 0, ORS_SEEK_END );
+        ors_data_seek( server_to_client, 0, ORS_SEEK_END );
+
+
+        check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_OUT ) );
+        check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_OUT ) );
+        usleep(1000);
+    }
+    #if 0
     ors_data_t client_out = ors_data_create_file("data2", "rb");
     char nonce1[1528], nonce2[1528];
     unsigned int time1, time2;
@@ -84,5 +118,6 @@ int main(){
         printf( "\n");
         //ors_data_seek( client_out, msg->message_length - count, ORS_SEEK_OFFSET );
     }
+    #endif
     return 0;
 }

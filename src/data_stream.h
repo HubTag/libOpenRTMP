@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "rtmp_types.h"
+
 #include "memutil.h"
 
 enum ORS_SEEK {

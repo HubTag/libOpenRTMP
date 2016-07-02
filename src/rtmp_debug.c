@@ -177,7 +177,7 @@ const char* rtmp_get_vid_func_flag_name( rtmp_support_func_vid_t mtype ){
     }
 }
 
-const char* rtmp_get_vid_func_flag_list( rtmp_support_codec_vid_t mtype ){
+const char* rtmp_get_vid_func_flag_list( rtmp_support_func_vid_t mtype ){
     if( mtype == RTMP_SUPPORT_VID_CLIENT_SEEK ){
         return rtmp_get_vid_func_flag_name(RTMP_SUPPORT_VID_CLIENT_SEEK);
     }
@@ -214,3 +214,18 @@ const char* rtmp_get_usr_evt_type_name( rtmp_usr_evt_t mtype ){
     }
 }
 
+const char* rtmp_get_err_name( rtmp_err_t err ){
+    switch( err ){
+        case RTMP_ERR_NONE: return "No Error";
+        case RTMP_ERR_NOT_READY: return "Stream Not Ready";
+        case RTMP_ERR_ERROR: return "Generic Error";
+        case RTMP_ERR_OOM: return "Out Of Memory";
+        case RTMP_ERR_INVALID: return "Invalid Stream Data";
+        case RTMP_ERR_BAD_WRITE: return "Write Fail To Output";
+        case RTMP_ERR_BAD_READ: return "Read Fail From Input";
+        case RTMP_ERR_INADEQUATE_CHUNK: return "Inadequate Chunk Cache";
+        default:
+            snprintf( scratch_buffer, 511, "Unknown Error Code %d", err );
+            return scratch_buffer;
+    }
+}

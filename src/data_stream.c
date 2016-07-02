@@ -256,7 +256,7 @@ static int ors_data_memsnk_write(void *data, const byte *in, unsigned int in_len
     if( newlen >= this->reserve ){
         this->reserve = newlen * 5/3;
         void *result = realloc( this->parent.ptr, this->reserve );
-        if( result == NULL ){
+        if( result == nullptr ){
             return -1;
         }
         this->parent.ptr = result;
@@ -273,7 +273,7 @@ static int ors_data_memsnk_close(void *data){
     this->parent.length = 0;
     this->reserve = 0;
     free( this->parent.ptr );
-    this->parent.ptr = NULL;
+    this->parent.ptr = nullptr;
     return 0;
 }
 

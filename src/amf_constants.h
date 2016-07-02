@@ -36,9 +36,12 @@
         Information Page: http://www.adobe.com/devnet/swf.html
         CRC32: 8e55cb19
         Date: June 29th, 2016
+
 */
 
 #pragma once
+
+#include "rtmp_types.h"
 
 typedef enum AMF_ERR {
     AMF_ERR_NONE,

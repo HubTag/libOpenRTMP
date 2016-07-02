@@ -33,6 +33,38 @@
 
 #pragma once
 
+#include "rtmp_types.h"
+
+//Defaults
+
+#define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
+#define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
+#define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
+
+//Nonce size specified on page 8, §5.2.3
+#define RTMP_NONCE_SIZE                     1528
+
+#define RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
+#define RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
+
+typedef enum {
+    RTMP_IO_IN = 1,
+    RTMP_IO_OUT = 2,
+    RTMP_IO_ERR = 4
+} rtmp_io_t;
+
+typedef enum {
+    RTMP_STATUS_UNINIT          =  0x0000,
+    RTMP_STATUS_SHAKING_C0      =  0x0001,
+    RTMP_STATUS_SHAKING_C1      =  0x0002,
+    RTMP_STATUS_SHAKING_C2      =  0x0004,
+    RTMP_STATUS_SHAKING_S0      =  0x0008,
+    RTMP_STATUS_SHAKING_S1      =  0x0010,
+    RTMP_STATUS_SHAKING_S2      =  0x0020,
+    RTMP_STATUS_SHAKING_DONE    =  0x003F,
+    RTMP_STATUS_IS_CLIENT       =  0x0040
+} rtmp_chunk_conn_status_t;
+
 //Set Peer Bandwidth Limit Type         //Page 21, §5.4.5
 typedef enum{
     RTMP_LIMIT_HARD = 0,
@@ -131,6 +163,17 @@ typedef enum{
     RTMP_USR_EVT_PING_REQ,
     RTMP_USR_EVT_PING_RES
 } rtmp_usr_evt_t;
+
+typedef enum {
+    RTMP_ERR_NONE = 0,
+    RTMP_ERR_NOT_READY,
+    RTMP_ERR_ERROR,
+    RTMP_ERR_OOM,
+    RTMP_ERR_INVALID,
+    RTMP_ERR_BAD_WRITE,
+    RTMP_ERR_BAD_READ,
+    RTMP_ERR_INADEQUATE_CHUNK
+} rtmp_err_t;
 
 //NetConnection Commands                //Page 29, §7.2.1
 #define RTMP_CMD_CONNECT "connect"
