@@ -20,32 +20,13 @@
     You should have received a copy of the GNU General Public License
     along with libOpenRTMP.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#define posix1993
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "memutil.h"
-#include <sys/stat.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/epoll.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <signal.h>
-
-#include <curl/curl.h>
 #include <time.h>
+#include "memutil.h"
 
 
 //memcpy that will reverse byte order if the machine is little endian
@@ -177,11 +158,16 @@ rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length){
     return RTMP_ERR_NONE;
 }
 
-
+//Using POSIX stuff here.
+//Unfortunately there's no C99 way to get subsecond timestamps...
 rtmp_time_t rtmp_get_time(){
-    unsigned long long s = clock();
-    s *= 1000;
-    s /= CLOCKS_PER_SEC;
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    unsigned long long s = t.tv_sec;
+    s = si_convert_ull(s, si_one, si_nano);
+    s += t.tv_nsec;
+    s = si_convert_ull(s, si_nano, si_milli);
+    printf("%llu\n", s);
     return s;
 }
 

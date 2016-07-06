@@ -62,8 +62,8 @@ int main(){
     ors_data_t client_to_server = ors_data_create_memsnk(10000);
     ors_data_t server_to_client = ors_data_create_memsnk(10000);
 
-    rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true, server_to_client, client_to_server, nullptr );
-    rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false, client_to_server, server_to_client, nullptr );
+    rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true, server_to_client, client_to_server );
+    rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false, client_to_server, server_to_client );
 
     size_t client_to_server_read, server_to_client_read;
     client_to_server_read = server_to_client_read = 0;
@@ -85,7 +85,8 @@ int main(){
 
         check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_OUT ) );
         check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_OUT ) );
-        usleep(1000);
+        usleep(10000);
+        printf( "%d, %d\n\n", client->lag, server->lag );
     }
     #if 0
     ors_data_t client_out = ors_data_create_file("data2", "rb");

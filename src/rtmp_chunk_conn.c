@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-rtmp_chunk_conn_t rtmp_chunk_conn_create( bool is_client, ors_data_t inflow, ors_data_t outflow, rtmp_chunk_proc callback ){
+rtmp_chunk_conn_t rtmp_chunk_conn_create( bool is_client, ors_data_t inflow, ors_data_t outflow ){
     rtmp_chunk_conn_t ret = malloc( sizeof( struct rtmp_chunk_conn ) );
 
     ret->inflow = inflow;
@@ -33,7 +33,11 @@ rtmp_chunk_conn_t rtmp_chunk_conn_create( bool is_client, ors_data_t inflow, ors
     ret->status = RTMP_STATUS_UNINIT | (is_client ? RTMP_STATUS_IS_CLIENT : 0 );
     ret->nonce_c = ret->nonce_s = nullptr;
     ret->self_time = ret->peer_time = ret->peer_shake_recv_time = ret->self_shake_recv_time = 0;
-    ret->callback = callback;
+    ret->callback_chunk = nullptr;
+    ret->callback_event = nullptr;
+    ret->userdata = nullptr;
+
+    ret->bytes_recvd = 0;
 
     ret->self_chunk_size = RTMP_DEFAULT_CHUNK_SIZE;
     ret->peer_chunk_size = RTMP_DEFAULT_CHUNK_SIZE;
@@ -57,14 +61,39 @@ rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn, bool close_pipes ){
     return RTMP_ERR_NONE;
 }
 
-#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){return err;}}
+
+
+rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
+    if( conn->callback_event ){
+        switch( conn->callback_event( conn, event, conn->userdata ) ){
+            case RTMP_CB_CONTINUE:
+                return RTMP_ERR_NONE;
+            case RTMP_CB_ERROR:
+                return RTMP_ERR_ERROR;
+            case RTMP_CB_ABORT:
+                return RTMP_ERR_ERROR;
+        }
+    }
+    return RTMP_ERR_NONE;
+}
+
 
 static void rtmp_chunk_conn_service_shake_tryfinalize( rtmp_chunk_conn_t conn ){
     if( ( conn->status & RTMP_STATUS_SHAKING_DONE ) == RTMP_STATUS_SHAKING_DONE ){
         rtmp_nonce_del( &conn->nonce_c );
         rtmp_nonce_del( &conn->nonce_s );
+        rtmp_chunk_conn_call_event( conn, RTMP_EVENT_CONNECT_SUCCESS );
+        conn->lag = 0;
+        if( conn->peer_shake_recv_time > conn->self_time ){
+            conn->lag = conn->peer_shake_recv_time - conn->self_time;
+        }
+        else{
+            conn->lag = conn->self_time - conn->peer_shake_recv_time;
+        }
     }
 }
+
+#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ rtmp_chunk_conn_call_event( conn, RTMP_EVENT_CONNECT_FAIL ); return err;}}
 
 static rtmp_err_t rtmp_chunk_conn_service_client_emit( rtmp_chunk_conn_t conn ){
     //Emit C0 if we haven't already
@@ -224,26 +253,71 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status 
     if( ( conn->status & RTMP_STATUS_SHAKING_DONE ) != RTMP_STATUS_SHAKING_DONE ){
         return rtmp_chunk_conn_service_shake( conn, io_status );
     }
+
     return RTMP_ERR_NONE;
 }
 
 
-rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size ){
+rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, void *user ){
+    conn->callback_chunk = chunk_cb;
+    conn->callback_event = event_cb;
+    conn->userdata = user;
+    return RTMP_ERR_NONE;
+}
 
+#undef FAIL_IF_ERR
+#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FAILED ); return err;}}
+
+static rtmp_err_t rtmp_chunk_conn_emit_number(rtmp_chunk_conn_t conn, rtmp_message_type_t msg_type, unsigned int value){
+    rtmp_chunk_stream_message_t msg;
+    msg.chunk_stream_id = RTMP_CONTROL_CHUNK_STREAM;
+    msg.message_stream_id = RTMP_CONTROL_MSG_STREAM;
+    msg.message_length = 4;
+    msg.timestamp = 0;
+    msg.message_type = msg_type;
+    FAIL_IF_ERR(rtmp_chunk_emit_hdr( conn->outflow, &msg, conn->stream_cache ));
+    ntoh_write_ud( &value, value );
+    if( ors_data_write( conn->outflow, (const byte*)&value, sizeof( value ) ) < sizeof( value ) ){
+        return RTMP_ERR_BAD_WRITE;
+    }
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size ){
+    size &= ~(1 << 31);
+    FAIL_IF_ERR(rtmp_chunk_conn_emit_number( conn, RTMP_MSG_SET_CHUNK_SIZE, size ) );
+    conn->self_chunk_size = size;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_stream ){
-
+    FAIL_IF_ERR(rtmp_chunk_conn_emit_number( conn, RTMP_MSG_ABORT, chunk_stream ) );
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn ){
-
+    FAIL_IF_ERR(rtmp_chunk_conn_emit_number( conn, RTMP_MSG_ACK, conn->bytes_recvd ) );
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, unsigned int size ){
-
+    FAIL_IF_ERR(rtmp_chunk_conn_emit_number( conn, RTMP_MSG_WIN_ACK_SIZE, size ) );
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, unsigned int size, rtmp_limit_t limit_type ){
-
+    rtmp_chunk_stream_message_t msg;
+    msg.chunk_stream_id = RTMP_CONTROL_CHUNK_STREAM;
+    msg.message_stream_id = RTMP_CONTROL_MSG_STREAM;
+    msg.message_length = 5;
+    msg.timestamp = 0;
+    msg.message_type = RTMP_MSG_SET_PEER_BWIDTH;
+    FAIL_IF_ERR(rtmp_chunk_emit_hdr( conn->outflow, &msg, conn->stream_cache ));
+    byte buffer[5];
+    ntoh_write_ud( buffer, size );
+    buffer[4] = limit_type;
+    if( ors_data_write( conn->outflow, buffer, 5 ) < 5 ){
+        return RTMP_ERR_BAD_WRITE;
+    }
+    return RTMP_ERR_NONE;
 }

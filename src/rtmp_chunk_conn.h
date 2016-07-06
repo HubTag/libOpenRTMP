@@ -30,19 +30,35 @@
 
 #define RTMP_STREAM_CACHE_MAX 10
 
-typedef int (*rtmp_chunk_proc)(
+typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;
+
+typedef rtmp_cb_status_t (*rtmp_chunk_proc)(
+    rtmp_chunk_conn_t conn,
     ors_data_t contents,
     unsigned int chunk_stream_id,
     unsigned int message_stream_id,
-    unsigned int timestamp, byte message_type
+    unsigned int timestamp,
+    byte message_type,
+    void *user
 );
 
-typedef struct rtmp_chunk_conn {
+typedef rtmp_cb_status_t (*rtmp_event_proc)(
+    rtmp_chunk_conn_t conn,
+    rtmp_event_t event,
+    void *user
+);
+
+struct rtmp_chunk_conn {
     ors_data_t inflow, outflow;
     rtmp_chunk_stream_message_t stream_cache[RTMP_STREAM_CACHE_MAX];
+
     void *nonce_c, *nonce_s;
     rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;
-    rtmp_chunk_proc callback;
+    unsigned int lag;
+
+    rtmp_chunk_proc callback_chunk;
+    rtmp_event_proc callback_event;
+    void *userdata;
     rtmp_chunk_conn_status_t status;
 
     unsigned int self_chunk_size;
@@ -50,13 +66,19 @@ typedef struct rtmp_chunk_conn {
     unsigned int self_window_size;
     unsigned int peer_window_size;
     rtmp_limit_t peer_bandwidth_type;
-} *rtmp_chunk_conn_t;
+
+    unsigned int bytes_recvd;
+};
 
 
-rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client, ors_data_t inflow, ors_data_t outflow, rtmp_chunk_proc callback );
+rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client, ors_data_t inflow, ors_data_t outflow );
 rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn, bool close_pipes );
 
 rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status );
+
+rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, void *user );
+
+
 
 rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size );
 rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_stream );

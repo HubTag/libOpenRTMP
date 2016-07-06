@@ -48,10 +48,24 @@
 #define RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
 
 typedef enum {
+    RTMP_EVENT_CONNECT_SUCCESS,
+    RTMP_EVENT_CONNECT_FAIL,
+    RTMP_EVENT_CLOSED,
+    RTMP_EVENT_INTERRUPTED,
+    RTMP_EVENT_FAILED
+} rtmp_event_t;
+
+typedef enum {
     RTMP_IO_IN = 1,
     RTMP_IO_OUT = 2,
     RTMP_IO_ERR = 4
 } rtmp_io_t;
+
+typedef enum {
+    RTMP_CB_CONTINUE = 0,
+    RTMP_CB_ERROR,
+    RTMP_CB_ABORT
+} rtmp_cb_status_t;
 
 typedef enum {
     RTMP_STATUS_UNINIT          =  0x0000,
@@ -174,6 +188,9 @@ typedef enum {
     RTMP_ERR_BAD_READ,
     RTMP_ERR_INADEQUATE_CHUNK
 } rtmp_err_t;
+
+#define RTMP_CONTROL_MSG_STREAM 0
+#define RTMP_CONTROL_CHUNK_STREAM 2
 
 //NetConnection Commands                //Page 29, §7.2.1
 #define RTMP_CMD_CONNECT "connect"
