@@ -158,13 +158,20 @@ rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length){
     return RTMP_ERR_NONE;
 }
 
+byte* safe_alloc(size_t amount){
+    if( amount <= RTMP_MAX_ALLOC ){
+        return malloc( amount );
+    }
+    return nullptr;
+}
+
 //Using POSIX stuff here.
 //Unfortunately there's no C99 way to get subsecond timestamps...
 rtmp_time_t rtmp_get_time(){
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC, &t);
     unsigned long long s = t.tv_sec;
-    s = si_convert_ull(s, si_one, si_nano);
+    s = si_convert_ull(s, si_none, si_nano);
     s += t.tv_nsec;
     s = si_convert_ull(s, si_nano, si_milli);
     printf("%llu\n", s);

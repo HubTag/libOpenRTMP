@@ -25,7 +25,6 @@
 
 #include "rtmp_types.h"
 #include "data_stream.h"
-#define RTMP_STREAM_CACHE_MAX 10
 
 typedef struct rtmp_chunk_stream_message{
     unsigned int chunk_stream_id;
@@ -49,3 +48,5 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t output, rtmp_chunk_stream_message_t *
 rtmp_err_t rtmp_chunk_emit_hdr_basic( ors_data_t output, byte format, size_t id );
 rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id );
 
+
+void rtmp_print_message( rtmp_chunk_stream_message_t *msg );

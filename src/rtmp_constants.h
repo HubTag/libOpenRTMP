@@ -37,8 +37,12 @@
 //Defaults
 
 #define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
+#define RTMP_MAX_CHUNK_SIZE                 0x0000FFFF
 #define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
 #define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
+
+#define RTMP_STREAM_CACHE_MAX 10
+#define RTMP_CONTROL_BUFFER_SIZE 16
 
 //Nonce size specified on page 8, §5.2.3
 #define RTMP_NONCE_SIZE                     1528

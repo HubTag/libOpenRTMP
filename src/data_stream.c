@@ -36,6 +36,8 @@
 struct ors_data {
     ors_io_t *vtable;
     size_t cap;
+    size_t read;
+    size_t written;
     byte peek_buf[PEEK_MAX];
     PEEK_TYPE peek_len;
 };
@@ -65,12 +67,40 @@ void ors_io_prepare( ors_io_t *io ){
     io->do_seek = dummy_seek;
 }
 
+
+size_t ors_data_amount_read( ors_data_t descriptor ){
+    return C(descriptor)->read;
+}
+
+size_t ors_data_amount_written( ors_data_t descriptor ){
+    return C(descriptor)->written;
+}
+
+void ors_data_reset_read_amount( ors_data_t descriptor, size_t amount ){
+    if( C(descriptor)->read > amount ){
+        C(descriptor)->read -= amount;
+    }
+    else{
+        C(descriptor)->read = 0;
+    }
+}
+
+void ors_data_reset_write_amount( ors_data_t descriptor, size_t amount ){
+    if( C(descriptor)->written > amount ){
+        C(descriptor)->written -= amount;
+    }
+    else{
+        C(descriptor)->written = 0;
+    }
+}
+
 int ors_data_cap( ors_data_t descriptor, size_t len ){
     C(descriptor)->cap = len;
     return 1;
 }
 
 int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
+    C(descriptor)->cap = -1;
     int len = 0;
     if( C(descriptor)->peek_len > 0 ){
         len = min(C(descriptor)->peek_len, out_len);
@@ -88,10 +118,25 @@ int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
         C(descriptor)->peek_len -= len;
     }
     if( out_len == 0 ){
+        if( C(descriptor)->cap != -1 ){
+             if( C(descriptor)->cap > len ){
+                 C(descriptor)->cap -= len;
+             }
+             else{
+                 C(descriptor)->cap = 0;
+             }
+        }
+        C(descriptor)->read += len;
         return len;
     }
-    if( C(descriptor)->cap != -1 && C(descriptor)->cap < out_len ){
+    if( C(descriptor)->cap != -1 && C(descriptor)->cap < out_len + len ){
         out_len = C(descriptor)->cap;
+        if( len > out_len ){
+            out_len = 0;
+        }
+        else{
+            out_len -= len;
+        }
         int ret = C(descriptor)->vtable->do_read(
             descriptor,
             out,
@@ -99,22 +144,31 @@ int ors_data_read( ors_data_t descriptor, byte *out, unsigned int out_len ){
         ) + len;
         if( ret > 0 ){
             C(descriptor)->cap -= ret;
+            C(descriptor)->read += ret;
         }
         return ret;
     }
-    return C(descriptor)->vtable->do_read(
+    int ret = C(descriptor)->vtable->do_read(
         descriptor,
         out,
         out_len
     ) + len;
+    if( ret > 0 ){
+        C(descriptor)->read += ret;
+    }
+    return ret;
 }
 
 int ors_data_write( ors_data_t descriptor, const byte *in, unsigned int in_len ){
-    return C(descriptor)->vtable->do_write(
+    int ret = C(descriptor)->vtable->do_write(
         descriptor,
         in,
         in_len
     );
+    if( ret > 0 ){
+        C(descriptor)->written += ret;
+    }
+    return ret;
 }
 
 int ors_data_close( ors_data_t descriptor ){

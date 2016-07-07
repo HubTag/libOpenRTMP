@@ -27,6 +27,26 @@
 #include "rtmp_chunk_conn.h"
 #include "rtmp_constants.h"
 
+
+
+rtmp_cb_status_t data_callback(
+    rtmp_chunk_conn_t conn,
+    ors_data_t contents,
+    size_t available,
+    size_t remaining,
+    rtmp_chunk_stream_message_t *msg,
+    void *user
+){
+    printf("Avail: %d\tRemain: %d\n", available, remaining );
+    byte b[available];
+    ors_data_read( contents, b, available );
+    for( int i = 0; i < available; ++i ){
+        printf("%c", b[i]);
+    }
+    printf("\n");
+    return RTMP_CB_CONTINUE;
+}
+
 int check( int value ){
     if( value < 0 ){
         printf("Failed!\n");
@@ -65,8 +85,12 @@ int main(){
     rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true, server_to_client, client_to_server );
     rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false, client_to_server, server_to_client );
 
+    rtmp_chunk_conn_register_callbacks( client, data_callback, nullptr, nullptr );
+
     size_t client_to_server_read, server_to_client_read;
     client_to_server_read = server_to_client_read = 0;
+
+    int state = 0;
 
     while( true ){
         ors_data_seek( client_to_server, client_to_server_read, ORS_SEEK_START );
@@ -85,8 +109,24 @@ int main(){
 
         check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_OUT ) );
         check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_OUT ) );
+
+        if( state == 0 && rtmp_chunk_conn_connected(client) && rtmp_chunk_conn_connected(server) ){
+            state = 1;
+            rtmp_chunk_conn_set_chunk_size( client, 200 );
+            rtmp_chunk_conn_set_chunk_size( server, 1000 );
+        }
+        else if( state == 1 ){
+            rtmp_chunk_conn_set_peer_bwidth( client, 2000, RTMP_LIMIT_HARD );
+            ++state;
+        }
+        else if( state == 2 ){
+            rtmp_chunk_conn_set_chunk_size( server, 10 );
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 2, 1, 0, "Hello there my friend!", 22);
+            ++state;
+        }
+
         usleep(10000);
-        printf( "%d, %d\n\n", client->lag, server->lag );
+        //printf( "%d, %d\n\n", client->lag, server->lag );
     }
     #if 0
     ors_data_t client_out = ors_data_create_file("data2", "rb");

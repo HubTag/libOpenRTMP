@@ -22,6 +22,7 @@
 */
 
 #include "rtmp_chunk_flow.h"
+#include "rtmp_debug.h"
 #include "data_stream.h"
 #include <stdio.h>
 
@@ -169,7 +170,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
     size_t id;
     byte fmt;
     unsigned int old_time = 0;
-    if( rtmp_chunk_read_hdr_basic( input, &fmt, &id ) < 0 ){
+    if( rtmp_chunk_read_hdr_basic( input, &fmt, &id ) >= RTMP_ERR_ERROR ){
         return RTMP_ERR_BAD_READ;
     }
     if( id < RTMP_STREAM_CACHE_MAX ){
@@ -281,4 +282,20 @@ rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id
         *id += 64;
         return RTMP_ERR_NONE;
     }
+}
+
+
+
+void rtmp_print_message( rtmp_chunk_stream_message_t *msg ){
+    printf("Message: \n"
+            "\tChunk Stream:   %d\n"
+            "\tMessage Stream: %d\n"
+            "\tTimestamp:      %d\n"
+            "\tType:           %s\n"
+            "\tMessage Length: %lu\n\n",
+            msg->chunk_stream_id,
+            msg->message_stream_id,
+            msg->timestamp,
+            rtmp_get_message_type_name(msg->message_type),
+            msg->message_length );
 }

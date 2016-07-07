@@ -54,6 +54,7 @@ static rtmp_printer def = {
 rtmp_printer_t rtmp_default_printer = &def;
 
 
+
 const char* rtmp_get_message_type_name( rtmp_message_type_t mtype ){
     switch( mtype ){
         case RTMP_MSG_SET_CHUNK_SIZE: return "Set Chunk Size";
@@ -213,6 +214,18 @@ const char* rtmp_get_usr_evt_type_name( rtmp_usr_evt_t mtype ){
         default: return "Unknown User Control Message Event Type";
     }
 }
+
+const char* rtmp_get_event_name( rtmp_event_t mtype ){
+    switch( mtype ){
+        case RTMP_EVENT_CONNECT_SUCCESS:    return "Connection Successful";
+        case RTMP_EVENT_CONNECT_FAIL:       return "Connection Failed";
+        case RTMP_EVENT_CLOSED:             return "Connection Closed";
+        case RTMP_EVENT_INTERRUPTED:        return "Connection Interrupted";
+        case RTMP_EVENT_FAILED:             return "Connection Failed";
+        default:                            return "Unknown Connection Event";
+    }
+}
+
 
 const char* rtmp_get_err_name( rtmp_err_t err ){
     switch( err ){

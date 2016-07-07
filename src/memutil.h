@@ -74,3 +74,6 @@ rtmp_err_t rtmp_nonce_del(void **nonce);
 rtmp_time_t rtmp_get_time();
 
 unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to);
+
+#define RTMP_MAX_ALLOC 10000
+byte* safe_alloc(size_t amount);
