@@ -28,7 +28,6 @@
 #include "rtmp_constants.h"
 #include "rtmp_chunk_flow.h"
 
-#define RTMP_STREAM_CACHE_MAX 10
 
 typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;
 
@@ -49,8 +48,8 @@ typedef rtmp_cb_status_t (*rtmp_event_proc)(
 
 struct rtmp_chunk_conn {
     ors_data_t inflow, outflow;
-    rtmp_chunk_stream_message_t stream_cache[RTMP_STREAM_CACHE_MAX];
-    size_t chunk_processing[RTMP_STREAM_CACHE_MAX];
+    rtmp_chunk_stream_cache_t stream_cache_out;
+    rtmp_chunk_stream_cache_t stream_cache_in;
 
     void *nonce_c, *nonce_s;
     rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;

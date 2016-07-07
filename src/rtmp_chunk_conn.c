@@ -47,8 +47,8 @@ rtmp_chunk_conn_t rtmp_chunk_conn_create( bool is_client, ors_data_t inflow, ors
     ret->peer_window_size = RTMP_DEFAULT_WINDOW_SIZE;
     ret->peer_bandwidth_type = RTMP_DEFAULT_BANDWIDTH_TYPE;
 
-    memset( ret->chunk_processing, 0, RTMP_STREAM_CACHE_MAX * sizeof( size_t ) );
-    memset( ret->stream_cache, 0, RTMP_STREAM_CACHE_MAX * sizeof( rtmp_chunk_stream_message_t ) );
+    ret->stream_cache_in = rtmp_cache_create();
+    ret->stream_cache_out = rtmp_cache_create();
 
     return ret;
 }
@@ -62,6 +62,9 @@ rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn, bool close_pipes ){
     }
     rtmp_nonce_del( &conn->nonce_c );
     rtmp_nonce_del( &conn->nonce_s );
+    rtmp_cache_destroy( conn->stream_cache_in );
+    rtmp_cache_destroy( conn->stream_cache_out );
+
     free( conn );
     return RTMP_ERR_NONE;
 }
@@ -290,11 +293,13 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_set_chunk_size(rtmp_chunk_conn_t 
 static rtmp_err_t rtmp_chunk_conn_service_recv_abort(rtmp_chunk_conn_t conn){
     if( conn->control_message_len >= 4 ){
         unsigned int chunk_stream = ntoh_read_ud( conn->control_message_buffer );
-        if( chunk_stream >= RTMP_STREAM_CACHE_MAX ){
+
+        rtmp_chunk_stream_message_t msg;
+        rtmp_chunk_stream_message_internal_t *cached = rtmp_cache_get( conn->stream_cache_in, chunk_stream);
+        if( cached == nullptr ){
             return RTMP_ERR_INADEQUATE_CHUNK;
         }
-        rtmp_chunk_stream_message_t msg;
-        memcpy( &msg, &(conn->stream_cache[chunk_stream]), sizeof( rtmp_chunk_stream_message_t ) );
+        memcpy( &msg, cached, sizeof( rtmp_chunk_stream_message_t ) );
         msg.chunk_stream_id = chunk_stream;
 
         printf("Peer aborted chunk %d\n", chunk_stream);
@@ -384,19 +389,19 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, size
 
 static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_t io_status ){
     rtmp_chunk_stream_message_t *msg;
-    FAIL_IF_ERR( rtmp_chunk_read_hdr( conn->inflow, &msg, conn->stream_cache ) );
-    //read_hdr should fail if chunk stream id is greater than the max allowed
+    FAIL_IF_ERR( rtmp_chunk_read_hdr( conn->inflow, &msg, conn->stream_cache_in ) );
+
+    rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get( conn->stream_cache_in, msg->chunk_stream_id );
 
     //Limit the data output to message_length
     size_t start = ors_data_amount_read(conn->inflow);
-    ors_data_cap( conn->inflow, msg->message_length );
 
     rtmp_err_t ret = RTMP_ERR_NONE;
 
     size_t available = msg->message_length;
-    size_t processing = conn->chunk_processing[msg->chunk_stream_id];
+    size_t processing = previous->processed;
     if( processing == 0 ){
-        conn->chunk_processing[msg->chunk_stream_id] = available;
+        previous->processed = available;
     }
     else{
         available = processing;
@@ -405,8 +410,8 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
         available = conn->peer_chunk_size;
     }
 
-    conn->chunk_processing[msg->chunk_stream_id] -= available;
-    processing = conn->chunk_processing[msg->chunk_stream_id];
+    previous->processed -= available;
+    processing = previous->processed;
 
     if( msg->chunk_stream_id == RTMP_CONTROL_CHUNK_STREAM && msg->message_stream_id == RTMP_CONTROL_MSG_STREAM ){
         ret = rtmp_chunk_conn_service_recv_cmd( conn, available, processing, msg );
@@ -414,8 +419,6 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
     else{
         ret = rtmp_chunk_conn_call_chunk( conn, available, processing, msg );
     }
-
-    ors_data_cap( conn->inflow, -1 );
 
     //If message_length bytes weren't read, fast forward data
     size_t end = ors_data_amount_read(conn->inflow);
@@ -566,7 +569,7 @@ rtmp_chunk_conn_send_message(
         if( chunk_len > conn->self_chunk_size ){
             chunk_len = conn->self_chunk_size;
         }
-        FAIL_IF_ERR(rtmp_chunk_emit_hdr( conn->outflow, &msg, conn->stream_cache ));
+        FAIL_IF_ERR(rtmp_chunk_emit_hdr( conn->outflow, &msg, conn->stream_cache_out ));
         if( ors_data_write( conn->outflow, data + written, chunk_len ) < chunk_len ){
             return RTMP_ERR_BAD_WRITE;
         }

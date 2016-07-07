@@ -30,9 +30,26 @@ typedef struct rtmp_chunk_stream_message{
     unsigned int chunk_stream_id;
     unsigned int timestamp;
     size_t message_length;
-    byte message_type;
     unsigned int message_stream_id;
+    byte message_type;
 } rtmp_chunk_stream_message_t;
+
+typedef struct rtmp_chunk_stream_message_internal{
+    rtmp_chunk_stream_message_t msg;
+    unsigned int time_delta;
+    unsigned int processed;
+    bool initialized;
+} rtmp_chunk_stream_message_internal_t;
+
+typedef struct rtmp_chunk_stream_cache{
+    rtmp_chunk_stream_message_internal_t static_cache[RTMP_STREAM_STATIC_CACHE_SIZE];
+    rtmp_chunk_stream_message_internal_t *dynamic_cache;
+    size_t dynamic_cache_size;
+} *rtmp_chunk_stream_cache_t;
+
+rtmp_chunk_stream_cache_t rtmp_cache_create();
+void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache );
+rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id );
 
 rtmp_err_t rtmp_chunk_emit_shake_0( ors_data_t output );
 rtmp_err_t rtmp_chunk_emit_shake_1( ors_data_t output, unsigned int timestamp, const byte* nonce, size_t length);
@@ -42,8 +59,8 @@ rtmp_err_t rtmp_chunk_read_shake_0( ors_data_t input );
 rtmp_err_t rtmp_chunk_read_shake_1( ors_data_t input, unsigned int *timestamp, byte* nonce, size_t length);
 rtmp_err_t rtmp_chunk_read_shake_2( ors_data_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* data, size_t length);
 
-rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX] );
-rtmp_err_t rtmp_chunk_read_hdr( ors_data_t output, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX] );
+rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache );
+rtmp_err_t rtmp_chunk_read_hdr( ors_data_t output, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_cache_t cache );
 
 rtmp_err_t rtmp_chunk_emit_hdr_basic( ors_data_t output, byte format, size_t id );
 rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id );

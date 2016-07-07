@@ -24,7 +24,79 @@
 #include "rtmp_chunk_flow.h"
 #include "rtmp_debug.h"
 #include "data_stream.h"
+#include "algorithm.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+rtmp_chunk_stream_cache_t rtmp_cache_create(){
+    struct rtmp_chunk_stream_cache *ret = calloc( sizeof( struct rtmp_chunk_stream_cache ), 1 );
+    return ret;
+}
+
+void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache ){
+    free( cache->dynamic_cache );
+    free( cache );
+}
+
+//static bool rtmp_chunk_stream_message_less_than( const size_t *a, const rtmp_chunk_stream_message_internal_t *b ){
+//    return *a < b->msg.chunk_stream_id;
+//}
+static bool rtmp_chunk_stream_message_less_than( const void *a, const void *b ){
+    return *(const size_t*)a < ((const rtmp_chunk_stream_message_internal_t*)b)->msg.chunk_stream_id;
+}
+
+static rtmp_chunk_stream_message_internal_t * rtmp_cache_insert( rtmp_chunk_stream_cache_t cache, size_t index, size_t chunk_id ){
+    rtmp_chunk_stream_message_internal_t *ret = nullptr;
+    if( cache->dynamic_cache_size >= RTMP_STREAM_CACHE_MAX ){
+        printf("Failed to insert %d! (Max reached)\n", chunk_id);
+        return ret;
+    }
+    size_t remainder = cache->dynamic_cache_size - index;
+    cache->dynamic_cache_size ++;
+    void* newptr = realloc( cache->dynamic_cache, sizeof(rtmp_chunk_stream_message_internal_t) * cache->dynamic_cache_size );
+    if( newptr == nullptr ){
+        printf("Failed to insert %d! (OOM)\n", chunk_id);
+        return ret;
+    }
+    cache->dynamic_cache = newptr;
+    ret = cache->dynamic_cache + index;
+    if( remainder > 0 ){
+        memmove( ret + 1, ret, remainder );
+    }
+    memset( ret, 0, sizeof( rtmp_chunk_stream_message_internal_t ) );
+    ret->msg.chunk_stream_id = chunk_id;
+        printf("Inserted %d!\n", chunk_id);
+    return ret;
+}
+
+rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id ){
+    if( chunk_id < RTMP_STREAM_STATIC_CACHE_SIZE ){
+        return &cache->static_cache[chunk_id];
+    }
+    size_t idx = alg_search_bin(
+            &chunk_id,
+            cache->dynamic_cache,
+            sizeof(rtmp_chunk_stream_message_internal_t),
+            cache->dynamic_cache_size,
+            rtmp_chunk_stream_message_less_than
+    );
+    if( idx == cache->dynamic_cache_size ){
+        return rtmp_cache_insert( cache, idx, chunk_id );
+    }
+    else{
+        rtmp_chunk_stream_message_internal_t *target = cache->dynamic_cache + idx;
+        if( target->msg.chunk_stream_id == chunk_id ){
+            printf("Fetching %d!\n", target->msg.chunk_stream_id );
+            return target;
+        }
+        else{
+            return rtmp_cache_insert( cache, idx, chunk_id );
+        }
+    }
+}
+
+
 
 rtmp_err_t rtmp_chunk_emit_shake_0( ors_data_t output ){
     byte version = 3;
@@ -110,29 +182,36 @@ rtmp_err_t rtmp_chunk_read_shake_2( ors_data_t input, unsigned int *timestamp1, 
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX] ){
+rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache ){
     byte fmt = 0;
     unsigned int timestamp = message->timestamp;
-    if( message->chunk_stream_id < RTMP_STREAM_CACHE_MAX ){
-        rtmp_chunk_stream_message_t *previous = &cache[message->chunk_stream_id];
-        if( previous->message_stream_id == message->message_stream_id ){
+
+    rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, message->chunk_stream_id);
+    if( previous == nullptr ){
+
+        return RTMP_ERR_INADEQUATE_CHUNK;
+    }
+    size_t delta = timestamp_get_delta( previous->msg.timestamp, timestamp );
+
+    if( previous->initialized ){
+        if( previous->msg.message_stream_id == message->message_stream_id ){
             fmt = 1;
-            if( previous->message_type == message->message_type &&
-                previous->message_length == message->message_length ){
+            if( previous->msg.message_type == message->message_type &&
+                previous->msg.message_length == message->message_length ){
                 fmt = 2;
-                if( previous->timestamp == message->timestamp ){
+                if( previous->time_delta == delta ){
                     fmt = 3;
                 }
             }
         }
-        if( fmt > 0 ){
-            timestamp = timestamp_get_delta( previous->timestamp, timestamp );
-        }
     }
-    else{
-        printf("Trying to use more chunk streams than have been allocated for caching. (Using %d / %d)\n", message->chunk_stream_id, RTMP_STREAM_CACHE_MAX );
-        return RTMP_ERR_INADEQUATE_CHUNK;
+    if( fmt > 0 ){
+        timestamp = timestamp_get_delta( previous->msg.timestamp, timestamp );
     }
+    memcpy( previous, message, sizeof( rtmp_chunk_stream_message_t) );
+    previous->time_delta = delta;
+    previous->initialized = true;
+
     byte buffer[16];
     size_t position = 0;
     if( rtmp_chunk_emit_hdr_basic( output, fmt, message->chunk_stream_id ) != RTMP_ERR_NONE ){
@@ -166,21 +245,21 @@ rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **message_out, rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX] ){
+rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **message_out, rtmp_chunk_stream_cache_t cache ){
     size_t id;
     byte fmt;
     unsigned int old_time = 0;
     if( rtmp_chunk_read_hdr_basic( input, &fmt, &id ) >= RTMP_ERR_ERROR ){
         return RTMP_ERR_BAD_READ;
     }
-    if( id < RTMP_STREAM_CACHE_MAX ){
-        old_time = cache[id].timestamp;
-    }
-    else{
-        printf("Trying to use more chunk streams than have been allocated for caching. (Using %lu / %d)\n", id, RTMP_STREAM_CACHE_MAX );
+
+    rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, id);
+    if( previous == nullptr ){
         return RTMP_ERR_INADEQUATE_CHUNK;
     }
-    rtmp_chunk_stream_message_t *message = &cache[id];
+    old_time = previous->msg.timestamp;
+
+    rtmp_chunk_stream_message_t *message = &previous->msg;
     message->chunk_stream_id = id;
     byte buffer[4];
     unsigned int new_time = 0;
@@ -213,7 +292,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
         message->timestamp = new_time;
     }
     else{
-        message->timestamp = cache[id].timestamp + new_time;
+        message->timestamp += new_time;
     }
     *message_out = message;
     return RTMP_ERR_NONE;

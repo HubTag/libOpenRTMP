@@ -122,6 +122,10 @@ int main(){
         else if( state == 2 ){
             rtmp_chunk_conn_set_chunk_size( server, 10 );
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 2, 1, 0, "Hello there my friend!", 22);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 200, 1, 0, "Hello there my friend!", 22);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 9000, 1, 0, "Hello there my friend!", 22);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 14, 1, 0, "Hello there my friend!", 22);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, "Hello there my friend!", 22);
             ++state;
         }
 
