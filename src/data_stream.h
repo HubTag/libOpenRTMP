@@ -56,8 +56,12 @@ int ors_data_tell( ors_data_t descriptor );
 int ors_data_seek( ors_data_t descriptor, int amount, enum ORS_SEEK whence );
 int ors_data_peek( ors_data_t descriptor, byte *out, unsigned int out_len );
 int ors_data_flush_peek( ors_data_t descriptor );
+int ors_data_return( ors_data_t descriptor, const byte *in, unsigned int in_len );
 size_t ors_data_amount_read( ors_data_t descriptor );
 size_t ors_data_amount_written( ors_data_t descriptor );
+size_t ors_data_begin_buffer( ors_data_t descriptor, size_t buffer_size );
+size_t ors_data_end_buffer( ors_data_t descriptor );
+size_t ors_data_revert_buffer( ors_data_t descriptor );
 void ors_data_reset_read_amount( ors_data_t descriptor, size_t amount );
 void ors_data_reset_write_amount( ors_data_t descriptor, size_t amount );
 

@@ -237,6 +237,7 @@ const char* rtmp_get_err_name( rtmp_err_t err ){
         case RTMP_ERR_BAD_WRITE: return "Write Fail To Output";
         case RTMP_ERR_BAD_READ: return "Read Fail From Input";
         case RTMP_ERR_INADEQUATE_CHUNK: return "Inadequate Chunk Cache";
+        case RTMP_ERR_AGAIN: return "Try Again Later";
         default:
             snprintf( scratch_buffer, 511, "Unknown Error Code %d", err );
             return scratch_buffer;

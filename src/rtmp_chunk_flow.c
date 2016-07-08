@@ -143,8 +143,11 @@ rtmp_err_t rtmp_chunk_emit_shake_2( ors_data_t output, unsigned int timestamp1, 
 rtmp_err_t rtmp_chunk_read_shake_0( ors_data_t input ){
     byte version;
     int result = ors_data_read( input, &version, 1 );
-    if( result < 0 || version != 3 ){
+    if( result < 0){
         return RTMP_ERR_BAD_READ;
+    }
+    if( version != 3 ){
+        return RTMP_ERR_INVALID;
     }
     return RTMP_ERR_NONE;
 }
@@ -249,8 +252,9 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
     size_t id;
     byte fmt;
     unsigned int old_time = 0;
-    if( rtmp_chunk_read_hdr_basic( input, &fmt, &id ) >= RTMP_ERR_ERROR ){
-        return RTMP_ERR_BAD_READ;
+    rtmp_err_t err;
+    if( (err = rtmp_chunk_read_hdr_basic( input, &fmt, &id )) >= RTMP_ERR_ERROR ){
+        return err;
     }
 
     rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, id);
@@ -262,6 +266,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
     rtmp_chunk_stream_message_t *message = &previous->msg;
     message->chunk_stream_id = id;
     byte buffer[4];
+
     unsigned int new_time = 0;
     if( fmt <= 2 ){
         if( ors_data_read( input, buffer, 3) < 0 ){

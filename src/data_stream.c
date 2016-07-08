@@ -30,7 +30,7 @@
 #define max(a, b) ((a)>(b)?(a):(b))
 #define abs(a) ((a)<0?-(a):(a))
 
-#define PEEK_MAX 20
+#define PEEK_MAX 50
 #define PEEK_TYPE char
 
 struct ors_data {
@@ -66,6 +66,15 @@ void ors_io_prepare( ors_io_t *io ){
     io->do_seek = dummy_seek;
 }
 
+
+int ors_data_return( ors_data_t descriptor, const byte *in, unsigned int in_len ){
+    in_len = min( PEEK_MAX, in_len + C(descriptor)->peek_len );
+    in_len -= C(descriptor)->peek_len;
+    memmove( C(descriptor)->peek_buf + in_len, C(descriptor)->peek_buf, C(descriptor)->peek_len );
+    memcpy( C(descriptor)->peek_buf, in, in_len );
+    C(descriptor)->peek_len += in_len;
+    return C(descriptor)->peek_len;
+}
 
 size_t ors_data_amount_read( ors_data_t descriptor ){
     return C(descriptor)->read;
