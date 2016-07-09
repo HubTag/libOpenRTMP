@@ -80,7 +80,7 @@ struct rtmp_chunk_conn {
 rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client );
 rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn );
 
-rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status );
+rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn );
 
 rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, void *user );
 
@@ -91,6 +91,13 @@ rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_str
 rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn );
 rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, unsigned int size );
 rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, unsigned int size, rtmp_limit_t limit_type );
+
+rtmp_err_t rtmp_chunk_conn_get_in_buff( rtmp_chunk_conn_t conn, void **buffer, size_t *size );
+rtmp_err_t rtmp_chunk_conn_get_out_buff( rtmp_chunk_conn_t conn, const void **buffer, size_t *size );
+rtmp_err_t rtmp_chunk_conn_commit_in_buff( rtmp_chunk_conn_t conn, size_t size );
+rtmp_err_t rtmp_chunk_conn_commit_out_buff( rtmp_chunk_conn_t conn, size_t size );
+
+
 
 rtmp_err_t
 rtmp_chunk_conn_send_message(

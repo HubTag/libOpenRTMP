@@ -25,20 +25,20 @@
 
 typedef struct ringbuffer * ringbuffer_t;
 
-ringbuffer_t ringbuffer_create( unsigned int size);
+ringbuffer_t ringbuffer_create( unsigned long size);
 void ringbuffer_destroy( ringbuffer_t buffer );
-void* ringbuffer_get_write_buf( ringbuffer_t buffer, unsigned int *size );
-const void* ringbuffer_get_read_buf( ringbuffer_t buffer, unsigned int *size );
-unsigned int ringbuffer_commit_write( ringbuffer_t buffer, unsigned int len );
-unsigned int ringbuffer_commit_read( ringbuffer_t buffer, unsigned int len );
-void ringbuffer_expand( ringbuffer_t buffer, unsigned int amount );
-void ringbuffer_shrink( ringbuffer_t buffer, unsigned int amount );
-void ringbuffer_resize( ringbuffer_t buffer, unsigned int amount );
-unsigned int ringbuffer_size( ringbuffer_t buffer );
-unsigned int ringbuffer_count( ringbuffer_t buffer );
+void* ringbuffer_get_write_buf( ringbuffer_t buffer, unsigned long *size );
+const void* ringbuffer_get_read_buf( ringbuffer_t buffer, unsigned long *size );
+unsigned long ringbuffer_commit_write( ringbuffer_t buffer, unsigned long len );
+unsigned long ringbuffer_commit_read( ringbuffer_t buffer, unsigned long len );
+void ringbuffer_expand( ringbuffer_t buffer, unsigned long amount );
+void ringbuffer_shrink( ringbuffer_t buffer, unsigned long amount );
+void ringbuffer_resize( ringbuffer_t buffer, unsigned long amount );
+unsigned long ringbuffer_size( ringbuffer_t buffer );
+unsigned long ringbuffer_count( ringbuffer_t buffer );
 void ringbuffer_freeze_read( ringbuffer_t buffer );
 void ringbuffer_freeze_write( ringbuffer_t buffer );
-unsigned int ringbuffer_unfreeze_read( ringbuffer_t buffer, char commit );
-unsigned int ringbuffer_unfreeze_write( ringbuffer_t buffer, char commit );
-unsigned int ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned int length );
-unsigned int ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsigned int length );
+unsigned long ringbuffer_unfreeze_read( ringbuffer_t buffer, char commit );
+unsigned long ringbuffer_unfreeze_write( ringbuffer_t buffer, char commit );
+unsigned long ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned long length );
+unsigned long ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsigned long length );

@@ -77,32 +77,39 @@ void check_conn_err( rtmp_err_t err ){
 }
 
 #include "ringbuffer.h"
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
+
+void service( rtmp_chunk_conn_t client, rtmp_chunk_conn_t server ){
+    const void *from;
+    size_t from_size;
+    const void *to;
+    size_t to_size;
+    size_t transferring;
+
+
+    //xmit from client to server
+    rtmp_chunk_conn_get_out_buff( client, &from, &from_size );
+    rtmp_chunk_conn_get_in_buff( server, &to, &to_size );
+    transferring = MIN( from_size, to_size );
+    memcpy( to, from, transferring );
+    rtmp_chunk_conn_commit_out_buff( client, transferring );
+    rtmp_chunk_conn_commit_in_buff( server, transferring );
+
+    //xmit from server to client
+    rtmp_chunk_conn_get_out_buff( server, &from, &from_size );
+    rtmp_chunk_conn_get_in_buff( client, &to, &to_size );
+    transferring = MIN( from_size, to_size );
+    memcpy( to, from, transferring );
+    rtmp_chunk_conn_commit_out_buff( server, transferring );
+    rtmp_chunk_conn_commit_in_buff( client, transferring );
+
+    check_conn_err( rtmp_chunk_conn_service( client ) );
+    check_conn_err( rtmp_chunk_conn_service( server ) );
+}
 
 int main(){
-    ringbuffer_t buffer = ringbuffer_create( 10 );
-    unsigned int size;
-    void* dst = ringbuffer_get_write_buf( buffer, &size );
-    const char* str = "1234567890abcdefghijklmnopqrstuvwxyz";
-    memcpy( dst, str, size );
-    ringbuffer_commit_write( buffer, size / 2 );
-    dst = ringbuffer_get_write_buf( buffer, &size );
-
-    memcpy( dst, str, size );
-    ringbuffer_commit_write( buffer, size / 2 );
-    ringbuffer_freeze_read( buffer );
-    const char* r = ringbuffer_get_read_buf( buffer, &size );
-    for( int i = 0; i < size/2; ++i ){
-        putchar( r[i] );
-    }
-    ringbuffer_commit_read( buffer, size / 2 );
-    ringbuffer_unfreeze_read( buffer, true );
-    r = ringbuffer_get_read_buf( buffer, &size );
-    for( int i = 0; i < size; ++i ){
-        putchar( r[i] );
-    }
-    ringbuffer_commit_read( buffer, size );
-    return;
-
     ors_data_t client_to_server = ors_data_create_memsnk(10000);
     ors_data_t server_to_client = ors_data_create_memsnk(10000);
 
@@ -117,22 +124,7 @@ int main(){
     int state = 0;
 
     while( true ){
-        ors_data_seek( client_to_server, client_to_server_read, ORS_SEEK_START );
-        ors_data_seek( server_to_client, server_to_client_read, ORS_SEEK_START );
-        if( !ors_data_eof( client_to_server ) ){
-            check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_IN ) );
-        }
-        if( !ors_data_eof( server_to_client ) ){
-            check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_IN ) );
-        }
-        client_to_server_read = ors_data_tell( client_to_server );
-        server_to_client_read = ors_data_tell( server_to_client );
-        ors_data_seek( client_to_server, 0, ORS_SEEK_END );
-        ors_data_seek( server_to_client, 0, ORS_SEEK_END );
-
-
-        check_conn_err( rtmp_chunk_conn_service( client, RTMP_IO_OUT ) );
-        check_conn_err( rtmp_chunk_conn_service( server, RTMP_IO_OUT ) );
+        service( client, server );
 
         if( state == 0 && rtmp_chunk_conn_connected(client) && rtmp_chunk_conn_connected(server) ){
             state = 1;
@@ -144,12 +136,23 @@ int main(){
             ++state;
         }
         else if( state == 2 ){
-            rtmp_chunk_conn_set_chunk_size( server, 10 );
+            rtmp_chunk_conn_set_chunk_size( server, 1000 );
+            size_t wrote;
+            char test[5000];
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 2, 1, 0, "Hello there my friend!", 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 200, 1, 0, "Hello there my friend!", 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 9000, 1, 0, "Hello there my friend!", 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 14, 1, 0, "Hello there my friend!", 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, "Hello there my friend!", 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, "Hello there my friend!", 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, "Hello there my friend!", 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test, sizeof(test), &wrote);
+            size_t total = wrote;
+            while( total < sizeof( test ) ){
+                rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test + total, sizeof(test) - total, &wrote);
+                total += wrote;
+                service( client, server );
+            }
             ++state;
         }
 

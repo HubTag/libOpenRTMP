@@ -123,7 +123,7 @@ static void rtmp_chunk_conn_service_shake_tryfinalize( rtmp_chunk_conn_t conn ){
     }
 }
 
-#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ rtmp_chunk_conn_call_event( conn, RTMP_EVENT_CONNECT_FAIL ); return err;}}
+#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ if( err != RTMP_ERR_AGAIN ){rtmp_chunk_conn_call_event( conn, RTMP_EVENT_CONNECT_FAIL );} return err;}}
 
 static rtmp_err_t rtmp_chunk_conn_service_shake_client_emit( rtmp_chunk_conn_t conn ){
     //Emit C0 if we haven't already
@@ -175,19 +175,25 @@ static rtmp_err_t rtmp_chunk_conn_service_shake_client_ingest( rtmp_chunk_conn_t
              ( conn->status & RTMP_STATUS_SHAKING_C0 )   &&
              ( conn->status & RTMP_STATUS_SHAKING_C1 )       ){
         rtmp_time_t verify_time;
-        FAIL_IF_ERR( rtmp_chunk_read_shake_2( conn->in, &verify_time, &conn->self_shake_recv_time, conn->nonce_s, RTMP_NONCE_SIZE ) );
+        void *verify_nonce = nullptr;
+        FAIL_IF_ERR( rtmp_nonce_alloc( &verify_nonce, RTMP_NONCE_SIZE ) );
+
+        FAIL_IF_ERR( rtmp_chunk_read_shake_2( conn->in, &verify_time, &conn->self_shake_recv_time, verify_nonce, RTMP_NONCE_SIZE ) );
         #ifdef RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
         if( verify_time != conn->self_time ){
+            rtmp_nonce_del( &verify_nonce );
             return RTMP_ERR_INVALID;
         }
         #endif
         #ifdef RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
-        if( memcmp( conn->nonce_c, conn->nonce_s, RTMP_NONCE_SIZE ) != 0 ){
+        if( memcmp( conn->nonce_c, verify_nonce, RTMP_NONCE_SIZE ) != 0 ){
+            rtmp_nonce_del( &verify_nonce );
             return RTMP_ERR_INVALID;
         }
         #endif
         conn->status |= RTMP_STATUS_SHAKING_S2;
         rtmp_chunk_conn_service_shake_tryfinalize( conn );
+        rtmp_nonce_del( &verify_nonce );
     }
     return RTMP_ERR_NONE;
 }
@@ -240,19 +246,24 @@ static rtmp_err_t rtmp_chunk_conn_service_shake_server_ingest( rtmp_chunk_conn_t
              ( conn->status & RTMP_STATUS_SHAKING_S0 )   &&
              ( conn->status & RTMP_STATUS_SHAKING_S1 )       ){
         rtmp_time_t verify_time;
-        FAIL_IF_ERR( rtmp_chunk_read_shake_2( conn->in, &verify_time, &conn->self_shake_recv_time, conn->nonce_c, RTMP_NONCE_SIZE ) );
+        void *verify_nonce = nullptr;
+        FAIL_IF_ERR( rtmp_nonce_alloc( &verify_nonce, RTMP_NONCE_SIZE ) );
+        FAIL_IF_ERR( rtmp_chunk_read_shake_2( conn->in, &verify_time, &conn->self_shake_recv_time, verify_nonce, RTMP_NONCE_SIZE ) );
         #ifdef RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
         if( verify_time != conn->self_time ){
+            rtmp_nonce_del( &verify_nonce );
             return RTMP_ERR_INVALID;
         }
         #endif
         #ifdef RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
-        if( memcmp( conn->nonce_c, conn->nonce_s, RTMP_NONCE_SIZE ) != 0 ){
+        if( memcmp( verify_nonce, conn->nonce_s, RTMP_NONCE_SIZE ) != 0 ){
+            rtmp_nonce_del( &verify_nonce );
             return RTMP_ERR_INVALID;
         }
         #endif
         conn->status |= RTMP_STATUS_SHAKING_C2;
         rtmp_chunk_conn_service_shake_tryfinalize( conn );
+        rtmp_nonce_del( &verify_nonce );
     }
     return RTMP_ERR_NONE;
 }
@@ -280,7 +291,7 @@ static rtmp_err_t rtmp_chunk_conn_service_shake( rtmp_chunk_conn_t conn, rtmp_io
 }
 
 #undef FAIL_IF_ERR
-#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FAILED ); return err;}}
+#define FAIL_IF_ERR(a) {rtmp_err_t err; if((err=(a))>=RTMP_ERR_ERROR){ if( err != RTMP_ERR_AGAIN ){rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FAILED );} return err;}}
 
 static rtmp_err_t rtmp_chunk_conn_service_recv_set_chunk_size(rtmp_chunk_conn_t conn){
     if( conn->control_message_len >= 4 ){
@@ -407,6 +418,7 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
             conn->partial_chunk -= length;
         }
         else{
+            length = conn->partial_chunk;
             conn->partial_chunk = 0;
         }
 
@@ -419,6 +431,8 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
         else{
             ret = rtmp_chunk_conn_call_chunk( conn, input, length, processing, &msg->msg );
         }
+
+        ringbuffer_commit_read( conn->in, length );
         return ret;
     }
 
@@ -451,8 +465,8 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
     if( available > length ){
         conn->partial_chunk = available - length;
         available = length;
-        conn->partial_msg = msg;
-        conn->partial_msg_p = previous;
+        conn->partial_msg = msg->chunk_stream_id;
+        conn->partial_msg_p = previous->msg.chunk_stream_id;
     }
 
     previous->processed -= available;
@@ -470,8 +484,19 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
     return ret;
 }
 
-rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status ){
+rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
     rtmp_err_t ret = RTMP_ERR_NONE;
+    rtmp_io_t io_status = 0;
+    bool shaking = ( conn->status & RTMP_STATUS_SHAKING_DONE ) != RTMP_STATUS_SHAKING_DONE;
+    if( ringbuffer_count( conn->in ) > 0 ){
+        io_status = RTMP_IO_IN;
+    }
+    else if( ringbuffer_count( conn->out ) > 0 || shaking ){
+        io_status = RTMP_IO_OUT;
+    }
+    else{
+        return RTMP_ERR_NONE;
+    }
 
     if( io_status == RTMP_IO_IN ){
         ringbuffer_freeze_read( conn->in );
@@ -480,7 +505,7 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status 
         ringbuffer_freeze_write( conn->out );
     }
 
-    if( ( conn->status & RTMP_STATUS_SHAKING_DONE ) != RTMP_STATUS_SHAKING_DONE ){
+    if( shaking ){
         ret = rtmp_chunk_conn_service_shake( conn, io_status );
     }
     else if( io_status & RTMP_IO_IN ){
@@ -645,6 +670,10 @@ rtmp_chunk_conn_send_message(
     msg.timestamp = timestamp;
     msg.message_type = message_type;
 
+    if( conn->self_chunk_size + 20 > ringbuffer_size( conn->out ) ){
+        ringbuffer_resize( conn->out, conn->self_chunk_size + 20 );
+    }
+
     size_t written = 0;
     while( written < length ){
         size_t chunk_len = length - written;
@@ -669,6 +698,26 @@ rtmp_chunk_conn_send_message(
     if( written_out ){
         *written_out = written;
     }
+    return ret;
+}
+
+rtmp_err_t rtmp_chunk_conn_get_in_buff( rtmp_chunk_conn_t conn, void **buffer, size_t *size ){
+    *buffer = ringbuffer_get_write_buf( conn->in, size );
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_chunk_conn_get_out_buff( rtmp_chunk_conn_t conn, const void **buffer, size_t *size ){
+    *buffer = ringbuffer_get_read_buf( conn->out, size );
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_chunk_conn_commit_in_buff( rtmp_chunk_conn_t conn, size_t size ){
+    ringbuffer_commit_write( conn->in, size );
+    return RTMP_ERR_NONE;
+}
+
+rtmp_err_t rtmp_chunk_conn_commit_out_buff( rtmp_chunk_conn_t conn, size_t size ){
+    ringbuffer_commit_read( conn->out, size );
     return RTMP_ERR_NONE;
 }
 

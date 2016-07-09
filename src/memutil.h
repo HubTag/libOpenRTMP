@@ -67,6 +67,7 @@ void emit_err(const char* err);
 
 int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 );
 
+//If generating of allocating a nonce, it MUST be initialized to null!
 rtmp_err_t rtmp_nonce_gen(void **nonce, size_t length);
 rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length);
 rtmp_err_t rtmp_nonce_del(void **nonce);
