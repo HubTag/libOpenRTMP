@@ -25,6 +25,7 @@
 
 #include "rtmp_types.h"
 #include "data_stream.h"
+#include "ringbuffer.h"
 
 typedef struct rtmp_chunk_stream_message{
     unsigned int chunk_stream_id;
@@ -51,19 +52,19 @@ rtmp_chunk_stream_cache_t rtmp_cache_create();
 void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache );
 rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id );
 
-rtmp_err_t rtmp_chunk_emit_shake_0( ors_data_t output );
-rtmp_err_t rtmp_chunk_emit_shake_1( ors_data_t output, unsigned int timestamp, const byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_emit_shake_2( ors_data_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t output );
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, unsigned int timestamp, const byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length);
 
-rtmp_err_t rtmp_chunk_read_shake_0( ors_data_t input );
-rtmp_err_t rtmp_chunk_read_shake_1( ors_data_t input, unsigned int *timestamp, byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_read_shake_2( ors_data_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* data, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input );
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, unsigned int *timestamp, byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* data, size_t length);
 
-rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache );
-rtmp_err_t rtmp_chunk_read_hdr( ors_data_t output, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_cache_t cache );
+rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache );
+rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_cache_t cache );
 
-rtmp_err_t rtmp_chunk_emit_hdr_basic( ors_data_t output, byte format, size_t id );
-rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id );
+rtmp_err_t rtmp_chunk_emit_hdr_basic( ringbuffer_t output, byte format, size_t id );
+rtmp_err_t rtmp_chunk_read_hdr_basic( ringbuffer_t input, byte *format, size_t *id );
 
 
 void rtmp_print_message( rtmp_chunk_stream_message_t *msg );

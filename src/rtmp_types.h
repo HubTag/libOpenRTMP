@@ -22,6 +22,7 @@
 */
 
 #pragma once
+
 typedef unsigned int rtmp_time_t;
 typedef unsigned char byte;
 typedef unsigned long size_t;

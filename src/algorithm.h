@@ -21,12 +21,14 @@
 
 */
 
+#pragma once
+
 #include "rtmp_types.h"
 
 typedef bool (*less_than_proc)(const void *a, const void *b);
 
-size_t alg_search_bin( const void *needle, const void* haystack, size_t element_size, size_t count, less_than_proc less_than );
-size_t alg_search_lin( const void *needle, const void* haystack, size_t element_size, size_t count, less_than_proc less_than );
+size_t alg_search_bin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than );
+size_t alg_search_lin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than );
 
 
 

@@ -49,14 +49,14 @@ static bool rtmp_chunk_stream_message_less_than( const void *a, const void *b ){
 static rtmp_chunk_stream_message_internal_t * rtmp_cache_insert( rtmp_chunk_stream_cache_t cache, size_t index, size_t chunk_id ){
     rtmp_chunk_stream_message_internal_t *ret = nullptr;
     if( cache->dynamic_cache_size >= RTMP_STREAM_CACHE_MAX ){
-        printf("Failed to insert %d! (Max reached)\n", chunk_id);
+        printf("Failed to insert %lu! (Max reached)\n", chunk_id);
         return ret;
     }
     size_t remainder = cache->dynamic_cache_size - index;
     cache->dynamic_cache_size ++;
     void* newptr = realloc( cache->dynamic_cache, sizeof(rtmp_chunk_stream_message_internal_t) * cache->dynamic_cache_size );
     if( newptr == nullptr ){
-        printf("Failed to insert %d! (OOM)\n", chunk_id);
+        printf("Failed to insert %lu! (OOM)\n", chunk_id);
         return ret;
     }
     cache->dynamic_cache = newptr;
@@ -66,7 +66,7 @@ static rtmp_chunk_stream_message_internal_t * rtmp_cache_insert( rtmp_chunk_stre
     }
     memset( ret, 0, sizeof( rtmp_chunk_stream_message_internal_t ) );
     ret->msg.chunk_stream_id = chunk_id;
-        printf("Inserted %d!\n", chunk_id);
+        printf("Inserted %lu!\n", chunk_id);
     return ret;
 }
 
@@ -98,53 +98,53 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t
 
 
 
-rtmp_err_t rtmp_chunk_emit_shake_0( ors_data_t output ){
+rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t out ){
     byte version = 3;
-    if( ors_data_write( output, &version, 1 ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( out, &version, 1 ) < 1 ){
+        return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_1( ors_data_t output, unsigned int timestamp, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, unsigned int timestamp, const byte* nonce, size_t length){
     byte zero[4] = {0,0,0,0};
     byte timestamp_out[4];
     ntoh_write_ud( timestamp_out, timestamp );
-    if( ors_data_write( output, timestamp_out, 4 ) < 0){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, timestamp_out, 4 ) < 4){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_write( output, zero, 4 ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, zero, 4 ) < 4 ){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_write( output, nonce, length ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, nonce, length ) < length ){
+        return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_2( ors_data_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length){
     byte timestamp1_out[4];
     byte timestamp2_out[4];
     ntoh_write_ud( timestamp1_out, timestamp1 );
     ntoh_write_ud( timestamp2_out, timestamp2 );
-    if( ors_data_write( output, timestamp1_out, 4 ) < 0){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, timestamp1_out, 4 ) < 4){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_write( output, timestamp2_out, 4 ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, timestamp2_out, 4 ) < 4 ){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_write( output, nonce, length ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, nonce, length ) < length ){
+        return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
 
-rtmp_err_t rtmp_chunk_read_shake_0( ors_data_t input ){
+rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input ){
     byte version;
-    int result = ors_data_read( input, &version, 1 );
-    if( result < 0){
-        return RTMP_ERR_BAD_READ;
+    int result = ringbuffer_copy_read( input, &version, 1 );
+    if( result < 1){
+        return RTMP_ERR_AGAIN;
     }
     if( version != 3 ){
         return RTMP_ERR_INVALID;
@@ -152,46 +152,45 @@ rtmp_err_t rtmp_chunk_read_shake_0( ors_data_t input ){
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_1( ors_data_t input, unsigned int *timestamp, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, unsigned int *timestamp, byte* nonce, size_t length){
     byte timestamp_in[4];
     byte zero[4];
-    if( ors_data_read( input, timestamp_in, 4 ) < 0){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, timestamp_in, 4 ) < 4){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_read( input, zero, 4 ) < 0 ){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, zero, 4 ) < 4 ){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_read( input, nonce, length ) < 0 ){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, nonce, length ) < length ){
+        return RTMP_ERR_AGAIN;
     }
     *timestamp = ntoh_read_ud( timestamp_in );
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_2( ors_data_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* nonce, size_t length){
     byte timestamp1_in[4];
     byte timestamp2_in[4];
-    if( ors_data_read( input, timestamp1_in, 4 ) < 0){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, timestamp1_in, 4 ) < 4 ){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_read( input, timestamp2_in, 4 ) < 0 ){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, timestamp2_in, 4 ) < 4 ){
+        return RTMP_ERR_AGAIN;
     }
-    if( ors_data_read( input, nonce, length ) < 0 ){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, nonce, length ) < length ){
+        return RTMP_ERR_AGAIN;
     }
     *timestamp1 = ntoh_read_ud( timestamp1_in );
     *timestamp2 = ntoh_read_ud( timestamp2_in );
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache ){
+rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache ){
     byte fmt = 0;
     unsigned int timestamp = message->timestamp;
 
     rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, message->chunk_stream_id);
     if( previous == nullptr ){
-
         return RTMP_ERR_INADEQUATE_CHUNK;
     }
     size_t delta = timestamp_get_delta( previous->msg.timestamp, timestamp );
@@ -217,8 +216,9 @@ rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *
 
     byte buffer[16];
     size_t position = 0;
-    if( rtmp_chunk_emit_hdr_basic( output, fmt, message->chunk_stream_id ) != RTMP_ERR_NONE ){
-        return RTMP_ERR_BAD_WRITE;
+    rtmp_err_t err;
+    if( (err = rtmp_chunk_emit_hdr_basic( output, fmt, message->chunk_stream_id ) ) >= RTMP_ERR_ERROR ){
+        return err;
     }
     if( fmt <= 2 ){
         if( timestamp >= 0xFFFFFF ){
@@ -242,13 +242,13 @@ rtmp_err_t rtmp_chunk_emit_hdr( ors_data_t output, rtmp_chunk_stream_message_t *
         ntoh_write_ud( buffer + position, timestamp );
         position += 4;
     }
-    if(ors_data_write( output, buffer, position ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if(ringbuffer_copy_write( output, buffer, position ) < position ){
+        return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **message_out, rtmp_chunk_stream_cache_t cache ){
+rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t input, rtmp_chunk_stream_message_t **message_out, rtmp_chunk_stream_cache_t cache ){
     size_t id;
     byte fmt;
     unsigned int old_time = 0;
@@ -269,27 +269,27 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
 
     unsigned int new_time = 0;
     if( fmt <= 2 ){
-        if( ors_data_read( input, buffer, 3) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer, 3) < 3 ){
+            return RTMP_ERR_AGAIN;
         }
         new_time = ntoh_read_ud3( buffer );
     }
     if( fmt <= 1 ){
-        if( ors_data_read( input, buffer, 4) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer, 4) < 4 ){
+            return RTMP_ERR_AGAIN;
         }
         message->message_length = ntoh_read_ud3( buffer );
         message->message_type = buffer[3];
     }
     if( fmt <= 0 ){
-        if( ors_data_read( input, buffer, 4) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer, 4) < 4 ){
+            return RTMP_ERR_AGAIN;
         }
         message->message_stream_id = ltoh_read_ud( buffer );
     }
     if( ( fmt == 3 && old_time == 0xFFFFFF ) || new_time == 0xFFFFFF ){
-        if( ors_data_read( input, buffer, 4) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer, 4) < 4 ){
+            return RTMP_ERR_AGAIN;
         }
         new_time = ntoh_read_ud( buffer );
     }
@@ -303,7 +303,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ors_data_t input, rtmp_chunk_stream_message_t **
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_hdr_basic( ors_data_t output, byte format, size_t id ){
+rtmp_err_t rtmp_chunk_emit_hdr_basic( ringbuffer_t output, byte format, size_t id ){
     byte buffer[3];
     int len = 1;
     //Fill the two least significant bits of buffer[0] with format
@@ -331,16 +331,16 @@ rtmp_err_t rtmp_chunk_emit_hdr_basic( ors_data_t output, byte format, size_t id 
     else{
         return RTMP_ERR_INVALID;
     }
-    if( ors_data_write( output, buffer, len ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+    if( ringbuffer_copy_write( output, buffer, len ) < len ){
+        return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id ){
+rtmp_err_t rtmp_chunk_read_hdr_basic( ringbuffer_t input, byte *format, size_t *id ){
     byte buffer[3];
-    if( ors_data_read( input, buffer, 1) < 0 ){
-        return RTMP_ERR_BAD_READ;
+    if( ringbuffer_copy_read( input, buffer, 1) < 1 ){
+        return RTMP_ERR_AGAIN;
     }
     *format = (buffer[0] >> 6) & 3;
     buffer[0] = buffer[0] & 63;
@@ -349,16 +349,16 @@ rtmp_err_t rtmp_chunk_read_hdr_basic( ors_data_t input, byte *format, size_t *id
         return RTMP_ERR_NONE;
     }
     else if( buffer[0] == 0 ){
-        if( ors_data_read( input, buffer + 1, 1) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer + 1, 1) < 1 ){
+            return RTMP_ERR_AGAIN;
         }
         *id = buffer[1];
         *id += 64;
         return RTMP_ERR_NONE;
     }
     else { //buffer[0] must be 1
-        if( ors_data_read( input, buffer + 1, 2) < 0 ){
-            return RTMP_ERR_BAD_READ;
+        if( ringbuffer_copy_read( input, buffer + 1, 2) < 2 ){
+            return RTMP_ERR_AGAIN;
         }
         *id = buffer[1];
         *id <<= 8;

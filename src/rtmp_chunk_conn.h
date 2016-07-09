@@ -33,7 +33,7 @@ typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;
 
 typedef rtmp_cb_status_t (*rtmp_chunk_proc)(
     rtmp_chunk_conn_t conn,
-    ors_data_t contents,
+    byte *contents,
     size_t available,
     size_t remaining,
     rtmp_chunk_stream_message_t *msg,
@@ -47,9 +47,14 @@ typedef rtmp_cb_status_t (*rtmp_event_proc)(
 );
 
 struct rtmp_chunk_conn {
-    ors_data_t inflow, outflow;
+    ringbuffer_t in, out;
     rtmp_chunk_stream_cache_t stream_cache_out;
     rtmp_chunk_stream_cache_t stream_cache_in;
+
+    size_t bytes_out, bytes_in;
+    size_t partial_chunk;
+    size_t *partial_msg;
+    size_t *partial_msg_p;
 
     void *nonce_c, *nonce_s;
     rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;
@@ -72,8 +77,8 @@ struct rtmp_chunk_conn {
 };
 
 
-rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client, ors_data_t inflow, ors_data_t outflow );
-rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn, bool close_pipes );
+rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client );
+rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn );
 
 rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn, rtmp_io_t io_status );
 
@@ -95,5 +100,6 @@ rtmp_chunk_conn_send_message(
     unsigned int message_stream,
     unsigned int timestamp,
     byte *data,
-    size_t length
+    size_t length,
+    size_t *written
 );

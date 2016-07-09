@@ -39,7 +39,7 @@ static bool less_than_equals( const void* a, const void *b, less_than_proc less_
 }
 
 
-size_t alg_search_bin( const void *needle, const void* haystack, size_t element_size, size_t count, less_than_proc less_than ){
+size_t alg_search_bin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than ){
     if( count == 0 ){
         return 0;
     }
@@ -66,7 +66,7 @@ size_t alg_search_bin( const void *needle, const void* haystack, size_t element_
     return index;
 }
 
-size_t alg_search_lin( const void *needle, const void* haystack, size_t element_size, size_t count, less_than_proc less_than ){
+size_t alg_search_lin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than ){
     const char *d = haystack;
     for( size_t i = 0; i < count; ++i ){
         if( equals( needle, d + (element_size * i), less_than ) ){
