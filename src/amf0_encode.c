@@ -108,7 +108,7 @@ amf_err_t amf0_write_undefined( ors_data_t* dest ){
     return 1;
 }
 
-amf_err_t amf0_write_reference( ors_data_t* dest, unsigned int value){
+amf_err_t amf0_write_reference( ors_data_t* dest, uint32_t value){
     byte data[3];
     data[0] = AMF0_TYPE_REFERENCE;
     ntoh_write_us( data + 1, value );

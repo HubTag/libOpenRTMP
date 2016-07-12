@@ -229,17 +229,20 @@ const char* rtmp_get_event_name( rtmp_event_t mtype ){
 
 const char* rtmp_get_err_name( rtmp_err_t err ){
     switch( err ){
-        case RTMP_ERR_NONE: return "No Error";
-        case RTMP_ERR_NOT_READY: return "Stream Not Ready";
-        case RTMP_ERR_ERROR: return "Generic Error";
-        case RTMP_ERR_OOM: return "Out Of Memory";
-        case RTMP_ERR_INVALID: return "Invalid Stream Data";
-        case RTMP_ERR_BAD_WRITE: return "Write Fail To Output";
-        case RTMP_ERR_BAD_READ: return "Read Fail From Input";
-        case RTMP_ERR_INADEQUATE_CHUNK: return "Inadequate Chunk Cache";
-        case RTMP_ERR_AGAIN: return "Try Again Later";
+        case RTMP_ERR_NONE: return "No error";
+        case RTMP_ERR_NOT_READY: return "Stream not ready";
+        case RTMP_ERR_ERROR: return "Generic error";
+        case RTMP_ERR_OOM: return "Out of memory";
+        case RTMP_ERR_INVALID: return "Invalid stream data";
+        case RTMP_ERR_BAD_WRITE: return "Write fail to output";
+        case RTMP_ERR_BAD_READ: return "Read fail from input";
+        case RTMP_ERR_INADEQUATE_CHUNK: return "Inadequate chunk cache";
+        case RTMP_ERR_AGAIN: return "Try again later";
+        case RTMP_ERR_DIVERGENCE_METER_ERROR: return "Divergence meter in erroneous state (time travel is possible?)";
         default:
-            snprintf( scratch_buffer, 511, "Unknown Error Code %d", err );
+            snprintf( scratch_buffer, 511, "Unknown error code %d", err );
             return scratch_buffer;
     }
 }
+
+

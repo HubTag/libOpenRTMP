@@ -36,7 +36,7 @@ amf_err_t amf0_write_prop_name( ors_data_t* dest, void *value, size_t value_len 
 amf_err_t amf0_write_movieclip( ors_data_t* dest );
 amf_err_t amf0_write_null( ors_data_t* dest );
 amf_err_t amf0_write_undefined( ors_data_t* dest );
-amf_err_t amf0_write_reference( ors_data_t* dest, unsigned int value);
+amf_err_t amf0_write_reference( ors_data_t* dest, uint32_t value);
 amf_err_t amf0_write_ecma_array( ors_data_t* dest );
 amf_err_t amf0_write_object_end( ors_data_t* dest );
 amf_err_t amf0_write_strict_array( ors_data_t* dest );
@@ -60,7 +60,7 @@ amf_err_t amf0_get_prop_name( ors_data_t* source, void *value, int value_len );
 amf_err_t amf0_get_movieclip( ors_data_t* source );
 amf_err_t amf0_get_null( ors_data_t* source );
 amf_err_t amf0_get_undefined( ors_data_t* source );
-amf_err_t amf0_get_reference( ors_data_t* source, unsigned int *value);
+amf_err_t amf0_get_reference( ors_data_t* source, uint32_t *value);
 amf_err_t amf0_get_ecma_array( ors_data_t* source );
 amf_err_t amf0_get_object_end( ors_data_t* source );
 amf_err_t amf0_get_strict_array( ors_data_t* source );

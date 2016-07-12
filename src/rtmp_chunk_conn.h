@@ -28,84 +28,86 @@
 #include "rtmp_constants.h"
 #include "rtmp_chunk_flow.h"
 
-
 typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;
 
+//Procedure prototype for handling partial chunk information
 typedef rtmp_cb_status_t (*rtmp_chunk_proc)(
-    rtmp_chunk_conn_t conn,
-    byte *contents,
-    size_t available,
-    size_t remaining,
-    rtmp_chunk_stream_message_t *msg,
-    void *user
+    rtmp_chunk_conn_t conn,             //The originating connection
+    const byte *contents,               //The contents of the partial chunk
+    size_t available,                   //The number of bytes availavle in contents
+    size_t remaining,                   //The number of bytes remaining in this chunk
+    rtmp_chunk_stream_message_t *msg,   //The message data
+    void *user                          //User-specified data
 );
 
+//Procedure prototype for handling chunk stream events
 typedef rtmp_cb_status_t (*rtmp_event_proc)(
-    rtmp_chunk_conn_t conn,
-    rtmp_event_t event,
-    void *user
+    rtmp_chunk_conn_t conn,             //The originating connection
+    rtmp_event_t event,                 //The event
+    void *user                          //User-specified data
 );
 
-struct rtmp_chunk_conn {
-    ringbuffer_t in, out;
-    rtmp_chunk_stream_cache_t stream_cache_out;
-    rtmp_chunk_stream_cache_t stream_cache_in;
-
-    size_t bytes_out, bytes_in;
-    size_t partial_chunk;
-    size_t *partial_msg;
-    size_t *partial_msg_p;
-
-    void *nonce_c, *nonce_s;
-    rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;
-
-    unsigned int lag;
-    byte control_message_buffer[RTMP_CONTROL_BUFFER_SIZE];
-    int control_message_len;
-
-    rtmp_chunk_proc callback_chunk;
-    rtmp_event_proc callback_event;
-    void *userdata;
-    rtmp_chunk_conn_status_t status;
-
-    unsigned int self_chunk_size;
-    unsigned int peer_chunk_size;
-    unsigned int self_window_size;
-    unsigned int peer_window_size;
-    unsigned int peer_acknowledged;
-    rtmp_limit_t peer_bandwidth_type;
-};
+//Procedure prototype for handling logging
+typedef void (*rtmp_log_proc)(
+    rtmp_err_t err,                     //The error status
+    size_t line,                        //The line upon which the log was generated
+    const char* file,                   //The file from which the log was generated
+    const char* message,                //An optional message associated with the log
+    void *user                          //User-specified data
+);
 
 
+//Create an RTMP chunk connection object.
+//The client parameter specifies whether it should act as a client (true) or server (false).
 rtmp_chunk_conn_t rtmp_chunk_conn_create( bool client );
+
+//Destroy an RTMP object.
 rtmp_err_t rtmp_chunk_conn_close( rtmp_chunk_conn_t conn );
 
+//This should be called every time the buffers are changed.
 rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn );
 
-rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, void *user );
+//Pass in procedure definitions. The user pointer will be sent with all callbacks.
+rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, rtmp_log_proc log_cb, void *user );
 
+//Returns true if the chunk stream is connected and has successfully performed a handshake.
 bool rtmp_chunk_conn_connected( rtmp_chunk_conn_t conn );
 
-rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, unsigned int size );
-rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, unsigned int chunk_stream );
-rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn );
-rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, unsigned int size );
-rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, unsigned int size, rtmp_limit_t limit_type );
+//Set the max chunk size. Generally higher is better, though has little real impact.
+rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, uint32_t size );
 
+//Tells the peer to stop processing a message on the specified chunk stream.
+rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, uint32_t chunk_stream );
+
+//Sends an acknowledgement of the number of bytes received so far.
+rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn );
+
+//Tells the peer how many bytes will be received prior to an ack being sent.
+rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, uint32_t size );
+
+//Asks the peer to change their window size.
+rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, uint32_t size, rtmp_limit_t limit_type );
+
+//Fetches a buffer along with its size used to feed the RTMP chunk connection with data.
 rtmp_err_t rtmp_chunk_conn_get_in_buff( rtmp_chunk_conn_t conn, void **buffer, size_t *size );
+
+//Fetches a buffer along with its size used to fetch data from the RTMP chunk connection.
 rtmp_err_t rtmp_chunk_conn_get_out_buff( rtmp_chunk_conn_t conn, const void **buffer, size_t *size );
+
+//Inform the connection about how many bytes were written to the buffer.
 rtmp_err_t rtmp_chunk_conn_commit_in_buff( rtmp_chunk_conn_t conn, size_t size );
+
+//Inform the connection about how many bytes were read from the buffer.
 rtmp_err_t rtmp_chunk_conn_commit_out_buff( rtmp_chunk_conn_t conn, size_t size );
 
-
-
+//Send an arbitrary message via the chunk stream.
 rtmp_err_t
 rtmp_chunk_conn_send_message(
     rtmp_chunk_conn_t conn,
     byte message_type,
-    unsigned int chunk_stream,
-    unsigned int message_stream,
-    unsigned int timestamp,
+    uint32_t chunk_stream,
+    uint32_t message_stream,
+    uint32_t timestamp,
     byte *data,
     size_t length,
     size_t *written

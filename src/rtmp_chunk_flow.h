@@ -27,44 +27,47 @@
 #include "data_stream.h"
 #include "ringbuffer.h"
 
+//A chunk message header
 typedef struct rtmp_chunk_stream_message{
-    unsigned int chunk_stream_id;
-    unsigned int timestamp;
-    size_t message_length;
-    unsigned int message_stream_id;
-    byte message_type;
+    uint32_t chunk_stream_id;   //ID of the chunk stream
+    rtmp_time_t timestamp;         //Absolute timestamp of the message
+    size_t message_length;          //Length of the message in bytes
+    uint32_t message_stream_id; //ID of the message stream
+    byte message_type;              //Message type
 } rtmp_chunk_stream_message_t;
 
-typedef struct rtmp_chunk_stream_message_internal{
-    rtmp_chunk_stream_message_t msg;
-    unsigned int time_delta;
-    unsigned int processed;
-    bool initialized;
-} rtmp_chunk_stream_message_internal_t;
+typedef struct rtmp_chunk_stream_message_internal rtmp_chunk_stream_message_internal_t;
+typedef struct rtmp_chunk_stream_cache *rtmp_chunk_stream_cache_t;
 
-typedef struct rtmp_chunk_stream_cache{
-    rtmp_chunk_stream_message_internal_t static_cache[RTMP_STREAM_STATIC_CACHE_SIZE];
-    rtmp_chunk_stream_message_internal_t *dynamic_cache;
-    size_t dynamic_cache_size;
-} *rtmp_chunk_stream_cache_t;
+//Create a stream cache, used for decoding partial chunk headers.
+rtmp_chunk_stream_cache_t rtmp_cache_create( void );
 
-rtmp_chunk_stream_cache_t rtmp_cache_create();
 void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache );
+
+//Get a cached message header by chunk stream ID
 rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id );
 
+//Used to emit the various handshakes. Used for both the client and server; the only difference is ordering.
 rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t output );
-rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, unsigned int timestamp, const byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte* nonce, size_t length);
 
+//Used to read the various handshakes. Used for both the client and server; the only difference is ordering.
 rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input );
-rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, unsigned int *timestamp, byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* data, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t *timestamp1, rtmp_time_t *timestamp2, byte* data, size_t length);
 
+//Used to emit a header. Contents of header will be read from message and stored in the cache for future writes.
 rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache );
-rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_cache_t cache );
 
+//Used to read a header. Message will be filled with a pointer to a message in the cache which contains all the information.
+rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t input, rtmp_chunk_stream_message_t **message, rtmp_chunk_stream_cache_t cache );
+
+//Used to emit the initial few bytes of the chunk header, as the length and content is variable based on the id value.
 rtmp_err_t rtmp_chunk_emit_hdr_basic( ringbuffer_t output, byte format, size_t id );
+
+//Used to read the initial few bytes of the chunk header, as the length and content is variable based on the id value.
 rtmp_err_t rtmp_chunk_read_hdr_basic( ringbuffer_t input, byte *format, size_t *id );
 
-
+//Print the contents of a chunk header. For debugging.
 void rtmp_print_message( rtmp_chunk_stream_message_t *msg );

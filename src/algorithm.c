@@ -31,38 +31,41 @@ static bool equals( const void* a, const void *b, less_than_proc less_than ){
 static bool greater_than( const void* a, const void *b, less_than_proc less_than ){
     return less_than(b, a) ;
 }
+
+/*
+Unused for now.
+
 static bool greater_than_equals( const void* a, const void *b, less_than_proc less_than ){
     return !less_than(a, b) ;
 }
 static bool less_than_equals( const void* a, const void *b, less_than_proc less_than ){
     return !less_than(b, a);
-}
+}*/
 
 
 size_t alg_search_bin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than ){
-    if( count == 0 ){
-        return 0;
-    }
+    //Redefine here for ease of use
     const char *d = haystack;
     size_t lower_bound = 0;
     size_t upper_bound = count;
-    size_t index = ( upper_bound - lower_bound ) / 2;
-    do{
-
+    size_t index = 0;
+    while( lower_bound < upper_bound ) {
+        index = lower_bound + ( upper_bound - lower_bound ) / 2;
+        //If needle is less than haystack[index], move upper_bound to index
         if( less_than( needle, d + (element_size * index) ) ){
             upper_bound = index;
         }
-        else if( greater_than( needle, d + (element_size * index), less_than ) ){
+        //Else if needle is greater than haystack[index], move lower_bound to index+i,
+        //as index needn't ever be checked again
+        else if( greater_than( needle, d + (element_size * index), less_than ) ) {
             lower_bound = index + 1;
-            if( lower_bound > upper_bound ){
-                lower_bound = upper_bound;
-            }
         }
-        else if( equals( needle, d + (element_size * index), less_than ) ){
+        //Otherwise, we've found the item. No need to check again since equals is defined
+        //as (not less than) and (not greater than)
+        else {
             return index;
         }
-        index = lower_bound + ( upper_bound - lower_bound ) / 2;
-    } while( lower_bound < upper_bound );
+    }
     return index;
 }
 

@@ -155,7 +155,7 @@ amf_err_t amf0_get_undefined( ors_data_t* source ){
     return 1;
 }
 
-amf_err_t amf0_get_reference( ors_data_t* source, unsigned int *value){
+amf_err_t amf0_get_reference( ors_data_t* source, uint32_t *value){
     AMF0_HARVEST_LENGTH(source, 3);
     AMF0_CHECK_TYPE( buffer, AMF0_TYPE_REFERENCE, AMF_ERR_INVALID_DATA );
     *value = ntoh_read_us(buffer);
@@ -229,7 +229,7 @@ amf_err_t amf0_get_typed_object( ors_data_t* source ){
 void amf0_print( ors_data_t* data, size_t len, rtmp_printer_t printer ){
     double num;
     int integer;
-    unsigned int uinteger;
+    uint32_t uinteger;
     char str[1000];
     int object_layer = 0;
     size_t r = 0;

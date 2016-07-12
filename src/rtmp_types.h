@@ -26,6 +26,11 @@
 typedef unsigned int rtmp_time_t;
 typedef unsigned char byte;
 typedef unsigned long size_t;
+typedef unsigned int uint32_t;
+typedef int int32_t;
+typedef unsigned short uint16_t;
+typedef short int16_t;
+
 #ifndef __cplusplus
 #define nullptr ((void*)0x0)
 typedef enum{
@@ -54,3 +59,9 @@ typedef enum {
     si_zepto = -21,
     si_yocto = -24
 } si_prefix;
+
+#ifdef __cplusplus
+#define DEFAULT(a) = a
+#else
+#define DEFAULT(a)
+#endif

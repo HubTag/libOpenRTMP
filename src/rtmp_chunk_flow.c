@@ -21,6 +21,7 @@
 
 */
 
+#include "rtmp_private.h"
 #include "rtmp_chunk_flow.h"
 #include "rtmp_debug.h"
 #include "data_stream.h"
@@ -29,7 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-rtmp_chunk_stream_cache_t rtmp_cache_create(){
+
+
+rtmp_chunk_stream_cache_t rtmp_cache_create( void ){
     struct rtmp_chunk_stream_cache *ret = calloc( sizeof( struct rtmp_chunk_stream_cache ), 1 );
     return ret;
 }
@@ -39,9 +42,7 @@ void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache ){
     free( cache );
 }
 
-//static bool rtmp_chunk_stream_message_less_than( const size_t *a, const rtmp_chunk_stream_message_internal_t *b ){
-//    return *a < b->msg.chunk_stream_id;
-//}
+//Compare the chunk stream IDs for ordering
 static bool rtmp_chunk_stream_message_less_than( const void *a, const void *b ){
     return *(const size_t*)a < ((const rtmp_chunk_stream_message_internal_t*)b)->msg.chunk_stream_id;
 }
@@ -49,31 +50,35 @@ static bool rtmp_chunk_stream_message_less_than( const void *a, const void *b ){
 static rtmp_chunk_stream_message_internal_t * rtmp_cache_insert( rtmp_chunk_stream_cache_t cache, size_t index, size_t chunk_id ){
     rtmp_chunk_stream_message_internal_t *ret = nullptr;
     if( cache->dynamic_cache_size >= RTMP_STREAM_CACHE_MAX ){
-        printf("Failed to insert %lu! (Max reached)\n", chunk_id);
+        //Max stream cache size reached
         return ret;
     }
     size_t remainder = cache->dynamic_cache_size - index;
     cache->dynamic_cache_size ++;
+    //Make room for the new element
     void* newptr = realloc( cache->dynamic_cache, sizeof(rtmp_chunk_stream_message_internal_t) * cache->dynamic_cache_size );
     if( newptr == nullptr ){
-        printf("Failed to insert %lu! (OOM)\n", chunk_id);
+        //Out of memory
         return ret;
     }
     cache->dynamic_cache = newptr;
     ret = cache->dynamic_cache + index;
     if( remainder > 0 ){
+        //If there's data after our index, move it down by one element
         memmove( ret + 1, ret, remainder );
     }
+    //Clear the memory for our new element and set its ID
     memset( ret, 0, sizeof( rtmp_chunk_stream_message_internal_t ) );
     ret->msg.chunk_stream_id = chunk_id;
-        printf("Inserted %lu!\n", chunk_id);
     return ret;
 }
 
 rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id ){
     if( chunk_id < RTMP_STREAM_STATIC_CACHE_SIZE ){
+        //Happy path! If the ID falls in the range of the static allocation, just index into the static array.
         return &cache->static_cache[chunk_id];
     }
+    //Search the dynamic array for our element
     size_t idx = alg_search_bin(
             &chunk_id,
             cache->dynamic_cache,
@@ -81,15 +86,17 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t
             cache->dynamic_cache_size,
             rtmp_chunk_stream_message_less_than
     );
+    //If the index is equal to the size of the array, we need to append a new element
     if( idx == cache->dynamic_cache_size ){
         return rtmp_cache_insert( cache, idx, chunk_id );
     }
     else{
         rtmp_chunk_stream_message_internal_t *target = cache->dynamic_cache + idx;
+        //If the element at the index we found shares the ID we're looking for, return it
         if( target->msg.chunk_stream_id == chunk_id ){
-            printf("Fetching %d!\n", target->msg.chunk_stream_id );
             return target;
         }
+        //Otherwise, insert a new element there
         else{
             return rtmp_cache_insert( cache, idx, chunk_id );
         }
@@ -99,14 +106,14 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t
 
 
 rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t out ){
-    byte version = 3;
+    byte version = RTMP_VERSION;
     if( ringbuffer_copy_write( out, &version, 1 ) < 1 ){
         return RTMP_ERR_AGAIN;
     }
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, unsigned int timestamp, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte* nonce, size_t length){
     byte zero[4] = {0,0,0,0};
     byte timestamp_out[4];
     ntoh_write_ud( timestamp_out, timestamp );
@@ -122,7 +129,7 @@ rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, unsigned int timestamp,
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, unsigned int timestamp1, unsigned int timestamp2, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte* nonce, size_t length){
     byte timestamp1_out[4];
     byte timestamp2_out[4];
     ntoh_write_ud( timestamp1_out, timestamp1 );
@@ -152,7 +159,7 @@ rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input ){
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, unsigned int *timestamp, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, byte* nonce, size_t length){
     byte timestamp_in[4];
     byte zero[4];
     if( ringbuffer_copy_read( input, timestamp_in, 4 ) < 4){
@@ -168,7 +175,7 @@ rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, unsigned int *timestamp,
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, unsigned int *timestamp1, unsigned int *timestamp2, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t *timestamp1, rtmp_time_t *timestamp2, byte* nonce, size_t length){
     byte timestamp1_in[4];
     byte timestamp2_in[4];
     if( ringbuffer_copy_read( input, timestamp1_in, 4 ) < 4 ){
@@ -187,13 +194,13 @@ rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, unsigned int *timestamp1
 
 rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache ){
     byte fmt = 0;
-    unsigned int timestamp = message->timestamp;
+    rtmp_time_t timestamp = message->timestamp;
 
     rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, message->chunk_stream_id);
     if( previous == nullptr ){
         return RTMP_ERR_INADEQUATE_CHUNK;
     }
-    size_t delta = timestamp_get_delta( previous->msg.timestamp, timestamp );
+    int32_t delta = timestamp_get_delta( previous->msg.timestamp, timestamp );
 
     if( previous->initialized ){
         if( previous->msg.message_stream_id == message->message_stream_id ){
@@ -267,7 +274,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t input, rtmp_chunk_stream_message_t 
     message->chunk_stream_id = id;
     byte buffer[4];
 
-    unsigned int new_time = 0;
+    rtmp_time_t new_time = 0;
     if( fmt <= 2 ){
         if( ringbuffer_copy_read( input, buffer, 3) < 3 ){
             return RTMP_ERR_AGAIN;

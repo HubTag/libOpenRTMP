@@ -32,26 +32,13 @@
 
 #pragma once
 
+#include "rtmp_config.h"
 #include "rtmp_types.h"
 
-//Defaults
-
-#define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
-#define RTMP_MAX_CHUNK_SIZE                 0x0000FFFF
-#define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
-#define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
-//#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x0000FFFF
-#define RTMP_DEFAULT_IO_BUFFER_SIZE         2000
-
-#define RTMP_STREAM_STATIC_CACHE_SIZE 10
-#define RTMP_STREAM_CACHE_MAX 100
-#define RTMP_CONTROL_BUFFER_SIZE 16
 
 //Nonce size specified on page 8, §5.2.3
 #define RTMP_NONCE_SIZE                     1528
-
-#define RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
-#define RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
+#define RTMP_VERSION                        3
 
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,
@@ -187,6 +174,7 @@ typedef enum{
 typedef enum {
     RTMP_ERR_NONE = 0,
     RTMP_ERR_NOT_READY,
+    RTMP_ERR_DIVERGENCE_METER_ERROR,
     RTMP_ERR_ERROR,
     RTMP_ERR_OOM,
     RTMP_ERR_INVALID,

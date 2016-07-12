@@ -1,0 +1,63 @@
+/*
+    rtmp_config.h
+
+    Copyright (C) 2016 Hubtag LLC.
+
+    ----------------------------------------
+
+    This file is part of libOpenRTMP.
+
+    libOpenRTMP is free software: you can redistribute it and/or modify
+    it under the terms of version 3 of the GNU Affero General Public License
+    as published by the Free Software Foundation.
+
+    libOpenRTMP is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with libOpenRTMP. If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+#pragma once
+
+//Defaults. These may all be negotiated at runtime.
+#define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
+#define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
+#define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
+
+//The max chunk size this implementation will allow to be used.
+//The peer may still use a larger chunk size than this.
+#define RTMP_MAX_CHUNK_SIZE                 0x0000FFFF
+
+//Size of the IO buffers used to feed data in and out of the RTMP object.
+//This must be at least 1600 bytes.
+#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x0000FFFF
+
+//Size of static allocation for chunk header cache
+#define RTMP_STREAM_STATIC_CACHE_SIZE 10
+
+//Max size of dynamic allocation for chunk header cache
+#define RTMP_STREAM_CACHE_MAX 100
+
+//Size of control chunk buffer. According to the spec, this only really needs to be
+//5 bytes, but just in case someone wants to do something weird, I've chosen 16.
+#define RTMP_CONTROL_BUFFER_SIZE 16
+
+//Force verification of handshake times and nonces. There is no real reason to turn
+//these off, as they ensure both the peer and the client are communicating correctly.
+#define RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
+#define RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
+
+//Determines if and how to log errors internal to the RTMP implementation.
+// 0 - No logging
+// 1 - Log fatal errors only (Suggested for production)
+// 2 - Log most non-fatal errors (Suggested for debugging)
+// 3 - Log all errors
+// 4 - Log all status codes other than ERR_NONE
+#define RTMP_LOG_LEVEL 0
+
+//The max size of a 'safe alloc'
+#define RTMP_MAX_ALLOC 10000

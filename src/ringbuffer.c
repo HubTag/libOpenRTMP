@@ -63,9 +63,11 @@ void* ringbuffer_get_write_buf( ringbuffer_t buffer, unsigned long *size ){
     unsigned long length = buffer->size - buffer->len - buffer->write_offset;
     void *buff = buffer->data + offset;
     if( size ){
+        //If the length of the buffer doesn't fall off the end, return the length as-is
         if( offset + length < buffer->size ){
             *size = length;
         }
+        //Otherwise return the length from the write offset to the end of the allocated buffer
         else{
             *size = buffer->size - offset;
         }
@@ -77,9 +79,11 @@ const void* ringbuffer_get_read_buf( ringbuffer_t buffer, unsigned long *size ){
     unsigned long length = buffer->len + buffer->write_offset - buffer->read_offset;
     void *buff = buffer->data + offset;
     if( size ){
+        //If the length of the read buffer doesn't fall off of the end, return the length as-is
         if( offset + length < buffer->size ){
             *size = length;
         }
+        //Otherwise, return the distance from the read offset to the end of the allocated buffer
         else{
             *size = buffer->size - offset;
         }
@@ -90,9 +94,11 @@ unsigned long ringbuffer_commit_write( ringbuffer_t buffer, unsigned long len ){
     if( WRITE_FROZEN(buffer->frozen) ){
         unsigned long ret = buffer->write_offset;
         if( len + buffer->len + buffer->write_offset > buffer->size ){
+            //If writes are frozen and this write would overfill the buffer, move the write offset to the very end
             buffer->write_offset = buffer->size - buffer->len;
         }
         else{
+            //otherwise just increment the write offset by len
             buffer->write_offset += len;
         }
         return buffer->write_offset - ret;
@@ -100,9 +106,11 @@ unsigned long ringbuffer_commit_write( ringbuffer_t buffer, unsigned long len ){
     else{
         unsigned long ret = buffer->len;
         if( len + buffer->len > buffer->size ){
+            //If the write would extend beyond the limit of the buffer, set the length to the max buffer size
             buffer->len = buffer->size;
         }
         else{
+            //Otherwise just increment the buffer length by len
             buffer->len += len;
         }
         return buffer->len - ret;
@@ -110,6 +118,7 @@ unsigned long ringbuffer_commit_write( ringbuffer_t buffer, unsigned long len ){
 }
 
 unsigned long ringbuffer_commit_read( ringbuffer_t buffer, unsigned long len ){
+    //If the read would extend past the end of the content, resize len to fit.
     if( len + buffer->read_offset > buffer->len + buffer->write_offset ){
         len = buffer->len + buffer->write_offset - buffer->read_offset;
     }
@@ -223,21 +232,27 @@ unsigned long ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned lon
     char *d = dst;
     unsigned long read = 0;
     const void* buff = ringbuffer_get_read_buf( buffer, &size );
+    //If the read buffer has more data than was requested, we only need a simple memcpy
     if( size >= length ){
         memcpy( dst, buff, length );
         read = length;
         ringbuffer_commit_read( buffer, read );
     }
     else{
+        //Copy the data which was made available
         memcpy( dst, buff, size );
         read = size;
         length -= size;
+        //Commit it and try to fetch another buffer
         ringbuffer_commit_read( buffer, read );
         buff = ringbuffer_get_read_buf( buffer, &size );
+        //If the new buffer is smaller than the remaining read, trim the remaining length to fit
         if( length > size ){
             length = size;
         }
+        //Copy from the read buffer into the dest buffer offset by the amount which has already been read
         memcpy( d + read, buff, length );
+        //Increment the amount read and commit the read
         read += length;
         ringbuffer_commit_read( buffer, length );
     }
@@ -246,25 +261,31 @@ unsigned long ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned lon
 
 unsigned long ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsigned long length ){
     unsigned long size;
-    char *d = (char*)src;
+    char *s = (char*)src;
     unsigned long wrote = 0;
     void* buff = ringbuffer_get_write_buf( buffer, &size );
+    //If the buffer has enough space to consume the whole write, we just need a simple memcpy
     if( size >= length ){
         memcpy( buff, src, length );
         wrote = length;
         ringbuffer_commit_write( buffer, wrote );
     }
     else{
+        //Fill the write buffer with the first size bytes from src
         memcpy( buff, src, size );
         wrote = size;
         length -= size;
+        //Commit the write and fetch a new buffer
         ringbuffer_commit_write( buffer, wrote );
         buff = ringbuffer_get_write_buf( buffer, &size );
+        //If the write buffer isn't big enough to consume the rest of the write, trim the amount to fit
         if( length > size ){
             length = size;
         }
-        memcpy( buff, d + wrote, length );
+        //Copy from the source buffer offset by the amount already written into the write buffer
+        memcpy( buff, s + wrote, length );
         wrote += length;
+        //Commit the amount which was written
         ringbuffer_commit_write( buffer, length );
     }
     return wrote;

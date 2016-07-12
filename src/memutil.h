@@ -37,10 +37,10 @@ short ntoh_read_s(const void *src);
 int ntoh_read_d(const void *src);
 
 //Read a short from a buffer based on endianess
-unsigned short ntoh_read_us(const void *src);
+uint16_t ntoh_read_us(const void *src);
 
 //Read an int from a buffer based on endianess
-unsigned int ntoh_read_ud(const void *src);
+uint32_t ntoh_read_ud(const void *src);
 
 //Write a short to a buffer based on endianess
 void ntoh_write_s(void *dst, short value);
@@ -49,23 +49,23 @@ void ntoh_write_s(void *dst, short value);
 void ntoh_write_d(void *dst, int value);
 
 //Write a short to a buffer based on endianess
-void ntoh_write_us(void *dst, unsigned short value);
+void ntoh_write_us(void *dst, uint16_t value);
 
 //Write an int to a buffer based on endianess
-void ntoh_write_ud(void *dst, unsigned int value);
+void ntoh_write_ud(void *dst, uint32_t value);
 
-void htol_write_ud(void *dst, unsigned int value);
-unsigned int ltoh_read_ud(void *src);
+void htol_write_ud(void *dst, uint32_t value);
+uint32_t ltoh_read_ud(void *src);
 
 
 //Write a 3 byte int to a buffer based on endianess
-void ntoh_write_ud3(void *dst, unsigned int value);
+void ntoh_write_ud3(void *dst, uint32_t value);
 //Read a 3 byte int from a buffer based on endianess
-unsigned int ntoh_read_ud3(void *dst);
+uint32_t ntoh_read_ud3(void *dst);
 
 void emit_err(const char* err);
 
-int timestamp_get_delta( unsigned int stamp1, unsigned int stamp2 );
+int32_t timestamp_get_delta( rtmp_time_t stamp1, rtmp_time_t stamp2 );
 
 //If generating of allocating a nonce, it MUST be initialized to null!
 rtmp_err_t rtmp_nonce_gen(void **nonce, size_t length);
@@ -76,5 +76,4 @@ rtmp_time_t rtmp_get_time();
 
 unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to);
 
-#define RTMP_MAX_ALLOC 10000
 byte* safe_alloc(size_t amount);
