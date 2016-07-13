@@ -182,7 +182,6 @@ rtmp_time_t rtmp_get_time( void ){
     s = si_convert_ull(s, si_none, si_nano);
     s += t.tv_nsec;
     s = si_convert_ull(s, si_nano, si_milli);
-    printf("%llu\n", s);
     return s;
 }
 

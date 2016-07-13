@@ -78,7 +78,6 @@ bool rtmp_chunk_conn_connected( rtmp_chunk_conn_t conn ){
 
 
 rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
-    printf("Event \"%s\" Called!\n", rtmp_get_event_name( event ) );
     rtmp_err_t err = RTMP_ERR_NONE;
     if( conn->callback_event ){
         switch( conn->callback_event( conn, event, conn->userdata ) ){
@@ -94,8 +93,6 @@ rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t even
 }
 
 rtmp_err_t rtmp_chunk_conn_call_chunk( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
-    printf("Chunk Called!\n");
-    rtmp_print_message( msg );
     rtmp_err_t err = RTMP_ERR_NONE;
     if( conn->callback_chunk ){
         switch( conn->callback_chunk( conn, input, available, remaining, msg, conn->userdata ) ){
@@ -303,7 +300,6 @@ static rtmp_err_t rtmp_chunk_conn_service_shake( rtmp_chunk_conn_t conn, rtmp_io
 static rtmp_err_t rtmp_chunk_conn_service_recv_set_chunk_size(rtmp_chunk_conn_t conn){
     if( conn->control_message_len >= 4 ){
         conn->peer_chunk_size = ntoh_read_ud( conn->control_message_buffer );
-        printf("Peer set chunk size to %d\n", conn->peer_chunk_size);
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
     }
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
@@ -321,7 +317,6 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_abort(rtmp_chunk_conn_t conn){
         memcpy( &msg, cached, sizeof( rtmp_chunk_stream_message_t ) );
         msg.chunk_stream_id = chunk_stream;
 
-        printf("Peer aborted chunk %d\n", chunk_stream);
         rtmp_chunk_conn_call_chunk( conn, nullptr, 0, 0, &msg );
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
     }
@@ -333,7 +328,6 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_set_peer_bwidth(rtmp_chunk_conn_t
         rtmp_limit_t limit = conn->control_message_buffer[4];
         uint32_t new_size = ntoh_read_ud( conn->control_message_buffer );
         uint32_t old_size = conn->self_window_size;
-        printf("Peer requested window size of %d\n", new_size);
         switch( limit ){
             case RTMP_LIMIT_DYNAMIC:
                 //If previous attempt was hard, treat as hard. Otherwise, ignore.
@@ -381,15 +375,12 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_ack(rtmp_chunk_conn_t conn ){
 static rtmp_err_t rtmp_chunk_conn_service_recv_win_ack_size(rtmp_chunk_conn_t conn ){
     if( conn->control_message_len >= 4 ){
         conn->peer_window_size = ntoh_read_ud( conn->control_message_buffer );
-        printf("Peer set window size to %d bytes\n", conn->peer_window_size);
         return rtmp_chunk_conn_acknowledge( conn );
     }
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
 }
 
 static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
-    printf("Service Chunk Called!\n");
-    rtmp_print_message( msg );
     if( available == remaining && remaining == 0 ){
         //The partial command has been aborted.
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
