@@ -42,10 +42,15 @@
 
 #include "rtmp_types.h"
 
+#define AMF_MAX_KEY 1000
+
 typedef enum AMF_ERR {
     AMF_ERR_NONE,
     AMF_ERR_INVALID_DATA = -10,
-    AMF_ERR_INCOMPLETE
+    AMF_ERR_INCOMPLETE,
+    AMF_ERR_NEED_NAME,
+    AMF_ERR_OOM,
+    AMF_ERR_BAD_ALLOC
 } amf_err_t;
 
 //AMF0 Type Markers             See AMF0 Specification

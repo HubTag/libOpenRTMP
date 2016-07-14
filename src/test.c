@@ -115,7 +115,57 @@ void service( rtmp_chunk_conn_t client, rtmp_chunk_conn_t server ){
     check_conn_err( rtmp_chunk_conn_service( server ) );
 }
 
+#include "amf_object.h"
+#define do_alloc(c) \
+    amf_push_string_alloc( amf, &target, strlen(c) ); memcpy(target, c, strlen(c));
+
 int main(){
+
+    void* target;
+    amf_t amf = amf_create( 3 );
+    amf_push_number( amf, 1337.0 );
+    amf_push_date( amf, 123, 10 );
+    amf_push_boolean( amf, true );
+    do_alloc("Hello there!");
+    amf_push_long_string( amf, target);
+    amf_push_null( amf );
+    amf_push_object_start( amf );
+        do_alloc( "Foo" );
+            amf_push_member( amf, target );
+            amf_push_number( amf, 45141 );
+        do_alloc( "bar" );
+            amf_push_member( amf, target );
+            amf_push_object_start( amf );
+                do_alloc( "Rawr" );
+                amf_push_member( amf, target );
+                amf_push_number( amf, 6667 );
+                amf_push_object_end( amf );
+        do_alloc( "Meow" );
+            amf_push_member( amf, target );
+            amf_push_number( amf, 6697 );
+        amf_push_object_end( amf );
+    amf_push_reference( amf, 0 );
+    amf_push_undefined( amf );
+    amf_push_object_start( amf );
+        do_alloc( "Thing" );
+            amf_push_member( amf, target );
+            amf_push_number( amf, 45141 );
+        do_alloc( "Meow" );
+            amf_push_member( amf, target );
+            amf_push_number( amf, 6697 );
+        amf_push_object_end( amf );
+    amf_push_undefined( amf );
+    do_alloc( "The end!" );
+    amf_push_string( amf, target );
+
+    amf_print( amf );
+
+    printf( "\n\nTest access: %f", amf_value_get_number( amf_obj_get_value( amf_obj_get_value( amf_get_item(amf, 5), "bar" ), "Rawr" ) ) );
+    amf_destroy( amf );
+
+
+    return 0;
+
     rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );
     rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false );
 

@@ -61,7 +61,7 @@ amf_value_t amf_get_item( amf_t amf, size_t idx );
 //Returns true if the given value is of the specified type.
 //Reference values will return true if the type is reference
 //or if the type matches the referenced value's type.
-bool amf_value_is( amf_value_t value, amf_type_t type );
+bool amf_value_is( amf_value_t value, amf0_type_t type );
 
 //Returns true if the type of the specified value is compatible
 //with the given type. Compatibility means that the given value
@@ -71,8 +71,8 @@ bool amf_value_is( amf_value_t value, amf_type_t type );
 //
 // Actual Type      | Compatible Types
 //------------------|--------------------------------------------
-// number           | boolean, date
-// boolean          | number, date
+// number           | date
+// boolean          |
 // string           | long string, xml document
 // object           | typed object
 // movieclip        |
@@ -81,29 +81,31 @@ bool amf_value_is( amf_value_t value, amf_type_t type );
 // reference        | based on type of referenced value
 // ECMA array       | strict array
 // strict array     | ECMA array
-// date             | number, boolean
+// date             | number
 // long string      | string, xml document
 // unsupported      |
 // recordset        |
 // XML document     | string, long string
 // typed object     | object
 //
-bool amf_value_is_like( amf_value_t value, amf_type_t type );
+bool amf_value_is_like( amf_value_t value, amf0_type_t type );
 
-amf_err_t amf_value_get_number( amf_value_t target, double *value );
-amf_err_t amf_value_get_bool( amf_value_t target, bool *value );
-amf_err_t amf_value_get_string( amf_value_t target, char** value, size_t *length );
-amf_err_t amf_value_get_object( amf_value_t target, amf_value_t *value );
-amf_err_t amf_value_get_ref( amf_value_t target, size_t *ref );
-amf_err_t amf_value_get_date( amf_value_t target, double *timestamp, signed char *timezone );
-amf_err_t amf_value_get_xml( amf_value_t target, char** value, size_t *length );
+double amf_value_get_number( amf_value_t target );
+bool amf_value_get_bool( amf_value_t target );
+char* amf_value_get_string( amf_value_t target, size_t *length );
+size_t amf_value_get_ref( amf_value_t target );
+double amf_value_get_date( amf_value_t target, signed char *timezone );
+char* amf_value_get_xml( amf_value_t target, size_t *length );
 
 
 //Get member from object by key.
-amf_err_t amf_obj_get_value( amf_value_t target, const char *key, amf_value_t *value );
+amf_value_t amf_obj_get_value( amf_value_t target, const char *key );
 
 //Get member from object by index. Key is returned if the arguments are not null.
-amf_err_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len, amf_value_t *value );
+amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
 
 //Get the number of members in object
 size_t amf_obj_get_count( amf_value_t target );
+
+void amf_print_value( amf_value_t val );
+void amf_print( amf_t val );
