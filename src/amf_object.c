@@ -489,7 +489,10 @@ amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
     return nullptr;
 }
 amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    const amf_v_t *v = (const amf_v_t*) target;
+    amf_v_t *v = (amf_v_t*) target;
+    if( v->type == AMF0_TYPE_REFERENCE ){
+        v = v->reference.ref;
+    }
     if( idx >= v->object.length ){
         return nullptr;
     }
