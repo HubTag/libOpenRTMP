@@ -8,3 +8,5 @@ file(GLOB src_files "src/*.*")
 add_executable( amf_test
 	${src_files}
 )
+
+target_link_libraries( amf_test m )

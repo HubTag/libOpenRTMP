@@ -119,8 +119,16 @@ void service( rtmp_chunk_conn_t client, rtmp_chunk_conn_t server ){
 #define do_alloc(c) \
     amf_push_string_alloc( amf, &target, strlen(c) ); memcpy(target, c, strlen(c));
 
-int main(){
+void printhex(byte* p, int len){
+    while( len --> 0 ){
+        for( int i = 0; i < 8; ++i ){
+            printf("%d", ((*p) >> (7-i)) & 1 );
+        }
+        printf("\t%02X\n", *(p++));
+    }
+}
 
+int main(){
     void* target;
     amf_t amf = amf_create( 3 );
     amf_push_number( amf, 1337.0 );

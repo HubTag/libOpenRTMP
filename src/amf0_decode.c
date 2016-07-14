@@ -59,7 +59,7 @@ amf0_type_t amf0_next_type( ors_data_t* source ){
 amf_err_t amf0_get_number( ors_data_t* source, double *value ){
     AMF0_HARVEST_LENGTH(source, 9);
     AMF0_CHECK_TYPE( buffer, AMF0_TYPE_NUMBER, AMF_ERR_INVALID_DATA );
-    ntoh_memcpy( value, buffer + 1, 8 );
+    *value = read_double_ieee( buffer + 1 );
     return 9;
 }
 

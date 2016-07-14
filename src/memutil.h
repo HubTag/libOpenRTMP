@@ -77,3 +77,6 @@ rtmp_time_t rtmp_get_time();
 unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to);
 
 byte* safe_alloc(size_t amount);
+
+double read_double_ieee(const void *ptr);
+void write_double_ieee(void *ptr, double value);

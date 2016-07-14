@@ -32,7 +32,7 @@
 amf_err_t amf0_write_number( ors_data_t* dest, double value ){
     byte data[sizeof(double)+1];
     data[0] = AMF0_TYPE_NUMBER;
-    ntoh_memcpy( data + 1, &value, sizeof( double ) );
+    write_double_ieee( data + 1, value );
     ors_data_write( dest, data, sizeof(double) + 1);
     return 9;
 }
