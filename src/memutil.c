@@ -229,49 +229,57 @@ unsigned long long si_convert_ull(unsigned long long number, const si_prefix fro
     return number * pow10[change];
 }
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    #define DBL_BYTE(a) (7-a)
+#elif __BYTE_ORDER__ == __ORDER_PDP_ENDIAN__
+    #error "Intentionally unsupported"
+#else
+    #define DBL_BYTE(a) (a)
+#endif
+
 //Sign is most significant bit
 static inline void set_sign(byte* d){
-    d[7] |= 0x80;
+    d[DBL_BYTE(0)] |= 0x80;
 }
 static inline void clear_sign(byte* d){
-    d[7] &= ~0x80;
+    d[DBL_BYTE(0)] &= ~0x80;
 }
 static inline int get_sign(const byte*d){
-    return (d[7] & 0x80) ? 1 : 0;
+    return (d[DBL_BYTE(0)] & 0x80) ? 1 : 0;
 }
 //Exponent starts at 2nd most significant bit and is 11 bits long
 static inline void set_exp(byte* d, uint16_t exp){
-    d[7] &= 0x80;
-    d[6] &= 0x0F;
-    d[7] |= (exp >> 4) & ~0x80;
-    d[6] |= (exp & 0x0F) << 4;
+    d[DBL_BYTE(0)] &= 0x80;
+    d[DBL_BYTE(1)] &= 0x0F;
+    d[DBL_BYTE(0)] |= (exp >> 4) & ~0x80;
+    d[DBL_BYTE(1)] |= (exp & 0x0F) << 4;
 }
 static inline int get_exp(const byte* d){
     int ret;
-    ret = (d[7] & ~0x80) << 4;
-    ret |= (d[6] & ~0x0F ) >> 4;
+    ret = (d[DBL_BYTE(0)] & ~0x80) << 4;
+    ret |= (d[DBL_BYTE(1)] & ~0x0F ) >> 4;
     return ret;
 }
 //Fraction starts at 12th most significant bit and is 52 bits long
 static inline void set_frac(byte* d, uint64_t frac){
-    d[6] &= ~0x0F;
-    d[6] |= (frac >> 48) & 0x0F;
-    d[5] = (frac >> 40) & 0xFF;
-    d[4] = (frac >> 32) & 0xFF;
-    d[3] = (frac >> 24) & 0xFF;
-    d[2] = (frac >> 16) & 0xFF;
-    d[1] = (frac >> 8) & 0xFF;
-    d[0] = (frac >> 0) & 0xFF;
+    d[DBL_BYTE(1)] &= ~0x0F;
+    d[DBL_BYTE(1)] |= (frac >> 48) & 0x0F;
+    d[DBL_BYTE(2)] = (frac >> 40) & 0xFF;
+    d[DBL_BYTE(3)] = (frac >> 32) & 0xFF;
+    d[DBL_BYTE(4)] = (frac >> 24) & 0xFF;
+    d[DBL_BYTE(5)] = (frac >> 16) & 0xFF;
+    d[DBL_BYTE(6)] = (frac >> 8) & 0xFF;
+    d[DBL_BYTE(7)] = (frac >> 0) & 0xFF;
 }
 static inline uint64_t get_frac(const byte* d){
     uint64_t ret;
-    ret = (uint64_t)(d[6] & 0x0F) << 48;
-    ret |= (uint64_t)d[5] << 40;
-    ret |= (uint64_t)d[4] << 32;
-    ret |= (uint64_t)d[3] << 24;
-    ret |= (uint64_t)d[2] << 16;
-    ret |= (uint64_t)d[1] << 8;
-    ret |= (uint64_t)d[0] << 0;
+    ret = (uint64_t)(d[DBL_BYTE(1)] & 0x0F) << 48;
+    ret |= (uint64_t)d[DBL_BYTE(2)] << 40;
+    ret |= (uint64_t)d[DBL_BYTE(3)] << 32;
+    ret |= (uint64_t)d[DBL_BYTE(4)] << 24;
+    ret |= (uint64_t)d[DBL_BYTE(5)] << 16;
+    ret |= (uint64_t)d[DBL_BYTE(6)] << 8;
+    ret |= (uint64_t)d[DBL_BYTE(7)] << 0;
     return ret;
 }
 
@@ -353,7 +361,7 @@ void write_double_ieee(void *ptr, double value){
         double p = pow(2, l);
         set_exp( d, 1023 + l );
         //value/p normalizes the value.
-        //Subtracting one removes the implicit leading bit (though it would be trimmed off automatically)
+        //Subtracting one removes the implicit leading bit (it should be trimmed off automatically)
         //Multiply by 2^51 to bring the value into integer range
         set_frac( d, (value / p) * 0x2p51 );
     }
