@@ -72,8 +72,9 @@ typedef struct amf_v_member amf_v_member_t;
 
 typedef struct amf_v_object{
     unsigned char type;
-    size_t length;
-    size_t reserve;
+    uint32_t length;
+    uint32_t reserve;
+    uint32_t write_offset;
     amf_v_member_t *members;
 } amf_v_object_t;
 
@@ -162,6 +163,94 @@ void amf_destroy( amf_t amf ){
     free( amf->data );
     free( amf->ref_table );
     free( amf->allocation );
+}
+
+amf_err_t amf_write_value( amf_value_t value, void *dest, size_t size ){
+    signed char temp_b;
+    double temp_d;
+    size_t temp_lu;
+    char *temp_pc;
+
+    switch( val->type ){
+        case AMF0_TYPE_AVMPLUS:
+            return amf0_write_unsupported( dest, size );
+            break;
+        case AMF0_TYPE_BOOLEAN:
+            return amf0_write_boolean( dest, size, amf_value_get_bool( value ) );
+            break;
+        case AMF0_TYPE_DATE:
+            temp_d = amf_value_get_date( value, &temp_b );
+            return amf0_write_date( dest, size, temp_b, temp_d );
+            break;
+        case AMF0_TYPE_MOVIECLIP:
+            return amf0_write_movieclip( dest, size );
+            break;
+        case AMF0_TYPE_NULL:
+            return amf0_write_null( dest, size );
+            break;
+        case AMF0_TYPE_NUMBER:
+            return amf0_write_number( dest, size, amf_value_get_number( value ) );
+            break;
+        case AMF0_TYPE_RECORDSET:
+            return amf0_write_recordset( dest, size );
+            break;
+        case AMF0_TYPE_REFERENCE:
+            return amf0_write_reference( dest, size, amf_value_get_ref( value ) );
+            break;
+        case AMF0_TYPE_UNDEFINED:
+            return amf0_write_undefined( dest, size );
+            break;
+        case AMF0_TYPE_UNSUPPORTED:
+            return amf0_write_unsupported( dest, size );
+            break;
+
+        case AMF0_TYPE_ECMA_ARRAY:
+            return amf0_write_ecma_array( dest, size );
+            break;
+        case AMF0_TYPE_STRICT_ARRAY:
+            return amf0_write_strict_array( dest, size );
+            break;
+        case AMF0_TYPE_TYPED_OBJECT:
+            return amf0_write_typed_object( dest, size );
+            break;
+
+        case AMF0_TYPE_STRING:
+            temp_pc = amf_value_get_string( value, &temp_lu );
+            return amf0_write_string( dest, size, temp_pc, temp_lu );
+            break;
+        case AMF0_TYPE_LONG_STRING:
+            temp_pc = amf_value_get_string( value, &temp_lu );
+            return amf0_write_long_string( dest, size, temp_pc, temp_lu );
+            break;
+        case AMF0_TYPE_XML_DOCUMENT:
+            temp_pc = amf_value_get_string( value, &temp_lu );
+            return amf0_write_xmldocument( dest, size, temp_pc, temp_lu );
+            break;
+        case AMF0_TYPE_OBJECT:
+            printf( "Object: {\n");
+            for( int i = 0; i < val->object.length; ++i ){
+                for( int i = 0; i <= depth; ++i ){
+                    printf("    ");
+                }
+                printf( "%.*s: ", (int) val->object.members[i].length, val->object.members[i].name );
+                amf_print_value_internal( &val->object.members[i].value, depth+1 );
+            }
+            for( int i = 0; i < depth; ++i ){
+                printf("    ");
+            }
+            printf( "}");
+            break;
+        default:
+            break;
+    }
+}
+
+amf_err_t amf_write( amf_t amf, void *dest, size_t size, size_t *written ){}
+
+}
+
+amf_err_t amf_read( amf_t amf, void *dest, size_t size, size_t *read ){
+
 }
 
 static amf_v_t * amf_v_get_object( amf_t amf ){
@@ -276,6 +365,7 @@ amf_err_t amf_push_object_start( amf_t amf ){
     target->object.type = AMF0_TYPE_OBJECT;
     target->object.length = 0;
     target->object.reserve = 0;
+    target->object.write_offset = 0;
     target->object.members = nullptr;
 
     if( amf->ref_table_len + 1 > amf->ref_reserve ){

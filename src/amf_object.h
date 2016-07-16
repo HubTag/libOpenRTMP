@@ -32,6 +32,9 @@ typedef struct amf_object * amf_t;
 amf_t amf_create( char type );
 void amf_destroy( amf_t amf );
 
+amf_err_t amf_write( amf_t amf, void *dest, size_t size, size_t *written );
+amf_err_t amf_read( amf_t amf, void *dest, size_t size, size_t *read );
+
 amf_err_t amf_push_number( amf_t amf, double number );
 amf_err_t amf_push_boolean( amf_t amf, char boolean );
 amf_err_t amf_push_string( amf_t amf, void *str );
