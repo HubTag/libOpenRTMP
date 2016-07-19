@@ -24,11 +24,20 @@
 #include "rtmp_debug.h"
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 static char scratch_buffer[512];
 
 static void rtmp_print_s(const char *v){
     printf("%s", v);
+}
+
+static void rtmp_print_s2(const char *v, size_t len){
+    int amt = (int) len;
+    if( len > INT_MAX ){
+        amt = INT_MAX;
+    }
+    printf("%.*s", amt, v);
 }
 
 static void rtmp_print_d(int v){
@@ -46,6 +55,7 @@ static void rtmp_print_u(unsigned int v){
 
 static rtmp_printer def = {
     s : rtmp_print_s,
+    s2 : rtmp_print_s2,
     d : rtmp_print_d,
     f : rtmp_print_f,
     u : rtmp_print_u

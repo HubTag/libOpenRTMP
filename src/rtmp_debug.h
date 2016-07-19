@@ -29,6 +29,7 @@
 
 typedef struct{
     void (*s)(const char* v);
+    void (*s2)(const char* v, size_t len);
     void (*d)(int v);
     void (*f)(double v);
     void (*u)(unsigned int v);

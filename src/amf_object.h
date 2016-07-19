@@ -32,8 +32,8 @@ typedef struct amf_object * amf_t;
 amf_t amf_create( char type );
 void amf_destroy( amf_t amf );
 
-amf_err_t amf_write( amf_t amf, void *dest, size_t size, size_t *written );
-amf_err_t amf_read( amf_t amf, void *dest, size_t size, size_t *read );
+amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written );
+amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read );
 
 amf_err_t amf_push_number( amf_t amf, double number );
 amf_err_t amf_push_boolean( amf_t amf, char boolean );
@@ -42,6 +42,7 @@ amf_err_t amf_push_object_start( amf_t amf );
 amf_err_t amf_push_member( amf_t amf, void *str );
 amf_err_t amf_push_null( amf_t amf );
 amf_err_t amf_push_undefined( amf_t amf );
+amf_err_t amf_push_unsupported( amf_t amf );
 amf_err_t amf_push_reference( amf_t amf, unsigned int ref );
 amf_err_t amf_push_object_end( amf_t amf );
 amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone );

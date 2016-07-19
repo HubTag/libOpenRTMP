@@ -30,17 +30,23 @@
 
 //Returns an IEEE 754 float from the data
 amf_err_t amf0_write_number( byte* data, size_t data_len, double value ){
+    if( data == nullptr ){
+        return 9;
+    }
     if( data_len < 9 ){
         return AMF_ERR_INCOMPLETE;
     }
     data[0] = AMF0_TYPE_NUMBER;
     byte flipped[8];
-    write_double_ieee( flipped + 1, value );
+    write_double_ieee( flipped, value );
     ntoh_memcpy(data + 1, flipped, 8);
     return 9;
 }
 
 amf_err_t amf0_write_boolean( byte* data, size_t data_len, int value ){
+    if( data == nullptr ){
+        return 2;
+    }
     data[0] = AMF0_TYPE_BOOLEAN;
     data[1] = value & 255;
     return 2;
@@ -48,6 +54,12 @@ amf_err_t amf0_write_boolean( byte* data, size_t data_len, int value ){
 
 //String functions are used for all strings.
 static amf_err_t amf0_write_string_internal( byte* data, size_t data_len, byte type, void *value, size_t value_len ){
+    if( data == nullptr ){
+        if( value_len > 0xFFFF || type == AMF0_TYPE_XML_DOCUMENT ){
+            return 5 + value_len;
+        }
+        return 3 + value_len;
+    }
     if( data_len < 3 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -64,10 +76,12 @@ static amf_err_t amf0_write_string_internal( byte* data, size_t data_len, byte t
         data[0] = AMF0_TYPE_STRING;
         ntoh_write_us( data + 1, value_len );
     }
-
+    if( value_len + len > data_len ){
+        return AMF_ERR_INCOMPLETE;
+    }
     value_len = value_len + len <= data_len ? value_len : data_len - len;
 
-    memcpy( data, value, value_len );
+    memcpy( data + len, value, value_len );
 
     return value_len + len;
 }
@@ -79,6 +93,9 @@ amf_err_t amf0_write_string( byte* data, size_t data_len, void *value, size_t va
 
 //Emit an object start marker
 amf_err_t amf0_write_object( byte* data, size_t data_len ){
+    if( data == nullptr ){
+        return 1;
+    }
     if( data_len < 1 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -88,6 +105,9 @@ amf_err_t amf0_write_object( byte* data, size_t data_len ){
 
 //If inside an object, use this to obtain a copy of the property name
 amf_err_t amf0_write_prop_name( byte* data, size_t data_len, void *value, size_t value_len ){
+    if( data == nullptr ){
+        return 2 + value_len;
+    }
     if( data_len < 2 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -107,6 +127,9 @@ amf_err_t amf0_write_movieclip( byte* data, size_t data_len ){
 
 //Basically a dummy; used to verify that the next item is indeed a null value.
 amf_err_t amf0_write_null( byte* data, size_t data_len ){
+    if( data == nullptr ){
+        return 1;
+    }
     if( data_len < 1 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -117,6 +140,9 @@ amf_err_t amf0_write_null( byte* data, size_t data_len ){
 
 //Basically a dummy; used to verify that the next item is indeed an undefined value.
 amf_err_t amf0_write_undefined( byte* data, size_t data_len ){
+    if( data == nullptr ){
+        return 1;
+    }
     if( data_len < 1 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -125,6 +151,9 @@ amf_err_t amf0_write_undefined( byte* data, size_t data_len ){
 }
 
 amf_err_t amf0_write_reference( byte* data, size_t data_len, uint32_t value){
+    if( data == nullptr ){
+        return 3;
+    }
     if( data_len < 3 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -141,6 +170,9 @@ amf_err_t amf0_write_ecma_array( byte* data, size_t data_len ){
 
 //Mostly a dummy; this is used to verify and skip an object end marker
 amf_err_t amf0_write_object_end( byte* data, size_t data_len ){
+    if( data == nullptr ){
+        return 1;
+    }
     if( data_len < 1 ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -157,6 +189,9 @@ amf_err_t amf0_write_strict_array( byte* data, size_t data_len ){
 //Returns a timezone offset as well as a double essentially representing a Unix timestamp
 //(Resolution is 1:1 with seconds, epoch is 1970 Jan 1 00:00:00.000)
 amf_err_t amf0_write_date( byte* data, size_t data_len, int timezone, double timestamp ){
+    if( data == nullptr ){
+        return 11;
+    }
     if( data_len < 11 ){
         return AMF_ERR_INCOMPLETE;
     }

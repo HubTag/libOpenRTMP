@@ -22,6 +22,7 @@
 */
 
 #include "amf_object.h"
+#include "amf.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -165,92 +166,327 @@ void amf_destroy( amf_t amf ){
     free( amf->allocation );
 }
 
-amf_err_t amf_write_value( amf_value_t value, void *dest, size_t size ){
+amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
     signed char temp_b;
     double temp_d;
     size_t temp_lu;
     char *temp_pc;
+    int amt = 0;
+    int amt2 = 0;
+    amf_v_t *val = (amf_v_t*) value;
 
     switch( val->type ){
         case AMF0_TYPE_AVMPLUS:
             return amf0_write_unsupported( dest, size );
-            break;
         case AMF0_TYPE_BOOLEAN:
             return amf0_write_boolean( dest, size, amf_value_get_bool( value ) );
-            break;
         case AMF0_TYPE_DATE:
             temp_d = amf_value_get_date( value, &temp_b );
             return amf0_write_date( dest, size, temp_b, temp_d );
-            break;
         case AMF0_TYPE_MOVIECLIP:
             return amf0_write_movieclip( dest, size );
-            break;
         case AMF0_TYPE_NULL:
             return amf0_write_null( dest, size );
-            break;
         case AMF0_TYPE_NUMBER:
             return amf0_write_number( dest, size, amf_value_get_number( value ) );
-            break;
         case AMF0_TYPE_RECORDSET:
             return amf0_write_recordset( dest, size );
-            break;
         case AMF0_TYPE_REFERENCE:
             return amf0_write_reference( dest, size, amf_value_get_ref( value ) );
-            break;
         case AMF0_TYPE_UNDEFINED:
             return amf0_write_undefined( dest, size );
-            break;
         case AMF0_TYPE_UNSUPPORTED:
             return amf0_write_unsupported( dest, size );
-            break;
 
         case AMF0_TYPE_ECMA_ARRAY:
             return amf0_write_ecma_array( dest, size );
-            break;
         case AMF0_TYPE_STRICT_ARRAY:
             return amf0_write_strict_array( dest, size );
-            break;
         case AMF0_TYPE_TYPED_OBJECT:
             return amf0_write_typed_object( dest, size );
-            break;
 
         case AMF0_TYPE_STRING:
             temp_pc = amf_value_get_string( value, &temp_lu );
             return amf0_write_string( dest, size, temp_pc, temp_lu );
-            break;
         case AMF0_TYPE_LONG_STRING:
             temp_pc = amf_value_get_string( value, &temp_lu );
             return amf0_write_long_string( dest, size, temp_pc, temp_lu );
-            break;
         case AMF0_TYPE_XML_DOCUMENT:
             temp_pc = amf_value_get_string( value, &temp_lu );
             return amf0_write_xmldocument( dest, size, temp_pc, temp_lu );
-            break;
         case AMF0_TYPE_OBJECT:
-            printf( "Object: {\n");
+            amt = amf0_write_object( dest, size );
+            if( amt < 0 ){
+                return amt;
+            }
+            if( dest ){
+                dest += amt;
+                size -= amt;
+            }
+
             for( int i = 0; i < val->object.length; ++i ){
-                for( int i = 0; i <= depth; ++i ){
-                    printf("    ");
+                amt2 = amf0_write_prop_name( dest, size, val->object.members[i].name, val->object.members[i].length );
+                if( amt2 < 0 ){
+                    return amt2;
                 }
-                printf( "%.*s: ", (int) val->object.members[i].length, val->object.members[i].name );
-                amf_print_value_internal( &val->object.members[i].value, depth+1 );
+                amt += amt2;
+                if( dest ){
+                    dest += amt2;
+                    size -= amt2;
+                }
+                amt2 = amf_write_value( &val->object.members[i].value.value, dest, size );
+                if( amt2 < 0 ){
+                    return amt2;
+                }
+                amt += amt2;
+                if( dest ){
+                    dest += amt2;
+                    size -= amt2;
+                }
             }
-            for( int i = 0; i < depth; ++i ){
-                printf("    ");
+            amt2 = amf0_write_prop_name( dest, size, "", 0 );
+            if( amt2 < 0 ){
+                return amt2;
             }
-            printf( "}");
-            break;
+            if( dest ){
+                dest += amt2;
+                size -= amt2;
+            }
+            amt += amt2;
+            amt2 = amf0_write_object_end( dest, size );
+            if( amt2 < 0 ){
+                return amt2;
+            }
+            if( dest ){
+                dest += amt2;
+                size -= amt2;
+            }
+            amt += amt2;
+            return amt;
         default:
             break;
     }
+    return AMF_ERR_NONE;
 }
 
-amf_err_t amf_write( amf_t amf, void *dest, size_t size, size_t *written ){}
-
+amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written ){
+    size_t offset = 0;
+    size_t total_len = 0;
+    size_t i;
+    if( written ){
+        i = *written;
+    }
+    for( i = 0; i < amf->length; ++i ){
+        if( dest && offset > size ){
+            break;
+        }
+        int result = amf_write_value( &amf->data[i].value, dest + offset, size - offset );
+        if( result < 0 ){
+            goto end;
+        }
+        total_len += result;
+        if( dest ){
+            offset = total_len;
+        }
+    }
+    end:
+    if( written ){
+        *written = i;
+    }
+    return total_len;
 }
 
-amf_err_t amf_read( amf_t amf, void *dest, size_t size, size_t *read ){
+amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
+    size_t offset = 0;
+    void *buffer = nullptr;
+    amf_err_t result = AMF_ERR_NONE;
+    int temp_d;
+    uint32_t temp_d32;
+    double temp_f;
+    size_t temp_size;
+    while( offset < size ){
+        if( amf->depth > 0 ){
+            if( ( result = amf0_get_prop_length( src + offset, size - offset, &temp_size )) < 0 ){
+                goto aborted;
+            }
+            if( (result = amf_push_string_alloc( amf, &buffer, temp_size )) < 0 ){
+                goto aborted;
+            }
+            if( (result = amf0_get_prop_name(src + offset, size - offset, buffer, temp_size ) ) < 0 ){
+                goto aborted;
+            }
+            offset += result;
+            if( (result = amf_push_member( amf, buffer ) ) < 0 ){
+                goto aborted;
+            }
 
+        }
+        amf0_type_t type = amf0_next_type(src + offset, size - offset);
+        result = AMF_ERR_NONE;
+        switch( type ){
+            case AMF0_TYPE_AVMPLUS:
+                break;
+            case AMF0_TYPE_BOOLEAN:
+                result = amf0_get_boolean( src + offset, size - offset, &temp_d );
+                break;
+            case AMF0_TYPE_DATE:
+                result = amf0_get_date( src + offset, size - offset, &temp_d, &temp_f );
+                break;
+            case AMF0_TYPE_ECMA_ARRAY:
+                result = amf0_get_ecma_array( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_LONG_STRING:
+                amf0_get_long_string_length( src + offset, size - offset, &temp_size );
+                break;
+            case AMF0_TYPE_MOVIECLIP:
+                result = amf0_get_movieclip( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_NULL:
+                result = amf0_get_null( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_NUMBER:
+                result = amf0_get_number( src + offset, size - offset, &temp_f );
+                break;
+            case AMF0_TYPE_OBJECT:
+                result = amf0_get_object( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_OBJECT_END:
+                result = amf0_get_object_end( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_RECORDSET:
+                result = amf0_get_recordset( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_REFERENCE:
+                result = amf0_get_reference( src + offset, size - offset, &temp_d32 );
+                break;
+            case AMF0_TYPE_STRICT_ARRAY:
+                result = amf0_get_strict_array( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_STRING:
+                amf0_get_string_length( src + offset, size - offset, &temp_size );
+                break;
+            case AMF0_TYPE_TYPED_OBJECT:
+                result = amf0_get_typed_object( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_UNDEFINED:
+                result = amf0_get_undefined( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_UNSUPPORTED:
+                result = amf0_get_unsupported( src + offset, size - offset );
+                break;
+            case AMF0_TYPE_XML_DOCUMENT:
+                amf0_get_xmldocument_length( src + offset, size - offset, &temp_size );
+                break;
+            default:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+        }
+        if( result < 0 ){
+            goto aborted;
+        }
+        offset += result;
+        switch( type ){
+            case AMF0_TYPE_LONG_STRING:
+            case AMF0_TYPE_STRING:
+            case AMF0_TYPE_XML_DOCUMENT:
+                result = amf_push_string_alloc( amf, &buffer, temp_size );
+                break;
+            default:
+                result = AMF_ERR_NONE;
+                break;
+        }
+        if( result < 0 ){
+            goto aborted;
+        }
+        offset += result;
+        switch( type ){
+            case AMF0_TYPE_LONG_STRING:
+                result = amf0_get_long_string( src + offset, size - offset, buffer, temp_size, nullptr );
+                break;
+            case AMF0_TYPE_STRING:
+                result = amf0_get_string( src + offset, size - offset, buffer, temp_size, nullptr );
+                break;
+            case AMF0_TYPE_XML_DOCUMENT:
+                result = amf0_get_xmldocument( src + offset, size - offset, buffer, temp_size, nullptr );
+                break;
+            default:
+                result = AMF_ERR_NONE;
+                break;
+        }
+        if( result < 0 ){
+            goto aborted;
+        }
+        offset += result;
+        switch( type ){
+            case AMF0_TYPE_AVMPLUS:
+                break;
+            case AMF0_TYPE_BOOLEAN:
+                result = amf_push_boolean( amf, temp_d );
+                break;
+            case AMF0_TYPE_DATE:
+                result = amf_push_date( amf, temp_f, temp_d );
+                break;
+            case AMF0_TYPE_ECMA_ARRAY:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+            case AMF0_TYPE_LONG_STRING:
+                result = amf_push_long_string( amf, buffer );
+                break;
+            case AMF0_TYPE_MOVIECLIP:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+            case AMF0_TYPE_NULL:
+                result = amf_push_null( amf );
+                break;
+            case AMF0_TYPE_NUMBER:
+                result = amf_push_number( amf, temp_f );
+                break;
+            case AMF0_TYPE_OBJECT:
+                result = amf_push_object_start( amf );
+                break;
+            case AMF0_TYPE_OBJECT_END:
+                result = amf_push_object_end( amf );
+                break;
+            case AMF0_TYPE_RECORDSET:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+            case AMF0_TYPE_REFERENCE:
+                result = amf_push_reference( amf, temp_d32 );
+                break;
+            case AMF0_TYPE_STRICT_ARRAY:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+            case AMF0_TYPE_STRING:
+                result = amf_push_string( amf, buffer );
+                break;
+            case AMF0_TYPE_TYPED_OBJECT:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+            case AMF0_TYPE_UNDEFINED:
+                result = amf_push_undefined( amf );
+                break;
+            case AMF0_TYPE_UNSUPPORTED:
+                result = amf_push_unsupported( amf );
+                break;
+            case AMF0_TYPE_XML_DOCUMENT:
+                result = amf_push_xml( amf, buffer );
+                break;
+            default:
+                result = AMF_ERR_INVALID_DATA;
+                break;
+        }
+        if( result < 0 ){
+            goto aborted;
+        }
+        offset += result;
+    }
+    return offset;
+
+    aborted:
+    if( read ){
+        *read = offset;
+    }
+    return result;
 }
 
 static amf_v_t * amf_v_get_object( amf_t amf ){
@@ -352,6 +588,9 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
         free( amf->allocation );
     }
     amf->allocation = malloc( length * sizeof( char ) );
+    if( amf->allocation == nullptr ){
+        return AMF_ERR_OOM;
+    }
     amf->allocation_len = length;
     *destination = amf->allocation;
     return AMF_ERR_NONE;
@@ -403,6 +642,11 @@ amf_err_t amf_push_null( amf_t amf ){
 amf_err_t amf_push_undefined( amf_t amf ){
     PUSH_PREP( amf, target );
     target->undefined.type = AMF0_TYPE_UNDEFINED;
+    return AMF_ERR_NONE;
+}
+amf_err_t amf_push_unsupported( amf_t amf ){
+    PUSH_PREP( amf, target );
+    target->undefined.type = AMF0_TYPE_UNSUPPORTED;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_reference( amf_t amf, unsigned int ref ){

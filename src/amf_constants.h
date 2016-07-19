@@ -96,3 +96,6 @@ typedef enum AMF3_TYPE{
     AMF3_TYPE_VECTOR_OBJECT,    //Page 12, §3.15
     AMF3_TYPE_DICTIONARY        //Page 13, §3.16
 } amf3_type_t;
+
+#define AMF0_LEN_PROP 2
+

@@ -131,6 +131,7 @@ void printhex(byte* p, int len){
 int main(){
     void* target;
     amf_t amf = amf_create( 3 );
+    amf_t amf2 = amf_create( 3 );
     amf_push_number( amf, 1337.0 );
     amf_push_date( amf, 123, 10 );
     amf_push_boolean( amf, true );
@@ -166,10 +167,20 @@ int main(){
     do_alloc( "The end!" );
     amf_push_string( amf, target );
 
+    size_t len = amf_write( amf, nullptr, 0, nullptr );
+    byte *buff = malloc( len );
+    amf_write( amf, buff, len, nullptr );
+    printf("amf_print!\n\n");
     amf_print( amf );
-
+    printf("\n\namf0_print!\n\n");
+    amf0_print( buff, len, rtmp_default_printer );
+    amf_read( amf2, buff, len, nullptr );
+    printf("\n\namf_print!\n\n");
+    amf_print( amf2 );
     printf( "\n\nTest access: %f", amf_value_get_number( amf_obj_get_value( amf_obj_get_value( amf_get_item(amf, 5), "bar" ), "Rawr" ) ) );
     amf_destroy( amf );
+    amf_destroy( amf2 );
+    free(buff);
 
 
     return 0;
