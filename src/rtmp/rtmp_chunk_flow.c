@@ -21,11 +21,11 @@
 
 */
 
-#include "rtmp_private.h"
-#include "rtmp_chunk_flow.h"
-#include "rtmp_debug.h"
-#include "data_stream.h"
-#include "algorithm.h"
+#include "../../include/rtmp/rtmp_private.h"
+#include "../../include/rtmp/chunk/rtmp_chunk_flow.h"
+#include "../../include/rtmp_debug.h"
+#include "../../include/data_stream.h"
+#include "../../include/algorithm.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

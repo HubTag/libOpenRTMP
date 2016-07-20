@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "rtmp_types.h"
-#include "rtmp_constants.h"
+#include "rtmp/rtmp_types.h"
+#include "rtmp/rtmp_constants.h"
 
 
 //memcpy that will reverse byte order if the machine is little endian

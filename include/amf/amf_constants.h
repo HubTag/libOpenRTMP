@@ -40,7 +40,7 @@
 
 #pragma once
 
-#include "rtmp_types.h"
+#include "../rtmp/rtmp_types.h"
 
 #define AMF_MAX_KEY 1000
 

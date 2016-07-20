@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "data_stream.h"
+#include "../include/data_stream.h"
 #include <stdio.h>
 
 #define min(a, b) ((a)<(b)?(a):(b))

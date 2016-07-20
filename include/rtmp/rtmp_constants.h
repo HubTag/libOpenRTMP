@@ -32,7 +32,7 @@
 
 #pragma once
 
-#include "rtmp_config.h"
+#include "../rtmp_config.h"
 #include "rtmp_types.h"
 
 

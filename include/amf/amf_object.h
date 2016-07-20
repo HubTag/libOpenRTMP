@@ -24,7 +24,7 @@
 #pragma once
 
 #include "amf_constants.h"
-#include "rtmp_types.h"
+#include "../rtmp/rtmp_types.h"
 
 typedef struct amf_value * amf_value_t;
 typedef struct amf_object * amf_t;

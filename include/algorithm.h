@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "rtmp_types.h"
+#include "rtmp/rtmp_types.h"
 
 //Return true if a is less than b. false otherwise.
 typedef bool (*less_than_proc)(

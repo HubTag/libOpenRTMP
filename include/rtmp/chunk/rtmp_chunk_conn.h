@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "rtmp_types.h"
-#include "data_stream.h"
-#include "rtmp_constants.h"
+#include "../rtmp_types.h"
+#include "../../data_stream.h"
+#include "../rtmp_constants.h"
 #include "rtmp_chunk_flow.h"
 
 typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;

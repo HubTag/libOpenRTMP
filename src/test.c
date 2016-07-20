@@ -25,10 +25,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "amf.h"
-#include "rtmp_chunk_conn.h"
-#include "rtmp_constants.h"
-#include "ringbuffer.h"
+#include <stdlib.h>
+#include "../include/amf/amf.h"
+#include "../include/rtmp/chunk/rtmp_chunk_conn.h"
+#include "../include/rtmp/rtmp_constants.h"
+#include "../include/ringbuffer.h"
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -115,7 +116,7 @@ void service( rtmp_chunk_conn_t client, rtmp_chunk_conn_t server ){
     check_conn_err( rtmp_chunk_conn_service( server ) );
 }
 
-#include "amf_object.h"
+#include "../include/amf/amf_object.h"
 #define do_alloc(c) \
     amf_push_string_alloc( amf, &target, strlen(c) ); memcpy(target, c, strlen(c));
 
@@ -129,6 +130,7 @@ void printhex(byte* p, int len){
 }
 
 int main(){
+
     void* target;
     amf_t amf = amf_create( 3 );
     amf_t amf2 = amf_create( 3 );
@@ -157,6 +159,7 @@ int main(){
     amf_push_undefined( amf );
     amf_push_object_start( amf );
         do_alloc( "Thing" );
+
             amf_push_member( amf, target );
             amf_push_number( amf, 45141 );
         do_alloc( "Meow" );
@@ -183,83 +186,6 @@ int main(){
     free(buff);
 
 
-    return 0;
-
-    rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );
-    rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false );
-
-    rtmp_chunk_conn_register_callbacks( client, data_callback, nullptr, logger, nullptr );
-    rtmp_chunk_conn_register_callbacks( server, data_callback, nullptr, logger, nullptr );
-
-
-    int state = 0;
-
-    while( true ){
-        service( client, server );
-
-        if( state == 0 && rtmp_chunk_conn_connected(client) && rtmp_chunk_conn_connected(server) ){
-            state = 1;
-            rtmp_chunk_conn_set_chunk_size( client, 200 );
-            rtmp_chunk_conn_set_chunk_size( server, 1000 );
-        }
-        else if( state == 1 ){
-            rtmp_chunk_conn_set_peer_bwidth( client, 2000, RTMP_LIMIT_HARD );
-            ++state;
-        }
-        else if( state == 2 ){
-            rtmp_chunk_conn_set_chunk_size( server, 1000 );
-            size_t wrote = 0;
-            unsigned char test[5000];
-            unsigned char *teststr = (unsigned char*)"Hello there my friend!";
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 2, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 200, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 9000, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 14, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test, sizeof(test), &wrote);
-            while( wrote < sizeof( test ) ){
-                rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test + wrote, sizeof(test), &wrote);
-                service( client, server );
-            }
-            ++state;
-        }
-
-        usleep(10000);
-    }
-    #if 0
-    ors_data_t client_out = ors_data_create_file("data2", "rb");
-    char nonce1[1528], nonce2[1528];
-    unsigned int time1, time2;
-    rtmp_chunk_stream_message_t cache[RTMP_STREAM_CACHE_MAX];
-    memset( cache, 0, sizeof( cache ) );
-
-    check( rtmp_chunk_read_shake_0( client_out ) );
-    check( rtmp_chunk_read_shake_1( client_out, &time1, nonce1, 1528 ) );
-    check( rtmp_chunk_read_shake_2( client_out, &time1, &time2, nonce2, 1528 ) );
-    rtmp_chunk_stream_message_t *msg;
-    while( ors_data_eof( client_out ) == 0 ){
-        check_chunk( rtmp_chunk_read_hdr( client_out, &msg, cache ), &msg );
-        if( !msg ){
-            continue;
-        }
-
-        if( msg->message_type == RTMP_MSG_AMF0_CMD || msg->message_type == RTMP_MSG_AMF0_SO || msg->message_type == RTMP_MSG_AMF0_DAT ){
-            amf0_print( client_out, msg->message_length, rtmp_default_printer );
-        }
-        else{
-            byte buf[msg->message_length];
-
-            ors_data_read( client_out, buf, msg->message_length);
-            for( int i = 0; i < msg->message_length; ++i){
-                //printf("%02X ", buf[i]);
-            }
-        }
-        printf( "\n");
-        //ors_data_seek( client_out, msg->message_length - count, ORS_SEEK_OFFSET );
-    }
-    #endif
     return 0;
 }
 

@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "rtmp_types.h"
+#include "../rtmp/rtmp_types.h"
 #include "amf_constants.h"
-#include "data_stream.h"
-#include "rtmp_debug.h"
+#include "../data_stream.h"
+#include "../rtmp_debug.h"
 
 amf_err_t amf0_write_number( byte* data, size_t len, double value );
 amf_err_t amf0_write_boolean( byte* data, size_t len, int value );

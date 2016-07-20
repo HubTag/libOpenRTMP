@@ -25,7 +25,7 @@
 
 #include "rtmp_types.h"
 #include "rtmp_constants.h"
-#include "rtmp_chunk_conn.h"
+#include "chunk/rtmp_chunk_conn.h"
 
 struct rtmp_chunk_stream_message_internal{
     rtmp_chunk_stream_message_t msg;

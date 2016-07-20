@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
-#include "memutil.h"
+#include "../include/memutil.h"
 
 
 //memcpy that will reverse byte order if the machine is little endian
