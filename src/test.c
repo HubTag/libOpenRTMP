@@ -34,8 +34,6 @@
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
-
-
 rtmp_cb_status_t data_callback(
     rtmp_chunk_conn_t conn,
     const byte *contents,
@@ -130,7 +128,6 @@ void printhex(byte* p, int len){
 }
 
 int main(){
-
     void* target;
     amf_t amf = amf_create( 3 );
     amf_t amf2 = amf_create( 3 );

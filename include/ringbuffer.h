@@ -28,6 +28,8 @@ typedef struct ringbuffer * ringbuffer_t;
 ringbuffer_t ringbuffer_create( unsigned long size);
 void ringbuffer_destroy( ringbuffer_t buffer );
 
+void ringbuffer_clear( ringbuffer_t buffer );
+
 //Returns a void* buffer for writing. Max write to buffer is returned in size.
 //The buffer returned is not guaranteed to be as long as the total unused
 //capacity of the buffer.

@@ -50,12 +50,20 @@ ringbuffer_t ringbuffer_create( unsigned long size){
     buf->size = size;
     buf->read_offset = 0;
     buf->write_offset = 0;
+    buf->frozen = 0;
     return buf;
 }
 
 void ringbuffer_destroy( ringbuffer_t buffer ){
     free( buffer->data );
     free( buffer );
+}
+
+void ringbuffer_clear( ringbuffer_t buffer ){
+    buffer->start = buffer->len = 0;
+    buffer->read_offset = 0;
+    buffer->write_offset = 0;
+    buffer->frozen = 0;
 }
 
 void* ringbuffer_get_write_buf( ringbuffer_t buffer, unsigned long *size ){

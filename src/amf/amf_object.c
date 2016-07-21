@@ -175,6 +175,7 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
     int amt2 = 0;
     amf_v_t *val = (amf_v_t*) value;
 
+
     switch( val->type ){
         case AMF0_TYPE_AVMPLUS:
             return amf0_write_unsupported( dest, size );
@@ -273,6 +274,7 @@ amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written ){
     size_t offset = 0;
     size_t total_len = 0;
     size_t i;
+
     if( written ){
         i = *written;
     }
