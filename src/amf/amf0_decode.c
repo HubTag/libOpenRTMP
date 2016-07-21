@@ -23,9 +23,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../../include/memutil.h"
-#include "../../include/amf/amf.h"
-#include "../../include/data_stream.h"
+#include "memutil.h"
+#include "amf/amf.h"
+#include "data_stream.h"
 
 
 

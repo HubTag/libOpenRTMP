@@ -26,10 +26,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "../include/amf/amf.h"
-#include "../include/rtmp/chunk/rtmp_chunk_conn.h"
-#include "../include/rtmp/rtmp_constants.h"
-#include "../include/ringbuffer.h"
+#include "amf/amf.h"
+#include "rtmp/chunk/rtmp_chunk_conn.h"
+#include "rtmp/rtmp_constants.h"
+#include "rtmp/chunk/rtmp_chunk_assembler.h"
+#include "ringbuffer.h"
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -114,7 +115,7 @@ void service( rtmp_chunk_conn_t client, rtmp_chunk_conn_t server ){
     check_conn_err( rtmp_chunk_conn_service( server ) );
 }
 
-#include "../include/amf/amf_object.h"
+#include "amf/amf_object.h"
 #define do_alloc(c) \
     amf_push_string_alloc( amf, &target, strlen(c) ); memcpy(target, c, strlen(c));
 
@@ -128,59 +129,55 @@ void printhex(byte* p, int len){
 }
 
 int main(){
-    void* target;
-    amf_t amf = amf_create( 3 );
-    amf_t amf2 = amf_create( 3 );
-    amf_push_number( amf, 1337.0 );
-    amf_push_date( amf, 123, 10 );
-    amf_push_boolean( amf, true );
-    do_alloc("Hello there!");
-    amf_push_long_string( amf, target);
-    amf_push_null( amf );
-    amf_push_object_start( amf );
-        do_alloc( "Foo" );
-            amf_push_member( amf, target );
-            amf_push_number( amf, 45141 );
-        do_alloc( "bar" );
-            amf_push_member( amf, target );
-            amf_push_object_start( amf );
-                do_alloc( "Rawr" );
-                amf_push_member( amf, target );
-                amf_push_number( amf, 6667 );
-                amf_push_object_end( amf );
-        do_alloc( "Meow" );
-            amf_push_member( amf, target );
-            amf_push_number( amf, 6697 );
-        amf_push_object_end( amf );
-    amf_push_reference( amf, 0 );
-    amf_push_undefined( amf );
-    amf_push_object_start( amf );
-        do_alloc( "Thing" );
+    rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );
+    rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false );
 
-            amf_push_member( amf, target );
-            amf_push_number( amf, 45141 );
-        do_alloc( "Meow" );
-            amf_push_member( amf, target );
-            amf_push_number( amf, 6697 );
-        amf_push_object_end( amf );
-    amf_push_undefined( amf );
-    do_alloc( "The end!" );
-    amf_push_string( amf, target );
+    rtmp_chunk_conn_register_callbacks( client, data_callback, nullptr, logger, nullptr );
+    rtmp_chunk_conn_register_callbacks( server, data_callback, nullptr, logger, nullptr );
 
-    size_t len = amf_write( amf, nullptr, 0, nullptr );
-    byte *buff = malloc( len );
-    amf_write( amf, buff, len, nullptr );
-    printf("amf_print!\n\n");
-    amf_print( amf );
-    printf("\n\namf0_print!\n\n");
-    amf0_print( buff, len, rtmp_default_printer );
-    amf_read( amf2, buff, len, nullptr );
-    printf("\n\namf_print!\n\n");
-    amf_print( amf2 );
-    printf( "\n\nTest access: %f", amf_value_get_number( amf_obj_get_value( amf_obj_get_value( amf_get_item(amf, 5), "bar" ), "Rawr" ) ) );
-    amf_destroy( amf );
-    amf_destroy( amf2 );
-    free(buff);
+    rtmp_chunk_assembler_t assembler1 = rtmp_chunk_assembler_create( 10000, data_callback, nullptr, logger, nullptr );
+    rtmp_chunk_assembler_assign( assembler1, client );
+
+    rtmp_chunk_assembler_t assembler2 = rtmp_chunk_assembler_create( 10000, data_callback, nullptr, logger, nullptr );
+    rtmp_chunk_assembler_assign( assembler2, server );
+
+
+    int state = 0;
+
+    while( true ){
+        service( client, server );
+
+        if( state == 0 && rtmp_chunk_conn_connected(client) && rtmp_chunk_conn_connected(server) ){
+            state = 1;
+            rtmp_chunk_conn_set_chunk_size( client, 0 );
+            rtmp_chunk_conn_set_chunk_size( server, 0 );
+        }
+        else if( state == 1 ){
+            rtmp_chunk_conn_set_peer_bwidth( client, 0, RTMP_LIMIT_HARD );
+            ++state;
+        }
+        else if( state == 2 ){
+            rtmp_chunk_conn_set_chunk_size( server, 0 );
+            size_t wrote = 0;
+            unsigned char test[5000];
+            unsigned char *teststr = (unsigned char*)"Hello there my friend!";
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 2, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 200, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 9000, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 14, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
+            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test, sizeof(test), &wrote);
+            while( wrote < sizeof( test ) ){
+                rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test + wrote, sizeof(test), &wrote);
+                service( client, server );
+            }
+            ++state;
+        }
+
+        usleep(10000);
+    }
 
 
     return 0;

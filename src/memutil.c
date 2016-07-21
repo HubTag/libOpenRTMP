@@ -27,8 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
-#include "../include/memutil.h"
-
+#include "memutil.h"
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void *dst, const void *src, size_t len){

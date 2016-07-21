@@ -57,7 +57,15 @@
 // 2 - Log most non-fatal errors (Suggested for debugging)
 // 3 - Log all errors
 // 4 - Log all status codes other than ERR_NONE
-#define RTMP_LOG_LEVEL 0
+#define RTMP_LOG_LEVEL 1
 
 //The max size of a 'safe alloc'
 #define RTMP_MAX_ALLOC 10000
+
+//Minimum RTMP values.
+#define RTMP_MIN_WINDOW_SIZE 1
+#define RTMP_MIN_CHUNK_SIZE 1
+#define RTMP_MIN_PEER_CHUNK_SIZE 1
+#define RTMP_MIN_PEER_WINDOW_SIZE 1
+#define RTMP_MIN_WINDOW_ACK_SIZE 1
+#define RTMP_MIN_PEER_WINDOW_SIZE 1

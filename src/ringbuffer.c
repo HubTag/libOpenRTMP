@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../include/ringbuffer.h"
+#include "ringbuffer.h"
 
 #define READ_FROZEN(a) (a&1)
 #define WRITE_FROZEN(a) (a&2)

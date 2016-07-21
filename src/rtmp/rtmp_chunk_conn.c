@@ -20,9 +20,9 @@
     along with libOpenRTMP. If not, see <http://www.gnu.org/licenses/>.
 
 */
-#include "../../include/rtmp/rtmp_private.h"
-#include "../../include/rtmp/chunk/rtmp_chunk_conn.h"
-#include "../../include/rtmp_debug.h"
+#include "rtmp/rtmp_private.h"
+#include "rtmp/chunk/rtmp_chunk_conn.h"
+#include "rtmp_debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -300,6 +300,9 @@ static rtmp_err_t rtmp_chunk_conn_service_shake( rtmp_chunk_conn_t conn, rtmp_io
 static rtmp_err_t rtmp_chunk_conn_service_recv_set_chunk_size(rtmp_chunk_conn_t conn){
     if( conn->control_message_len >= 4 ){
         conn->peer_chunk_size = ntoh_read_ud( conn->control_message_buffer );
+        if( conn->peer_chunk_size < RTMP_MIN_PEER_CHUNK_SIZE ){
+            conn->peer_chunk_size = RTMP_MIN_PEER_CHUNK_SIZE;
+        }
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
     }
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
@@ -328,6 +331,9 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_set_peer_bwidth(rtmp_chunk_conn_t
         rtmp_limit_t limit = conn->control_message_buffer[4];
         uint32_t new_size = ntoh_read_ud( conn->control_message_buffer );
         uint32_t old_size = conn->self_window_size;
+        if( new_size < RTMP_MIN_WINDOW_SIZE ){
+            new_size = RTMP_MIN_WINDOW_SIZE;
+        }
         switch( limit ){
             case RTMP_LIMIT_DYNAMIC:
                 //If previous attempt was hard, treat as hard. Otherwise, ignore.
@@ -375,6 +381,9 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_ack(rtmp_chunk_conn_t conn ){
 static rtmp_err_t rtmp_chunk_conn_service_recv_win_ack_size(rtmp_chunk_conn_t conn ){
     if( conn->control_message_len >= 4 ){
         conn->peer_window_size = ntoh_read_ud( conn->control_message_buffer );
+        if( conn->peer_window_size < RTMP_MIN_PEER_WINDOW_SIZE ){
+            conn->peer_window_size = RTMP_MIN_PEER_WINDOW_SIZE;
+        }
         return rtmp_chunk_conn_acknowledge( conn );
     }
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
@@ -390,7 +399,7 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, cons
         available = RTMP_CONTROL_BUFFER_SIZE - conn->control_message_len;
     }
 
-    memcpy( conn->control_message_buffer, input, available );
+    memcpy( conn->control_message_buffer + conn->control_message_len, input, available );
     conn->control_message_len += available;
 
     if( remaining == 0 ){
@@ -407,7 +416,10 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, cons
                 return rtmp_chunk_conn_service_recv_win_ack_size( conn );
         }
     }
-    return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
+    else if( available == 0 ){
+        return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
+    }
+    return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
 }
 
 static rtmp_err_t rtmp_chunk_conn_service_recv_issue(
@@ -572,6 +584,9 @@ rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chun
 
 rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, uint32_t size ){
     size &= ~(1 << 31);
+    if( size < RTMP_MIN_CHUNK_SIZE ){
+        size = RTMP_MIN_CHUNK_SIZE;
+    }
     if( size > RTMP_MAX_CHUNK_SIZE ){
         size = RTMP_MAX_CHUNK_SIZE;
     }
@@ -632,7 +647,9 @@ rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn ){
 }
 
 rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, uint32_t size ){
-
+    if( size < RTMP_MIN_WINDOW_ACK_SIZE ){
+        size = RTMP_MIN_WINDOW_ACK_SIZE;
+    }
 
     byte buffer[4];
     ntoh_write_ud( buffer, size );
@@ -654,6 +671,9 @@ rtmp_err_t rtmp_chunk_conn_set_window_ack_size( rtmp_chunk_conn_t conn, uint32_t
 }
 
 rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, uint32_t size, rtmp_limit_t limit_type ){
+    if( size < RTMP_MIN_PEER_WINDOW_SIZE ){
+        size = RTMP_MIN_PEER_WINDOW_SIZE;
+    }
     byte buffer[5];
     ntoh_write_ud( buffer, size );
     buffer[4] = limit_type;
@@ -759,6 +779,8 @@ rtmp_err_t rtmp_chunk_conn_gen_error(rtmp_chunk_conn_t conn, rtmp_err_t err, siz
         case RTMP_ERR_INADEQUATE_CHUNK:
         case RTMP_ERR_INVALID:
         case RTMP_ERR_OOM:
+            conn->callback_log( err, line, file, msg, conn->userdata );
+            return err;
         #if RTMP_LOG_LEVEL >= 2
         case RTMP_ERR_BAD_READ:
         case RTMP_ERR_BAD_WRITE:
@@ -775,7 +797,6 @@ rtmp_err_t rtmp_chunk_conn_gen_error(rtmp_chunk_conn_t conn, rtmp_err_t err, siz
         default:
             break;
     }
-
     #endif
     return err;
 }

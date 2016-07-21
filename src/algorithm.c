@@ -22,8 +22,8 @@
 */
 
 
-#include "../include/rtmp/rtmp_types.h"
-#include "../include/algorithm.h"
+#include "rtmp/rtmp_types.h"
+#include "algorithm.h"
 
 static bool equals( const void* a, const void *b, less_than_proc less_than ){
     return (!less_than(a, b)) && (!less_than(b, a));

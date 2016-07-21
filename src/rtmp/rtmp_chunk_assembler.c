@@ -21,7 +21,7 @@
 
 */
 
-#include "../../include/rtmp/chunk/rtmp_chunk_assembler.h"
+#include "rtmp/chunk/rtmp_chunk_assembler.h"
 #include <stdlib.h>
 
 struct rtmp_chunk_assembler{
@@ -70,6 +70,7 @@ rtmp_chunk_assembler_t rtmp_chunk_assembler_create( size_t max_size, rtmp_chunk_
 }
 
 void rtmp_chunk_assembler_destroy( rtmp_chunk_assembler_t assembler ){
+    ringbuffer_destroy( assembler->buffer );
     free( assembler );
 }
 

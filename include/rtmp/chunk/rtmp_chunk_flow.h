@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "../rtmp_types.h"
-#include "../../data_stream.h"
-#include "../../ringbuffer.h"
+#include "rtmp/rtmp_types.h"
+#include "data_stream.h"
+#include "ringbuffer.h"
 
 //A chunk message header
 typedef struct rtmp_chunk_stream_message{

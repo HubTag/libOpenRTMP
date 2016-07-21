@@ -21,8 +21,8 @@
 
 */
 
-#include "../../include/amf/amf_object.h"
-#include "../../include/amf/amf.h"
+#include "amf/amf_object.h"
+#include "amf/amf.h"
 #include <stdlib.h>
 #include <string.h>
 
