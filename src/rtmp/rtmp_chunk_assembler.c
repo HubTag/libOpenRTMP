@@ -32,7 +32,7 @@ struct rtmp_chunk_assembler{
     ringbuffer_t buffer;
 };
 
-rtmp_cb_status_t rtmp_chunk_assembler_cb(
+rtmp_cb_status_t    rtmp_chunk_assembler_cb(
         rtmp_chunk_conn_t conn,
         const byte *contents,
         size_t available,
@@ -41,19 +41,35 @@ rtmp_cb_status_t rtmp_chunk_assembler_cb(
         void *user
 ){
     rtmp_chunk_assembler_t self = user;
-    if( ringbuffer_copy_write( self->buffer, contents, available ) < available ){
-        //Message too large
-        return RTMP_CB_ABORT;
-    }
-    if( remaining == 0 ){
+    size_t original_size = ringbuffer_count( self->buffer );
+    size_t copied = ringbuffer_copy_write( self->buffer, contents, available );
+    if( copied < available || remaining == 0 ){
         if( available == 0 ){
+            //Chunk was aborted.
             ringbuffer_clear( self->buffer );
             return self->chunk_cb( conn, nullptr, 0, 0, msg, self->user );
         }
+        //If the chunk is done, or if our buffer is full, run the callback
         unsigned long len;
         const void* buffer = ringbuffer_get_read_buf( self->buffer, &len );
-        rtmp_cb_status_t ret = self->chunk_cb( conn, buffer, len, 0, msg, self->user );
+        original_size += copied;
+        original_size -= len;
+        rtmp_cb_status_t ret = self->chunk_cb( conn, buffer, len, original_size + remaining, msg, self->user );
+        if( ret == RTMP_CB_CONTINUE && len < original_size + copied ){
+            //The buffer wasn't exhausted
+            ringbuffer_commit_read( self->buffer, len );
+            buffer = ringbuffer_get_read_buf( self->buffer, &len );
+            original_size -= len;
+            ret = self->chunk_cb( conn, buffer, len, original_size + remaining, msg, self->user );
+        }
         ringbuffer_clear( self->buffer );
+        if( ret != RTMP_CB_CONTINUE ){
+            return ret;
+        }
+        if( available > copied ){
+            //There's still data which needs to be consumed by this callback
+            ret = self->chunk_cb( conn, contents + copied, available - copied, remaining, msg, self->user );
+        }
         return ret;
     }
     return RTMP_CB_CONTINUE;

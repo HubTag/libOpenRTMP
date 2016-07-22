@@ -314,13 +314,17 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_abort(rtmp_chunk_conn_t conn){
 
         rtmp_chunk_stream_message_t msg;
         rtmp_chunk_stream_message_internal_t *cached = rtmp_cache_get( conn->stream_cache_in, chunk_stream);
-        if( cached == nullptr ){
+        rtmp_chunk_stream_message_internal_t *agmsg = rtmp_cache_get( conn->stream_cache_in, RTMP_CACHE_AGGREGATE );
+        if( cached == nullptr || agmsg == nullptr ){
             return RTMP_GEN_ERROR(conn, RTMP_ERR_INADEQUATE_CHUNK);
         }
         memcpy( &msg, cached, sizeof( rtmp_chunk_stream_message_t ) );
         msg.chunk_stream_id = chunk_stream;
 
         rtmp_chunk_conn_call_chunk( conn, nullptr, 0, 0, &msg );
+        cached->processed = 0;
+        agmsg->processed = 0;
+        agmsg->initialized = false;
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
     }
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
@@ -389,11 +393,53 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_win_ack_size(rtmp_chunk_conn_t co
     return RTMP_GEN_ERROR(conn, RTMP_ERR_INVALID);
 }
 
+
+//This is the wrong place for this...
+//TODO: Move into RTMP stream handler
+static rtmp_err_t rtmp_chunk_conn_service_recv_aggregate( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
+    //Fetch our aggregate message cache
+    rtmp_chunk_stream_message_internal_t *agmsg = rtmp_cache_get( conn->stream_cache_in, RTMP_CACHE_AGGREGATE );
+    if( agmsg == nullptr ){
+        return RTMP_ERR_INADEQUATE_CHUNK;
+    }
+    size_t offset = 0;
+    if( agmsg->processed == 0 ){
+        //This is a new message, try fetching the header.
+        if( available + conn->control_message_len < RTMP_MESSAGE_HEADER_SIZE ){
+            //The number of available bytes isn't enough to fill the buffer
+            memcpy( conn->control_message_buffer + conn->control_message_len, input, available );
+            conn->control_message_len += available;
+            return RTMP_ERR_AGAIN;
+        }
+        else if( conn->control_message_len < RTMP_MESSAGE_HEADER_SIZE ){
+            //The number of available bytes is enough to fill the buffer.
+            size_t amount = RTMP_MESSAGE_HEADER_SIZE - conn->control_message_len;
+            memcpy( conn->control_message_buffer + conn->control_message_len, input, amount );
+            conn->control_message_len += amount;
+            offset = amount;
+        }
+        //With the filled buffer, parse it into the cache
+        agmsg->msg.message_type = conn->control_message_buffer[0];
+        agmsg->msg.message_length = ntoh_read_ud3( conn->control_message_buffer + 1 );
+        agmsg->msg.timestamp = ntoh_read_ud( conn->control_message_buffer + 4 );
+        agmsg->msg.message_stream_id = ntoh_read_ud3( conn->control_message_buffer + 8 );
+        agmsg->msg.chunk_stream_id = msg->chunk_stream_id;
+        agmsg->initialized = true;
+        agmsg->processed = agmsg->msg.message_length;
+
+    }
+    if( offset < available ){
+
+    }
+}
+
+
 static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
     if( available == remaining && remaining == 0 ){
         //The partial command has been aborted.
         return RTMP_GEN_ERROR(conn, RTMP_ERR_NONE);
     }
+
     //Clamp the length to the size of our control message buffer.
     if( available + conn->control_message_len >= RTMP_CONTROL_BUFFER_SIZE ){
         available = RTMP_CONTROL_BUFFER_SIZE - conn->control_message_len;

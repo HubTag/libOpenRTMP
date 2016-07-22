@@ -39,6 +39,8 @@
 //Nonce size specified on page 8, §5.2.3
 #define RTMP_NONCE_SIZE                     1528
 #define RTMP_VERSION                        3
+#define RTMP_CACHE_AGGREGATE                0
+#define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
 
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,

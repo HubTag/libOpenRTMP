@@ -135,10 +135,10 @@ int main(){
     rtmp_chunk_conn_register_callbacks( client, data_callback, nullptr, logger, nullptr );
     rtmp_chunk_conn_register_callbacks( server, data_callback, nullptr, logger, nullptr );
 
-    rtmp_chunk_assembler_t assembler1 = rtmp_chunk_assembler_create( 10000, data_callback, nullptr, logger, nullptr );
+    rtmp_chunk_assembler_t assembler1 = rtmp_chunk_assembler_create( RTMP_MAX_CHUNK_CACHE, data_callback, nullptr, logger, nullptr );
     rtmp_chunk_assembler_assign( assembler1, client );
 
-    rtmp_chunk_assembler_t assembler2 = rtmp_chunk_assembler_create( 10000, data_callback, nullptr, logger, nullptr );
+    rtmp_chunk_assembler_t assembler2 = rtmp_chunk_assembler_create( RTMP_MAX_CHUNK_CACHE, data_callback, nullptr, logger, nullptr );
     rtmp_chunk_assembler_assign( assembler2, server );
 
 
@@ -149,15 +149,15 @@ int main(){
 
         if( state == 0 && rtmp_chunk_conn_connected(client) && rtmp_chunk_conn_connected(server) ){
             state = 1;
-            rtmp_chunk_conn_set_chunk_size( client, 0 );
-            rtmp_chunk_conn_set_chunk_size( server, 0 );
+            rtmp_chunk_conn_set_chunk_size( client, 10 );
+            rtmp_chunk_conn_set_chunk_size( server, 10 );
         }
         else if( state == 1 ){
-            rtmp_chunk_conn_set_peer_bwidth( client, 0, RTMP_LIMIT_HARD );
+            rtmp_chunk_conn_set_peer_bwidth( client, 10, RTMP_LIMIT_HARD );
             ++state;
         }
         else if( state == 2 ){
-            rtmp_chunk_conn_set_chunk_size( server, 0 );
+            rtmp_chunk_conn_set_chunk_size( server, 10 );
             size_t wrote = 0;
             unsigned char test[5000];
             unsigned char *teststr = (unsigned char*)"Hello there my friend!";
@@ -168,11 +168,11 @@ int main(){
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
             rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, teststr, 22, nullptr);
-            rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test, sizeof(test), &wrote);
+            /*rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test, sizeof(test), &wrote);
             while( wrote < sizeof( test ) ){
                 rtmp_chunk_conn_send_message( server, RTMP_MSG_AUDIO, 55556, 1, 0, test + wrote, sizeof(test), &wrote);
                 service( client, server );
-            }
+            }*/
             ++state;
         }
 

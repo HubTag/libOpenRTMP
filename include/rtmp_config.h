@@ -42,8 +42,7 @@
 //Max size of dynamic allocation for chunk header cache
 #define RTMP_STREAM_CACHE_MAX 100
 
-//Size of control chunk buffer. According to the spec, this only really needs to be
-//5 bytes, but just in case someone wants to do something weird, I've chosen 16.
+//Size of control chunk buffer. This MUST be at least 12 bytes.
 #define RTMP_CONTROL_BUFFER_SIZE 16
 
 //Force verification of handshake times and nonces. There is no real reason to turn
@@ -69,3 +68,6 @@
 #define RTMP_MIN_PEER_WINDOW_SIZE 1
 #define RTMP_MIN_WINDOW_ACK_SIZE 1
 #define RTMP_MIN_PEER_WINDOW_SIZE 1
+
+//Maximum values
+#define RTMP_MAX_CHUNK_CACHE 0x1000
