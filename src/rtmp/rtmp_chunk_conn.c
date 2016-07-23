@@ -396,7 +396,7 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_win_ack_size(rtmp_chunk_conn_t co
 
 //This is the wrong place for this...
 //TODO: Move into RTMP stream handler
-static rtmp_err_t rtmp_chunk_conn_service_recv_aggregate( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
+/*static rtmp_err_t rtmp_chunk_conn_service_recv_aggregate( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
     //Fetch our aggregate message cache
     rtmp_chunk_stream_message_internal_t *agmsg = rtmp_cache_get( conn->stream_cache_in, RTMP_CACHE_AGGREGATE );
     if( agmsg == nullptr ){
@@ -431,7 +431,7 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_aggregate( rtmp_chunk_conn_t conn
     if( offset < available ){
 
     }
-}
+}*/
 
 
 static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){

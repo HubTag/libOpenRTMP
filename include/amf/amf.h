@@ -76,3 +76,50 @@ amf_err_t amf0_get_typed_object( const byte* data, size_t len );
 amf_err_t amf0_get_continue( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation );
 
 void amf0_print( const byte* data, size_t len, rtmp_printer_t printer );
+
+/*
+amf_err_t amf3_write_undefined( byte *data, size_t len );
+amf_err_t amf3_write_null( byte *data, size_t len );
+amf_err_t amf3_write_false( byte *data, size_t len );
+amf_err_t amf3_write_true( byte *data, size_t len );
+amf_err_t amf3_write_int( byte *data, size_t len, int value );
+amf_err_t amf3_write_double( byte *data, size_t len, double value );
+amf_err_t amf3_write_string( byte *data, size_t len, byte *str, size_t str_len );
+amf_err_t amf3_write_xmldocument( byte *data, size_t len, byte *str, size_t str_len);
+amf_err_t amf3_write_date( byte *data, size_t len, double timestamp );
+amf_err_t amf3_write_array_begin( byte *data, size_t len, size_t dense_len );
+amf_err_t amf3_write_array_mid( byte *data, size_t len, size_t assoc_len );
+amf_err_t amf3_write_array_key( byte *data, size_t len, byte *str, size_t str_len );
+amf_err_t amf3_write_object( byte *data, size_t len, );
+amf_err_t amf3_write_xml( byte *data, size_t len, );
+amf_err_t amf3_write_array_byte( byte *data, size_t len, );
+amf_err_t amf3_write_vec_int( byte *data, size_t len, );
+amf_err_t amf3_write_vec_uint( byte *data, size_t len, );
+amf_err_t amf3_write_vec_double( byte *data, size_t len, );
+amf_err_t amf3_write_vec_object( byte *data, size_t len, );
+amf_err_t amf3_write_dict( byte *data, size_t len, );
+amf_err_t amf3_write_reference( byte *data, size_t len, amf3_type_t type, size_t index );
+
+
+amf_err_t amf3_get_undefined( byte *data, size_t len );
+amf_err_t amf3_get_null( byte *data, size_t len );
+amf_err_t amf3_get_false( byte *data, size_t len );
+amf_err_t amf3_get_true( byte *data, size_t len );
+amf_err_t amf3_get_int( byte *data, size_t len, int *value );
+amf_err_t amf3_get_double( byte *data, size_t len, double *value );
+amf_err_t amf3_get_string_length( byte *data, size_t len, size_t *length );
+amf_err_t amf3_get_string( byte *data, size_t len, byte *str, size_t str_len, size_t *continuation );
+amf_err_t amf3_get_xmldocument_length( byte *data, size_t len, size_t *length );
+amf_err_t amf3_get_xmldocument( byte *data, size_t len, byte *str, size_t str_len, size_t *continuation );
+amf_err_t amf3_get_date( byte *data, size_t len, double *timestamp );
+amf_err_t amf3_get_array( byte *data, size_t len, );
+amf_err_t amf3_get_object( byte *data, size_t len, );
+amf_err_t amf3_get_xml( byte *data, size_t len, );
+amf_err_t amf3_get_array_byte( byte *data, size_t len, );
+amf_err_t amf3_get_vec_int( byte *data, size_t len, );
+amf_err_t amf3_get_vec_uint( byte *data, size_t len, );
+amf_err_t amf3_get_vec_double( byte *data, size_t len, );
+amf_err_t amf3_get_vec_object( byte *data, size_t len, );
+amf_err_t amf3_get_dict( byte *data, size_t len, );
+//If AMF_ERR_NOT_A_REFERENCE is returned, then obviously the value is not a reference.
+amf_err_t amf3_get_reference( byte *data, size_t len, amf3_type_t *type, size_t *index );*/

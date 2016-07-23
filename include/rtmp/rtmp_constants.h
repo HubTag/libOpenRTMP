@@ -41,6 +41,7 @@
 #define RTMP_VERSION                        3
 #define RTMP_CACHE_AGGREGATE                0
 #define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
+#define RTMP_ANY                            0xFFFFFF
 
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,

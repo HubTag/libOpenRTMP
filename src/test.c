@@ -128,6 +128,10 @@ void printhex(byte* p, int len){
     }
 }
 
+struct foo{
+    int a;
+};
+
 int main(){
     rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );
     rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false );
