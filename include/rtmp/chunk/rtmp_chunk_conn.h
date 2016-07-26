@@ -108,7 +108,7 @@ rtmp_chunk_conn_send_message(
     uint32_t chunk_stream,
     uint32_t message_stream,
     uint32_t timestamp,
-    byte *data,
+    const byte *data,
     size_t length,
     size_t *written
 );

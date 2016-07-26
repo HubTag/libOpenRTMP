@@ -743,7 +743,7 @@ rtmp_chunk_conn_send_message(
     uint32_t chunk_stream,
     uint32_t message_stream,
     uint32_t timestamp,
-    byte *data,
+    const byte *data,
     size_t length,
     size_t *written_out
 ){
@@ -765,13 +765,19 @@ rtmp_chunk_conn_send_message(
     if( written_out ){
         written = *written_out;
     }
+    else{
+        //We need to be able to roll back the whole loop
+        ringbuffer_freeze_write( conn->out );
+    }
     while( written < length ){
         size_t chunk_len = length - written;
         //Make sure we only write one chunk at a time
         if( chunk_len > conn->self_chunk_size ){
             chunk_len = conn->self_chunk_size;
         }
-        ringbuffer_freeze_write( conn->out );
+        if( written_out ){
+            ringbuffer_freeze_write( conn->out );
+        }
         ret = rtmp_chunk_emit_hdr( conn->out, &msg, conn->stream_cache_out );
         if( ret >= RTMP_ERR_ERROR ){
             //Rollback on fail
@@ -783,7 +789,9 @@ rtmp_chunk_conn_send_message(
             break;
         }
         //Commit the write
-        conn->bytes_out += ringbuffer_unfreeze_write( conn->out, true );
+        if( written_out ){
+            conn->bytes_out += ringbuffer_unfreeze_write( conn->out, true );
+        }
         written += chunk_len;
     }
     if( ret >= RTMP_ERR_ERROR ){
@@ -792,6 +800,10 @@ rtmp_chunk_conn_send_message(
     }
     if( written_out ){
         *written_out = written;
+    }
+    else {
+        //If we errored, the previous unfreeze should make this unfreeze return 0
+        conn->bytes_out += ringbuffer_unfreeze_write( conn->out, true );
     }
     return RTMP_GEN_ERROR(conn, ret);
 }

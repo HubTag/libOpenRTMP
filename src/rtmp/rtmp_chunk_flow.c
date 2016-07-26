@@ -203,6 +203,11 @@ rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t
     int32_t delta = timestamp_get_delta( previous->msg.timestamp, timestamp );
 
     if( previous->initialized ){
+        //If zero, force a delta of zero rather than use an absolute timestamp
+        if( timestamp == 0 ){
+            delta = 0;
+            timestamp = previous->msg.timestamp;
+        }
         if( previous->msg.message_stream_id == message->message_stream_id ){
             fmt = 1;
             if( previous->msg.message_type == message->message_type &&
