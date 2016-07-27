@@ -269,7 +269,6 @@ unsigned long ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned lon
 
 unsigned long ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsigned long length ){
     unsigned long size;
-    char *s = (char*)src;
     unsigned long wrote = 0;
     void* buff = ringbuffer_get_write_buf( buffer, &size );
     //If the buffer has enough space to consume the whole write, we just need a simple memcpy
@@ -291,7 +290,7 @@ unsigned long ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsig
             length = size;
         }
         //Copy from the source buffer offset by the amount already written into the write buffer
-        memcpy( buff, s + wrote, length );
+        memcpy( buff, (const char*)src + wrote, length );
         wrote += length;
         //Commit the amount which was written
         ringbuffer_commit_write( buffer, length );

@@ -30,7 +30,7 @@
 #include "memutil.h"
 
 //memcpy that will reverse byte order if the machine is little endian
-void ntoh_memcpy(void *dst, const void *src, size_t len){
+void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len){
     #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
         byte *output = dst;
         const byte *input = src;
@@ -289,7 +289,7 @@ double read_double_ieee(const void *ptr){
     memcpy( &ret, ptr, sizeof( ret ) );
     return ret;
     #else
-    const byte *d = (byte*) ptr;
+    const byte *d = ptr;
     double ret = 0;
     if( get_exp( d ) == 0 ){
         //Denormalized value. Value is frac * 2 ^ -1022

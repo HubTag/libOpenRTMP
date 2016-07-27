@@ -97,7 +97,7 @@ rtmp_cb_status_t rtmp_stream_call_amf(
 ){
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
 
-    char* name = nullptr;
+    const char* name = nullptr;
     size_t len;
 
     for( size_t i = 0; i < stream->amf_callbacks_len; ++i ){
@@ -148,11 +148,11 @@ rtmp_cb_status_t rtmp_stream_call_usr(
 //Procedure prototype for handling partial chunk information
 rtmp_cb_status_t rtmp_stream_chunk_proc(
     rtmp_chunk_conn_t conn,
-    const byte *contents,
+    const byte * restrict contents,
     size_t available,
     size_t remaining,
-    rtmp_chunk_stream_message_t *msg,
-    void *user
+    const rtmp_chunk_stream_message_t *msg,
+    void * restrict user
 ){
     if( remaining != 0 ){
         return RTMP_CB_ABORT;
@@ -210,7 +210,7 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
 rtmp_cb_status_t rtmp_stream_event_proc(
     rtmp_chunk_conn_t conn,
     rtmp_event_t event,
-    void *user
+    void * restrict user
 ){
     rtmp_stream_t self = (rtmp_stream_t) user;
     if( self->event_cb ){
@@ -223,9 +223,9 @@ rtmp_cb_status_t rtmp_stream_event_proc(
 void rtmp_stream_log_proc(
     rtmp_err_t err,
     size_t line,
-    const char* file,
-    const char* message,
-    void *user
+    const char * restrict file,
+    const char * restrict message,
+    void * restrict user
 ){
     rtmp_stream_t self = (rtmp_stream_t) user;
     if( self->log_cb ){
@@ -347,11 +347,11 @@ void rtmp_stream_set_msg_stream( rtmp_stream_t stream, size_t msg_id ){
     stream->message_id = msg_id;
 }
 
-rtmp_err_t rtmp_stream_send_audio( rtmp_stream_t stream, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written ){
+rtmp_err_t rtmp_stream_send_audio( rtmp_stream_t stream, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written ){
     return rtmp_stream_send_audio2( stream, stream->chunk_id, stream->message_id, timestamp, data, len, written );
 }
 
-rtmp_err_t rtmp_stream_send_video( rtmp_stream_t stream, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written ){
+rtmp_err_t rtmp_stream_send_video( rtmp_stream_t stream, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written ){
     return rtmp_stream_send_video2( stream, stream->chunk_id, stream->message_id, timestamp, data, len, written );
 }
 
@@ -404,7 +404,7 @@ static rtmp_err_t rtmp_stream_send_amf(
     return ret;
 }
 
-rtmp_err_t rtmp_stream_send_audio2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written ){
+rtmp_err_t rtmp_stream_send_audio2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written ){
     return rtmp_chunk_conn_send_message(
             stream->connection,
             RTMP_MSG_AUDIO,
@@ -415,7 +415,7 @@ rtmp_err_t rtmp_stream_send_audio2( rtmp_stream_t stream, size_t chunk_id, size_
             len,
             written );
 }
-rtmp_err_t rtmp_stream_send_video2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written ){
+rtmp_err_t rtmp_stream_send_video2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written ){
     return rtmp_chunk_conn_send_message(
             stream->connection,
             RTMP_MSG_VIDEO,

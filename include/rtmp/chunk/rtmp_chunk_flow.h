@@ -29,10 +29,10 @@
 
 //A chunk message header
 typedef struct rtmp_chunk_stream_message{
-    uint32_t chunk_stream_id;   //ID of the chunk stream
-    rtmp_time_t timestamp;         //Absolute timestamp of the message
+    uint32_t chunk_stream_id;       //ID of the chunk stream
+    rtmp_time_t timestamp;          //Absolute timestamp of the message
     size_t message_length;          //Length of the message in bytes
-    uint32_t message_stream_id; //ID of the message stream
+    uint32_t message_stream_id;     //ID of the message stream
     byte message_type;              //Message type
 } rtmp_chunk_stream_message_t;
 
@@ -49,13 +49,13 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t
 
 //Used to emit the various handshakes. Used for both the client and server; the only difference is ordering.
 rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t output );
-rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte* nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte * restrict nonce, size_t length);
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte * restrict nonce, size_t length);
 
 //Used to read the various handshakes. Used for both the client and server; the only difference is ordering.
 rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input );
-rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, byte* nonce, size_t length);
-rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t *timestamp1, rtmp_time_t *timestamp2, byte* data, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, byte * restrict nonce, size_t length);
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t * restrict timestamp1, rtmp_time_t * restrict timestamp2, byte * restrict data, size_t length);
 
 //Used to emit a header. Contents of header will be read from message and stored in the cache for future writes.
 rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache );

@@ -34,11 +34,11 @@ struct rtmp_chunk_assembler{
 
 rtmp_cb_status_t    rtmp_chunk_assembler_cb(
         rtmp_chunk_conn_t conn,
-        const byte *contents,
+        const byte * restrict contents,
         size_t available,
         size_t remaining,
-        rtmp_chunk_stream_message_t *msg,
-        void *user
+        const rtmp_chunk_stream_message_t *msg,
+        void * restrict user
 ){
     rtmp_chunk_assembler_t self = user;
     size_t original_size = ringbuffer_count( self->buffer );

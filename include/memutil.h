@@ -28,7 +28,7 @@
 
 
 //memcpy that will reverse byte order if the machine is little endian
-void ntoh_memcpy(void *dst, const void *src, size_t len);
+void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len);
 
 //Read a short from a buffer based on endianess
 short ntoh_read_s(const void *src);

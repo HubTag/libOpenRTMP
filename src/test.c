@@ -37,11 +37,11 @@
 
 rtmp_cb_status_t data_callback(
     rtmp_chunk_conn_t conn,
-    const byte *contents,
+    const byte * restrict contents,
     size_t available,
     size_t remaining,
-    rtmp_chunk_stream_message_t *msg,
-    void *user
+    const rtmp_chunk_stream_message_t *msg,
+    void * restrict user
 ){
     printf("Avail: %lu\tRemain: %lu\n", available, remaining );
     for( int i = 0; i < available; ++i ){
@@ -83,7 +83,7 @@ void check_conn_err( rtmp_err_t err ){
 }
 
 
-void logger( rtmp_err_t err, size_t line, const char* file, const char* msg, void* usr ){
+void logger( rtmp_err_t err, size_t line, const char * restrict file, const char * restrict msg, void* usr ){
     printf("Logged: [%s:%lu] %s\n", file, line, rtmp_get_err_name( err ) );
 }
 

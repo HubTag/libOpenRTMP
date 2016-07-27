@@ -43,7 +43,7 @@ void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache ){
 }
 
 //Compare the chunk stream IDs for ordering
-static bool rtmp_chunk_stream_message_less_than( const void *a, const void *b ){
+static bool rtmp_chunk_stream_message_less_than( const void * restrict a, const void * restrict b ){
     return *(const size_t*)a < ((const rtmp_chunk_stream_message_internal_t*)b)->msg.chunk_stream_id;
 }
 
@@ -113,7 +113,7 @@ rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t out ){
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, const byte * restrict nonce, size_t length){
     byte zero[4] = {0,0,0,0};
     byte timestamp_out[4];
     ntoh_write_ud( timestamp_out, timestamp );
@@ -129,7 +129,7 @@ rtmp_err_t rtmp_chunk_emit_shake_1( ringbuffer_t output, rtmp_time_t timestamp, 
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_emit_shake_2( ringbuffer_t output, rtmp_time_t timestamp1, rtmp_time_t timestamp2, const byte * restrict nonce, size_t length){
     byte timestamp1_out[4];
     byte timestamp2_out[4];
     ntoh_write_ud( timestamp1_out, timestamp1 );
@@ -159,7 +159,7 @@ rtmp_err_t rtmp_chunk_read_shake_0( ringbuffer_t input ){
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t * restrict timestamp, byte * restrict nonce, size_t length){
     byte timestamp_in[4];
     byte zero[4];
     if( ringbuffer_copy_read( input, timestamp_in, 4 ) < 4){
@@ -175,7 +175,7 @@ rtmp_err_t rtmp_chunk_read_shake_1( ringbuffer_t input, rtmp_time_t *timestamp, 
     return RTMP_ERR_NONE;
 }
 
-rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t *timestamp1, rtmp_time_t *timestamp2, byte* nonce, size_t length){
+rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t * restrict timestamp1, rtmp_time_t * restrict timestamp2, byte * restrict nonce, size_t length){
     byte timestamp1_in[4];
     byte timestamp2_in[4];
     if( ringbuffer_copy_read( input, timestamp1_in, 4 ) < 4 ){

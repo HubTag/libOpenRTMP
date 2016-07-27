@@ -25,25 +25,25 @@
 #include "rtmp/rtmp_types.h"
 #include "algorithm.h"
 
-static bool equals( const void* a, const void *b, less_than_proc less_than ){
+static bool equals( const void * restrict a, const void * restrict b, less_than_proc less_than ){
     return (!less_than(a, b)) && (!less_than(b, a));
 }
-static bool greater_than( const void* a, const void *b, less_than_proc less_than ){
+static bool greater_than( const void * restrict a, const void * restrict b, less_than_proc less_than ){
     return less_than(b, a) ;
 }
 
 /*
 Unused for now.
 
-static bool greater_than_equals( const void* a, const void *b, less_than_proc less_than ){
+static bool greater_than_equals( const void * restrict a, const void * restrict b, less_than_proc less_than ){
     return !less_than(a, b) ;
 }
-static bool less_than_equals( const void* a, const void *b, less_than_proc less_than ){
+static bool less_than_equals( const void * restrict a, const void * restrict b, less_than_proc less_than ){
     return !less_than(b, a);
 }*/
 
 
-size_t alg_search_bin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than ){
+size_t alg_search_bin( const void * restrict needle, const void * restrict haystack, size_t element_size, size_t count, less_than_proc less_than ){
     //Redefine here for ease of use
     const char *d = haystack;
     size_t lower_bound = 0;
@@ -69,7 +69,7 @@ size_t alg_search_bin( const void *needle, const void *haystack, size_t element_
     return index;
 }
 
-size_t alg_search_lin( const void *needle, const void *haystack, size_t element_size, size_t count, less_than_proc less_than ){
+size_t alg_search_lin( const void * restrict needle, const void * restrict haystack, size_t element_size, size_t count, less_than_proc less_than ){
     const char *d = haystack;
     for( size_t i = 0; i < count; ++i ){
         if( equals( needle, d + (element_size * i), less_than ) ){

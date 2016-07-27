@@ -30,9 +30,9 @@
 
 amf_err_t amf0_write_number( byte* data, size_t len, double value );
 amf_err_t amf0_write_boolean( byte* data, size_t len, int value );
-amf_err_t amf0_write_string( byte* data, size_t len, void *value, size_t value_len );
+amf_err_t amf0_write_string( byte* data, size_t len, const void *value, size_t value_len );
 amf_err_t amf0_write_object( byte* data, size_t len);
-amf_err_t amf0_write_prop_name( byte* data, size_t len, void *value, size_t value_len );
+amf_err_t amf0_write_prop_name( byte* data, size_t len, const void *value, size_t value_len );
 amf_err_t amf0_write_movieclip( byte* data, size_t len );
 amf_err_t amf0_write_null( byte* data, size_t len );
 amf_err_t amf0_write_undefined( byte* data, size_t len );
@@ -42,11 +42,11 @@ amf_err_t amf0_write_object_end( byte* data, size_t len );
 amf_err_t amf0_write_strict_array( byte* data, size_t len );
 amf_err_t amf0_write_date( byte* data, size_t len, int timezone, double timestamp );
 amf_err_t amf0_write_unsupported( byte* data, size_t len );
-amf_err_t amf0_write_long_string( byte* data, size_t len, void *value, size_t value_len);
-amf_err_t amf0_write_xmldocument( byte* data, size_t len, void *value, size_t value_len);
+amf_err_t amf0_write_long_string( byte* data, size_t len, const void *value, size_t value_len);
+amf_err_t amf0_write_xmldocument( byte* data, size_t len, const void *value, size_t value_len);
 amf_err_t amf0_write_recordset( byte* data, size_t len );
 amf_err_t amf0_write_typed_object( byte* data, size_t len );
-amf_err_t amf0_write_continue( byte* data, size_t len, void *value, size_t value_len );
+amf_err_t amf0_write_continue( byte* data, size_t len, const void *value, size_t value_len );
 
 
 

@@ -59,12 +59,12 @@ typedef rtmp_cb_status_t (*rtmp_stream_usr_proc)(
 rtmp_stream_t rtmp_stream_create( bool client );
 void rtmp_stream_destroy( rtmp_stream_t stream );
 
-rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char *name, rtmp_stream_amf_proc proc, void *user );
-rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void *user );
-rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_stream_usr_proc proc, void *user );
+rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char * restrict name, rtmp_stream_amf_proc proc, void * restrict user );
+rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void * restrict user );
+rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_stream_usr_proc proc, void * restrict user );
 
-rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_proc proc, void *user );
-rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *user );
+rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_proc proc, void * restrict user );
+rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void * restrict user );
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream );
 
@@ -72,8 +72,8 @@ rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream );
 void rtmp_stream_set_chunk_stream(          rtmp_stream_t stream, size_t chunk_id );
 void rtmp_stream_set_msg_stream(            rtmp_stream_t stream, size_t msg_id );
 
-rtmp_err_t rtmp_stream_send_audio(          rtmp_stream_t stream, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written );
-rtmp_err_t rtmp_stream_send_video(          rtmp_stream_t stream, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written );
+rtmp_err_t rtmp_stream_send_audio(          rtmp_stream_t stream, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written );
+rtmp_err_t rtmp_stream_send_video(          rtmp_stream_t stream, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written );
 rtmp_err_t rtmp_stream_send_cmd(            rtmp_stream_t stream, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 rtmp_err_t rtmp_stream_send_so(             rtmp_stream_t stream, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 rtmp_err_t rtmp_stream_send_dat(            rtmp_stream_t stream, rtmp_time_t timestamp, amf_t amf, size_t *written  );
@@ -88,8 +88,8 @@ rtmp_err_t rtmp_stream_send_ping_res(       rtmp_stream_t stream, uint32_t ping_
 
 
 
-rtmp_err_t rtmp_stream_send_audio2(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written );
-rtmp_err_t rtmp_stream_send_video2(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte *data, size_t len, size_t *written );
+rtmp_err_t rtmp_stream_send_audio2(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written );
+rtmp_err_t rtmp_stream_send_video2(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written );
 rtmp_err_t rtmp_stream_send_cmd2(           rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 rtmp_err_t rtmp_stream_send_so2(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 rtmp_err_t rtmp_stream_send_dat2(           rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, amf_t amf, size_t *written  );

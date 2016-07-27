@@ -170,7 +170,7 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
     signed char temp_b;
     double temp_d;
     size_t temp_lu;
-    char *temp_pc;
+    const char *temp_pc;
     int amt = 0;
     int amt2 = 0;
     amf_v_t *val = (amf_v_t*) value;
@@ -597,7 +597,7 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
     *destination = amf->allocation;
     return AMF_ERR_NONE;
 }
-amf_err_t amf_push_string( amf_t amf, void *str ){
+amf_err_t amf_push_string( amf_t amf, const void *str ){
     PUSH_STR( amf, str, AMF0_TYPE_STRING );
 }
 amf_err_t amf_push_object_start( amf_t amf ){
@@ -621,7 +621,7 @@ amf_err_t amf_push_object_start( amf_t amf ){
     amf->ref_table[ amf->ref_table_len++ ] = target;
     return AMF_ERR_NONE;
 }
-amf_err_t amf_push_member( amf_t amf, void *str ){
+amf_err_t amf_push_member( amf_t amf, const void *str ){
     if( amf->member_ready ){
         return AMF_ERR_INCOMPLETE;
     }
@@ -683,10 +683,10 @@ amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone ){
     target->string.type = AMF0_TYPE_DATE;
     return AMF_ERR_NONE;
 }
-amf_err_t amf_push_long_string( amf_t amf, void *str ){
+amf_err_t amf_push_long_string( amf_t amf, const void *str ){
     PUSH_STR( amf, str, AMF0_TYPE_LONG_STRING );
 }
-amf_err_t amf_push_xml( amf_t amf, void *xml ){
+amf_err_t amf_push_xml( amf_t amf, const void *xml ){
     PUSH_STR( amf, xml, AMF0_TYPE_XML_DOCUMENT );
 }
 
@@ -785,7 +785,7 @@ bool amf_value_get_bool( amf_value_t target ){
     return v->boolean.boolean;
 }
 
-char* amf_value_get_string( amf_value_t target, size_t *length ){
+const char* amf_value_get_string( amf_value_t target, size_t *length ){
     const amf_v_t *v = (const amf_v_t*) target;
     if( length ){
         *length = v->string.length;
@@ -806,7 +806,7 @@ double amf_value_get_date( amf_value_t target, signed char *timezone ){
     return v->date.timestamp;
 }
 
-char* amf_value_get_xml( amf_value_t target, size_t *length ){
+const char* amf_value_get_xml( amf_value_t target, size_t *length ){
     const amf_v_t *v = (const amf_v_t*) target;
     if( length ){
         *length = v->string.length;
@@ -825,7 +825,7 @@ amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
     return nullptr;
 }
 amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    amf_v_t *v = (amf_v_t*) target;
+    const amf_v_t *v = (const amf_v_t*) target;
     if( v->type == AMF0_TYPE_REFERENCE ){
         v = v->reference.ref;
     }
@@ -841,7 +841,7 @@ amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, s
     return &v->object.members[idx].value.value;
 }
 
-size_t amf_obj_get_count( amf_value_t target ){
+size_t amf_obj_get_count( const amf_value_t target ){
     const amf_v_t *v = (const amf_v_t*) target;
     return v->object.length;
 }

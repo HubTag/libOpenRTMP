@@ -27,14 +27,14 @@
 
 //Return true if a is less than b. false otherwise.
 typedef bool (*less_than_proc)(
-    const void *a,
-    const void *b
+    const void * restrict a,
+    const void * restrict b
 );
 
 //Binary search. Must be done on sorted array.
 size_t alg_search_bin(
-    const void *needle,
-    const void *haystack,
+    const void * restrict needle,
+    const void * restrict haystack,
     size_t element_size,
     size_t count,
     less_than_proc less_than
@@ -42,8 +42,8 @@ size_t alg_search_bin(
 
 //Linear search. May be used on non-linear array.
 size_t alg_search_lin(
-    const void *needle,
-    const void *haystack,
+    const void * restrict needle,
+    const void * restrict haystack,
     size_t element_size,
     size_t count,
     less_than_proc less_than

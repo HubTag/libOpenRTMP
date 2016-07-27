@@ -53,7 +53,7 @@ amf_err_t amf0_write_boolean( byte* data, size_t data_len, int value ){
 }
 
 //String functions are used for all strings.
-static amf_err_t amf0_write_string_internal( byte* data, size_t data_len, byte type, void *value, size_t value_len ){
+static amf_err_t amf0_write_string_internal( byte* data, size_t data_len, byte type, const void *value, size_t value_len ){
     if( data == nullptr ){
         if( value_len > 0xFFFF || type == AMF0_TYPE_XML_DOCUMENT ){
             return 5 + value_len;
@@ -87,7 +87,7 @@ static amf_err_t amf0_write_string_internal( byte* data, size_t data_len, byte t
 }
 
 //String functions are used for normal and long strings.
-amf_err_t amf0_write_string( byte* data, size_t data_len, void *value, size_t value_len ){
+amf_err_t amf0_write_string( byte* data, size_t data_len, const void *value, size_t value_len ){
     return amf0_write_string_internal( data, data_len, AMF0_TYPE_STRING, value, value_len );
 }
 
@@ -104,7 +104,7 @@ amf_err_t amf0_write_object( byte* data, size_t data_len ){
 }
 
 //If inside an object, use this to obtain a copy of the property name
-amf_err_t amf0_write_prop_name( byte* data, size_t data_len, void *value, size_t value_len ){
+amf_err_t amf0_write_prop_name( byte* data, size_t data_len, const void *value, size_t value_len ){
     if( data == nullptr ){
         return 2 + value_len;
     }
@@ -210,12 +210,12 @@ amf_err_t amf0_write_unsupported( byte* data, size_t data_len ){
 }
 
 //Alias around amf0_write_string_internal
-amf_err_t amf0_write_long_string( byte* data, size_t data_len, void *value, size_t value_len){
+amf_err_t amf0_write_long_string( byte* data, size_t data_len, const void *value, size_t value_len){
     return amf0_write_string_internal( data, data_len, AMF0_TYPE_LONG_STRING, value, value_len );
 }
 
 //Alias around amf0_write_string_internal
-amf_err_t amf0_write_xmldocument( byte* data, size_t data_len, void *value, size_t value_len){
+amf_err_t amf0_write_xmldocument( byte* data, size_t data_len, const void *value, size_t value_len){
     return amf0_write_string_internal( data, data_len, AMF0_TYPE_XML_DOCUMENT, value, value_len );
 }
 
@@ -230,7 +230,7 @@ amf_err_t amf0_write_typed_object( byte* data, size_t data_len ){
     return 0;
 }
 
-amf_err_t amf0_write_continue( byte* data, size_t data_len, void *value, size_t value_len ){
+amf_err_t amf0_write_continue( byte* data, size_t data_len, const void *value, size_t value_len ){
     value_len = value_len <= data_len ? value_len : data_len;
     memcpy( data, value, value_len );
     return value_len;

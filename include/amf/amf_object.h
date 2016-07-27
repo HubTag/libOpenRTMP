@@ -37,17 +37,17 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read );
 
 amf_err_t amf_push_number( amf_t amf, double number );
 amf_err_t amf_push_boolean( amf_t amf, char boolean );
-amf_err_t amf_push_string( amf_t amf, void *str );
+amf_err_t amf_push_string( amf_t amf, const void *str );
 amf_err_t amf_push_object_start( amf_t amf );
-amf_err_t amf_push_member( amf_t amf, void *str );
+amf_err_t amf_push_member( amf_t amf, const void *str );
 amf_err_t amf_push_null( amf_t amf );
 amf_err_t amf_push_undefined( amf_t amf );
 amf_err_t amf_push_unsupported( amf_t amf );
 amf_err_t amf_push_reference( amf_t amf, unsigned int ref );
 amf_err_t amf_push_object_end( amf_t amf );
 amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone );
-amf_err_t amf_push_long_string( amf_t amf, void *str );
-amf_err_t amf_push_xml( amf_t amf, void *xml );
+amf_err_t amf_push_long_string( amf_t amf, const void *str );
+amf_err_t amf_push_xml( amf_t amf, const void *xml );
 
 //Used to prepare a buffer allocation for all string data, that being:
 //Strings
@@ -60,12 +60,12 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length );
 size_t amf_get_count( amf_t amf );
 
 //Returns an item by index
-amf_value_t amf_get_item( amf_t amf, size_t idx );
+amf_value_t amf_get_item( amf_t amf, const size_t idx );
 
 //Returns true if the given value is of the specified type.
 //Reference values will return true if the type is reference
 //or if the type matches the referenced value's type.
-bool amf_value_is( amf_value_t value, amf0_type_t type );
+bool amf_value_is( amf_value_t value, const amf0_type_t type );
 
 //Returns true if the type of the specified value is compatible
 //with the given type. Compatibility means that the given value
@@ -92,14 +92,14 @@ bool amf_value_is( amf_value_t value, amf0_type_t type );
 // XML document     | string, long string
 // typed object     | object
 //
-bool amf_value_is_like( amf_value_t value, amf0_type_t type );
+bool amf_value_is_like( amf_value_t value, const amf0_type_t type );
 
 double amf_value_get_number( amf_value_t target );
 bool amf_value_get_bool( amf_value_t target );
-char* amf_value_get_string( amf_value_t target, size_t *length );
+const char* amf_value_get_string( amf_value_t target, size_t *length );
 size_t amf_value_get_ref( amf_value_t target );
 double amf_value_get_date( amf_value_t target, signed char *timezone );
-char* amf_value_get_xml( amf_value_t target, size_t *length );
+const char* amf_value_get_xml( amf_value_t target, size_t *length );
 
 
 //Get member from object by key.

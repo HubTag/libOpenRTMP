@@ -32,28 +32,28 @@ typedef struct rtmp_chunk_conn *rtmp_chunk_conn_t;
 
 //Procedure prototype for handling partial chunk information
 typedef rtmp_cb_status_t (*rtmp_chunk_proc)(
-    rtmp_chunk_conn_t conn,             //The originating connection
-    const byte *contents,               //The contents of the partial chunk
-    size_t available,                   //The number of bytes availavle in contents
-    size_t remaining,                   //The number of bytes remaining in this chunk
-    rtmp_chunk_stream_message_t *msg,   //The message data
-    void *user                          //User-specified data
+    rtmp_chunk_conn_t conn,                 //The originating connection
+    const byte * restrict contents,         //The contents of the partial chunk
+    size_t available,                       //The number of bytes availavle in contents
+    size_t remaining,                       //The number of bytes remaining in this chunk
+    const rtmp_chunk_stream_message_t *msg, //The message data
+    void * restrict user                    //User-specified data
 );
 
 //Procedure prototype for handling chunk stream events
 typedef rtmp_cb_status_t (*rtmp_event_proc)(
     rtmp_chunk_conn_t conn,             //The originating connection
     rtmp_event_t event,                 //The event
-    void *user                          //User-specified data
+    void * restrict user                //User-specified data
 );
 
 //Procedure prototype for handling logging
 typedef void (*rtmp_log_proc)(
     rtmp_err_t err,                     //The error status
     size_t line,                        //The line upon which the log was generated
-    const char* file,                   //The file from which the log was generated
-    const char* message,                //An optional message associated with the log
-    void *user                          //User-specified data
+    const char* restrict file,          //The file from which the log was generated
+    const char* restrict message,       //An optional message associated with the log
+    void * restrict user                //User-specified data
 );
 
 
@@ -108,7 +108,7 @@ rtmp_chunk_conn_send_message(
     uint32_t chunk_stream,
     uint32_t message_stream,
     uint32_t timestamp,
-    const byte *data,
+    const byte * restrict data,
     size_t length,
     size_t *written
 );
