@@ -562,3 +562,123 @@ rtmp_err_t rtmp_stream_send_ping_res( rtmp_stream_t stream, uint32_t ping_time )
             sizeof( buffer ),
             nullptr );
 }
+
+static amf_err_t amf_push_object_list_str( amf_t amf, const char * restrict member_name, const char * restrict member_value ){
+    size_t len = strlen( member_name );
+    void *buffer;
+    amf_err_t ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_name, len );
+    ret = amf_push_member( amf, buffer );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    len = strlen( member_value );
+    ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_value, len );
+    return amf_push_string( amf, buffer );
+}
+
+static amf_err_t amf_push_object_list_bool( amf_t amf, const char * restrict member_name, int member_value ){
+    size_t len = strlen( member_name );
+    void *buffer;
+    amf_err_t ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_name, len );
+    ret = amf_push_member( amf, buffer );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_boolean( amf, member_value );
+}
+
+static amf_err_t amf_push_object_list_int( amf_t amf, const char * restrict member_name, int member_value ){
+    size_t len = strlen( member_name );
+    void *buffer;
+    amf_err_t ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_name, len );
+    ret = amf_push_member( amf, buffer );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_number( amf, member_value );
+}
+static amf_err_t amf_push_object_list_dbl( amf_t amf, const char * restrict member_name, double member_value ){
+    size_t len = strlen( member_name );
+    void *buffer;
+    amf_err_t ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_name, len );
+    ret = amf_push_member( amf, buffer );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_number( amf, member_value );
+}
+
+amf_err_t amf_push_object_list( amf_t amf, va_list list ){
+    amf_err_t ret = amf_push_object_start( amf );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    amf0_type_t type;
+    const char *name;
+
+    rtmp_arg_t arg = RTMP_ARG_NONE;
+    while( arg != RTMP_ARG_END ){
+        arg = va_arg( list, rtmp_arg_t );
+        switch( arg ){
+            case RTMP_ARG_APP: ret = amf_push_object_list_str( amf, "app", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_FLASHVER: ret = amf_push_object_list_str( amf, "flashVer", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_SWFURL: ret = amf_push_object_list_str( amf, "swfUrl", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_TCURL: ret = amf_push_object_list_str( amf, "tcUrl", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_PAGEURL: ret = amf_push_object_list_str( amf, "pageUrl", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_FPAD: ret = amf_push_object_list_bool( amf, "fpad", va_arg( list, int ) ); break;
+            case RTMP_ARG_AUDIOCODECS: ret = amf_push_object_list_int( amf, "audioCodecs", va_arg( list, int ) ); break;
+            case RTMP_ARG_VIDEOCODECS: ret = amf_push_object_list_int( amf, "videoCodecs", va_arg( list, int ) ); break;
+            case RTMP_ARG_VIDEOFUNCTION: ret = amf_push_object_list_int( amf, "videoFunction", va_arg( list, int ) ); break;
+            case RTMP_ARG_CUSTOM:
+                type = va_arg( list, amf0_type_t );
+                name = va_arg( list, const char* );
+                switch( type ){
+                case AMF0_TYPE_NUMBER: ret = amf_push_object_list_dbl( amf, name, va_arg( list, double ) ); break;
+                case AMF0_TYPE_BOOLEAN: ret = amf_push_object_list_bool( amf, name, va_arg( list, int ) ); break;
+                case AMF0_TYPE_STRING: ret = amf_push_object_list_str( amf, name, va_arg( list, const char* ) ); break;
+                default:
+                    return AMF_ERR_INVALID_DATA;
+                }
+            case RTMP_ARG_END: break;
+            default: return AMF_ERR_INVALID_DATA;
+        }
+        if( ret != AMF_ERR_NONE ){
+            return ret;
+        }
+    }
+    ret = amf_push_object_end( amf );
+    return ret;
+}
+
+amf_err_t amf_push_object_simple( amf_t amf, ... ){
+    va_list list;
+    va_start( list, amf );
+    amf_err_t ret = amf_push_object_list( amf, list );
+    va_end(list);
+    return ret;
+}

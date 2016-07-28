@@ -25,6 +25,7 @@
 
 #include "amf_constants.h"
 #include "rtmp/rtmp_types.h"
+#include <stdarg.h>
 
 typedef struct amf_value * amf_value_t;
 typedef struct amf_object * amf_t;
@@ -48,6 +49,9 @@ amf_err_t amf_push_object_end( amf_t amf );
 amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone );
 amf_err_t amf_push_long_string( amf_t amf, const void *str );
 amf_err_t amf_push_xml( amf_t amf, const void *xml );
+
+
+
 
 //Used to prepare a buffer allocation for all string data, that being:
 //Strings

@@ -31,6 +31,7 @@
 #include "rtmp/rtmp_constants.h"
 #include "rtmp/chunk/rtmp_chunk_assembler.h"
 #include "ringbuffer.h"
+#include <stdarg.h>
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -132,7 +133,20 @@ struct foo{
     int a;
 };
 
+
+
 int main(){
+    amf_t amf = amf_create( 0 );
+    amf_push_object_simple( amf,
+        RTMP_ARG_APP, "test",
+        RTMP_ARG_FPAD, false,
+        RTMP_ARG_VIDEOCODECS, RTMP_SUPPORT_VID_ALL,
+        RTMP_ARG_FLASHVER, "1.2.4.4",
+        RTMP_ARG_CUSTOM, AMF0_TYPE_NUMBER, "TestThing", 123456.789,
+        RTMP_ARG_END );
+    amf_print( amf );
+    return 0;
+
     rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );
     rtmp_chunk_conn_t server = rtmp_chunk_conn_create( false );
 

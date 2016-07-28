@@ -55,6 +55,21 @@ typedef rtmp_cb_status_t (*rtmp_stream_usr_proc)(
 );
 
 
+typedef enum {
+    RTMP_ARG_NONE,
+    RTMP_ARG_APP,
+    RTMP_ARG_FLASHVER,
+    RTMP_ARG_SWFURL,
+    RTMP_ARG_TCURL,
+    RTMP_ARG_FPAD,
+    RTMP_ARG_AUDIOCODECS,
+    RTMP_ARG_VIDEOCODECS,
+    RTMP_ARG_VIDEOFUNCTION,
+    RTMP_ARG_PAGEURL,
+    RTMP_ARG_OBJ_ENCODING,
+    RTMP_ARG_CUSTOM,
+    RTMP_ARG_END
+} rtmp_arg_t;
 
 rtmp_stream_t rtmp_stream_create( bool client );
 void rtmp_stream_destroy( rtmp_stream_t stream );
@@ -68,6 +83,8 @@ rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream );
 
+amf_err_t amf_push_object_list( amf_t amf, va_list list );
+amf_err_t amf_push_object_simple( amf_t amf, ... );
 
 void rtmp_stream_set_chunk_stream(          rtmp_stream_t stream, size_t chunk_id );
 void rtmp_stream_set_msg_stream(            rtmp_stream_t stream, size_t msg_id );

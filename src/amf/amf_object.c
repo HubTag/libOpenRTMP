@@ -690,6 +690,7 @@ amf_err_t amf_push_xml( amf_t amf, const void *xml ){
     PUSH_STR( amf, xml, AMF0_TYPE_XML_DOCUMENT );
 }
 
+
 size_t amf_get_count( amf_t amf ){
     return amf->length;
 }
