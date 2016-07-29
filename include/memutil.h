@@ -26,6 +26,17 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 
+typedef struct{
+    char *scheme;
+    char *user;
+    char *password;
+    char *host;
+    char *port;
+    char *path;
+    char *query;
+    char *fragment;
+    char *allocated;
+} url_t;
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len);
@@ -80,3 +91,5 @@ byte* safe_alloc(size_t amount);
 
 double read_double_ieee(const void *ptr);
 void write_double_ieee(void *ptr, double value);
+
+bool parse_url( const char *url, url_t *out, bool force_host );

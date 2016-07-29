@@ -134,9 +134,111 @@ struct foo{
 };
 
 
+void print_url(url_t *url){
+    printf("ASM\t");
+    if( url->scheme ){
+        printf("%s:", url->scheme);
+    }
+    if( url->host && url->scheme ){
+        printf("//");
+    }
+    if( url->user ){
+        printf("%s", url->user);
+    }
+    if( url->password ){
+        printf(":%s", url->password);
+    }
+    if( url->user || url->password ){
+        printf("@");
+    }
+
+    if( url->host ){
+        printf("%s", url->host);
+    }
+    if( url->port ){
+        printf(":%s", url->port);
+    }
+    if( url->path ){
+        printf("%s", url->path);
+    }
+    if( url->query ){
+        printf("?%s", url->query);
+    }
+    if( url->fragment ){
+        printf("#%s", url->fragment);
+    }
+    printf("\n");
+    printf("Scheme\t%s\n"
+           "User\t%s\n"
+           "Pass\t%s\n"
+           "Host\t%s\n"
+           "Port\t%s\n"
+           "Path\t%s\n"
+           "Query\t%s\n"
+           "Frag\t%s\n\n",
+           url->scheme,
+           url->user,
+           url->password,
+           url->host,
+           url->port,
+           url->path,
+           url->query,
+           url->fragment );
+}
+void parse_n_print( const char* url ){
+    printf("URL\t%s\n", url);
+    url_t url_o;
+    memset( &url_o, 0, sizeof(url_t) );
+    parse_url( url, &url_o, false );
+    print_url( &url_o );
+}
 
 int main(){
-    amf_t amf = amf_create( 0 );
+    /*parse_n_print("");
+    parse_n_print("212://kaslai.com/test");
+    parse_n_print("http://212://kaslai.com/test");
+    parse_n_print("http://kaslai.com/test?wow=whoa");
+    parse_n_print("http://kaslai.com/test?wow=whoa#haha");
+    parse_n_print("http://kaslai.com/test#haha");
+    parse_n_print("http://andrew@kaslai.com/test#haha");
+    parse_n_print("http://andrew:pass@kaslai.com/test#haha");
+    parse_n_print("http://:pass@kaslai.com/test#haha");
+    parse_n_print("http://:@kaslai.com/test#haha");
+    parse_n_print("http://@kaslai.com/test#haha");
+    parse_n_print("@kaslai.com/test#haha");
+    parse_n_print("mailto:kaslai@kaslai.com");
+    parse_n_print("kaslai@kaslai.com");
+    parse_n_print("kaslai.com");
+    parse_n_print("localhost:101");
+    parse_n_print("localhost:101/test");
+    parse_n_print("://@/?#");
+    parse_n_print("2://@/?#");
+    parse_n_print("//@/?#");
+    parse_n_print("/ad234asd?@!@#");*/
+    srand(time(0));
+    size_t count = 2000000000;
+    char chars[] = "abasdasdasafagsg223asfa:?/:#:&//1@@/?a";
+    char url[100];
+    for( size_t i = 0; i < count; ++i ){
+        size_t len = rand() % 9;
+        for( size_t j = 0; j < len; ++j ){
+            url[j] = chars[rand() % (sizeof( chars )-1) ];
+        }
+        url[len] = 0;
+        url_t url_o;
+        memset( &url_o, 0, sizeof(url_t) );
+        parse_url( url, &url_o, false );
+        free( url_o.allocated );
+        //parse_n_print( url );
+        if( i % 1000000 == 0 ){
+            printf("%lld / %lld (%lld.%04lld%%)\r", i, count, 100 * i / count, 1000000 * i / count % 10000 );
+            fflush(stdout);
+        }
+    }
+
+
+
+    /*amf_t amf = amf_create( 0 );
     amf_push_object_simple( amf,
         RTMP_ARG_APP, "test",
         RTMP_ARG_FPAD, false,
@@ -144,7 +246,7 @@ int main(){
         RTMP_ARG_FLASHVER, "1.2.4.4",
         RTMP_ARG_CUSTOM, AMF0_TYPE_NUMBER, "TestThing", 123456.789,
         RTMP_ARG_END );
-    amf_print( amf );
+    amf_print( amf );*/
     return 0;
 
     rtmp_chunk_conn_t client = rtmp_chunk_conn_create( true );

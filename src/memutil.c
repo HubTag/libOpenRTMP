@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "memutil.h"
 
 //memcpy that will reverse byte order if the machine is little endian
@@ -366,4 +367,182 @@ void write_double_ieee(void *ptr, double value){
     }
     memcpy( ptr, &d, sizeof( d ) );
     #endif
+}
+
+//If the span of chars from ':' to the first '/' is all numeric, assume it's a port and a scheme wasn't provided.
+bool str_verify_scheme( char *url ){
+    bool ret = true;
+    do{
+        if( !isdigit( *url ) ){
+            if( *url == '/' || *url == '\0' ){
+                return ret;
+            }
+            return true;
+        }
+        ++url;
+        ret = false;
+    } while( true );
+    return false;
+}
+
+char *str_scan_scheme( char *url ){
+    if( !isalpha( *(url++)) ){
+        return nullptr;
+    }
+    while( *url ){
+        if( *url == ':'){
+            if( !str_verify_scheme( url + 1 ) ){
+                return nullptr;
+            }
+            *url = 0;
+            return url  + 1;
+        }
+        if( !(isalnum(*url) || *url == '+' || *url == '.' || *url == '-' ) ){
+            return nullptr;
+        }
+        ++url;
+    }
+    return nullptr;
+}
+bool str_has_authority( char *url ){
+    return url[0] == '/' && url[1] == '/';
+}
+
+char *parse_user( char *url ){
+    char *end = strpbrk( url, "@/" );
+    if( !end || *end != '@'){
+        return nullptr;
+    }
+    end = strpbrk( url, ":@" );
+    if( end ){
+        *end = 0;
+        return end + 1;
+    }
+    return nullptr;
+}
+char *parse_password( char *url ){
+    char *end = strpbrk( url, "@/" );
+    if( !end || *end != '@'){
+        return nullptr;
+    }
+    *end = 0;
+    return end + 1;
+}
+char *parse_host( char *url ){
+    char *end = strpbrk( url, ":/" );
+    return end;
+}
+char *parse_port( char *url ){
+    char *end = strpbrk( url, "/" );
+    if( !end ){
+        return nullptr;
+    }
+    *end = 0;
+    return end + 1;
+}
+char *parse_path( char *url ){
+    char *end = strpbrk( url, "?#" );
+    if( !end ){
+        return nullptr;
+    }
+    return end;
+}
+char *parse_query( char *url ){
+    char *end = strpbrk( url, "#" );
+    if( !end ){
+        return nullptr;
+    }
+    *end = 0;
+    return end + 1;
+}
+
+bool check_url( url_t *url ){
+    if( !url->scheme || !url->path ){
+        return false;
+    }
+    return true;
+}
+
+bool parse_url( const char *url, url_t *out, bool force_host ){
+    size_t len = strlen( url );
+    //allocating an extra byte to make room for a null between authority and path,
+    //and an extra null terminator.
+    out->allocated = malloc( 3 + len );
+    if( !out->allocated ){
+        return false;
+    }
+    char *buf = out->allocated;
+    char *end = out->allocated + len;
+    strcpy( buf, url );
+    buf[len] = buf[len+1] = buf[len+2] = 0;
+    char *temp = str_scan_scheme( buf );
+    if( temp ){
+        out->scheme = buf;
+        buf = temp;
+    }
+    if( !temp || str_has_authority( buf ) || force_host ){
+        if( str_has_authority( buf ) ){
+            //Skip slashes for authority
+            buf += 2;
+        }
+        temp = parse_user( buf );
+        if( temp ){
+            out->user = buf;
+            buf = temp;
+            temp = parse_password( buf );
+            if( temp ){
+                out->password = buf;
+                buf = temp;
+            }
+        }
+        temp = parse_host( buf );
+        out->host = buf;
+        if( temp ){
+            char sep = *temp;
+            *temp = 0;
+            buf = temp + 1;
+            if( sep == ':' ){
+                temp = parse_port( buf );
+                if( *buf ){
+                    out->port = buf;
+                }
+                if( temp ){
+                    buf = temp;
+                }
+                else{
+                    goto verify;
+                }
+            }
+            //Move the rest of the string down a byte since we need to insert a slash for path.
+            //This also gracefully handles the default case if no path is specified.
+            memmove( buf + 1, buf, end - buf );
+            *buf = '/';
+            ++end;
+        }
+        else{
+            goto verify;
+        }
+    }
+    temp = parse_path( buf );
+    out->path = buf;
+    if( temp ){
+        char sep = *temp;
+        *temp = 0;
+        buf = temp + 1;
+        if( sep == '?'){
+            temp = parse_query( buf );
+            out->query = buf;
+            if( temp ){
+                out->fragment = temp;
+            }
+        }
+        else if( sep == '#'){
+            out->fragment = buf;
+        }
+    }
+verify:
+    if( !out->scheme || !out->path ){
+        return false;
+    }
+    return true;
 }

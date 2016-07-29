@@ -27,8 +27,12 @@
 
 typedef struct rtmp_client * rtmp_client_t;
 
+
 rtmp_client_t rtmp_client_create( void );
 void rtmp_client_destroy( rtmp_client_t client );
+
+rtmp_err_t rtmp_client_easyconnect( rtmp_client_t client, const char *url );
+rtmp_err_t rtmp_client_easydisconnect( rtmp_client_t client );
 
 //See NetConnect documentation for usage
 rtmp_err_t rtmp_client_call( rtmp_client_t client, const char *name, double id, ... );
