@@ -1,5 +1,5 @@
 /*
-    amf_object.h
+    amf_object.c
 
     Copyright (C) 2016 Hubtag LLC.
 

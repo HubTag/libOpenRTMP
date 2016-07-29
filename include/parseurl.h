@@ -1,5 +1,5 @@
 /*
-    rtmp.h
+    parseurl.h
 
     Copyright (C) 2016 Hubtag LLC.
 
@@ -23,18 +23,23 @@
 
 #pragma once
 
-typedef struct rtmp_video_stream * rtmp_video_stream_t;
-typedef struct rtmp_audio_stream * rtmp_audio_stream_t;
+#include "rtmp/rtmp_types.h"
 
-typedef rtmp_cb_status_t (*rtmp_audio_proc)(
-    rtmp_audio_stream_t audio,
-    void *user
-);
+typedef enum {
+    PARSEURL_URL,
+    PARSEURL_SCHEME,
+    PARSEURL_USER,
+    PARSEURL_PASS,
+    PARSEURL_HOST,
+    PARSEURL_PORT,
+    PARSEURL_PATH,
+    PARSEURL_QUERY,
+    PARSEURL_FRAGMENT
+} parseurl_part_t;
 
-typedef rtmp_cb_status_t (*rtmp_video_proc)(
-    rtmp_video_stream_t audio,
-    void *user
-);
+typedef struct parseurl * parseurl_t;
 
-rtmp_err_t rtmp_push_audio( rtmp_audio_stream_t, byte *data, size_t data_len );
-rtmp_err_t rtmp_push_video( rtmp_video_stream_t, byte *data, size_t data_len );
+parseurl_t parseurl_create( void );
+void parseurl_destroy( parseurl_t parser );
+const char * parseurl_get( parseurl_t parser, parseurl_part_t part, const char *fallback );
+bool parseurl_set( parseurl_t parser, parseurl_part_t part, const char *value );

@@ -32,6 +32,7 @@
 #include "rtmp/chunk/rtmp_chunk_assembler.h"
 #include "ringbuffer.h"
 #include <stdarg.h>
+#include "parseurl.h"
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
@@ -134,40 +135,9 @@ struct foo{
 };
 
 
-void print_url(url_t *url){
-    printf("ASM\t");
-    if( url->scheme ){
-        printf("%s:", url->scheme);
-    }
-    if( url->host && url->scheme ){
-        printf("//");
-    }
-    if( url->user ){
-        printf("%s", url->user);
-    }
-    if( url->password ){
-        printf(":%s", url->password);
-    }
-    if( url->user || url->password ){
-        printf("@");
-    }
-
-    if( url->host ){
-        printf("%s", url->host);
-    }
-    if( url->port ){
-        printf(":%s", url->port);
-    }
-    if( url->path ){
-        printf("%s", url->path);
-    }
-    if( url->query ){
-        printf("?%s", url->query);
-    }
-    if( url->fragment ){
-        printf("#%s", url->fragment);
-    }
-    printf("\n");
+void print_url(parseurl_t url){
+    const char *urlstr = parseurl_get( url, PARSEURL_URL, "N/A");
+    printf( "Asm\t%s\n", urlstr );
     printf("Scheme\t%s\n"
            "User\t%s\n"
            "Pass\t%s\n"
@@ -176,25 +146,25 @@ void print_url(url_t *url){
            "Path\t%s\n"
            "Query\t%s\n"
            "Frag\t%s\n\n",
-           url->scheme,
-           url->user,
-           url->password,
-           url->host,
-           url->port,
-           url->path,
-           url->query,
-           url->fragment );
+           parseurl_get( url, PARSEURL_SCHEME, "N/A"),
+           parseurl_get( url, PARSEURL_USER, "N/A"),
+           parseurl_get( url, PARSEURL_PASS, "N/A"),
+           parseurl_get( url, PARSEURL_HOST, "N/A"),
+           parseurl_get( url, PARSEURL_PORT, "N/A"),
+           parseurl_get( url, PARSEURL_PATH, "N/A"),
+           parseurl_get( url, PARSEURL_QUERY, "N/A"),
+           parseurl_get( url, PARSEURL_FRAGMENT, "N/A") );
 }
 void parse_n_print( const char* url ){
     printf("URL\t%s\n", url);
-    url_t url_o;
-    memset( &url_o, 0, sizeof(url_t) );
-    parse_url( url, &url_o, false );
-    print_url( &url_o );
+    parseurl_t url_p = parseurl_create();
+    parseurl_set( url_p, PARSEURL_URL, url );
+    print_url( url_p );
+    parseurl_destroy( url_p );
 }
 
 int main(){
-    /*parse_n_print("");
+    parse_n_print("");
     parse_n_print("212://kaslai.com/test");
     parse_n_print("http://212://kaslai.com/test");
     parse_n_print("http://kaslai.com/test?wow=whoa");
@@ -214,9 +184,9 @@ int main(){
     parse_n_print("://@/?#");
     parse_n_print("2://@/?#");
     parse_n_print("//@/?#");
-    parse_n_print("/ad234asd?@!@#");*/
+    parse_n_print("/ad234asd?@!@#");
     srand(time(0));
-    size_t count = 2000000000;
+    size_t count = 200000;
     char chars[] = "abasdasdasafagsg223asfa:?/:#:&//1@@/?a";
     char url[100];
     for( size_t i = 0; i < count; ++i ){
@@ -225,12 +195,11 @@ int main(){
             url[j] = chars[rand() % (sizeof( chars )-1) ];
         }
         url[len] = 0;
-        url_t url_o;
-        memset( &url_o, 0, sizeof(url_t) );
-        parse_url( url, &url_o, false );
-        free( url_o.allocated );
+        parseurl_t url_p = parseurl_create();
+        parseurl_set( url_p, PARSEURL_URL, url );
+        parseurl_destroy( url_p );
         //parse_n_print( url );
-        if( i % 1000000 == 0 ){
+        if( i % 10 == 0 ){
             printf("%lld / %lld (%lld.%04lld%%)\r", i, count, 100 * i / count, 1000000 * i / count % 10000 );
             fflush(stdout);
         }

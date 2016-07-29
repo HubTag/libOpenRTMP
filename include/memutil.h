@@ -26,17 +26,6 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 
-typedef struct{
-    char *scheme;
-    char *user;
-    char *password;
-    char *host;
-    char *port;
-    char *path;
-    char *query;
-    char *fragment;
-    char *allocated;
-} url_t;
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len);
@@ -74,6 +63,12 @@ void ntoh_write_ud3(void *dst, uint32_t value);
 //Read a 3 byte int from a buffer based on endianess
 uint32_t ntoh_read_ud3(void *dst);
 
+//strlen which considers nullptr to be a zero-length string.
+size_t strlen_check( const char *str );
+
+//strcpy which returns str + strlen( appending ).
+char *strwrite( char * restrict str, const char * restrict appending );
+
 void emit_err(const char* err);
 
 int32_t timestamp_get_delta( rtmp_time_t stamp1, rtmp_time_t stamp2 );
@@ -91,5 +86,3 @@ byte* safe_alloc(size_t amount);
 
 double read_double_ieee(const void *ptr);
 void write_double_ieee(void *ptr, double value);
-
-bool parse_url( const char *url, url_t *out, bool force_host );
