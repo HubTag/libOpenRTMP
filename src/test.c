@@ -156,50 +156,41 @@ void print_url(parseurl_t url){
            parseurl_get( url, PARSEURL_FRAGMENT, "N/A") );
 }
 void parse_n_print( const char* url ){
-    printf("URL\t%s\n", url);
     parseurl_t url_p = parseurl_create();
-    parseurl_set( url_p, PARSEURL_URL, url );
+    parseurl_set( url_p, PARSEURL_URL_STRICT, url );
+    printf("URL\t%s\n", url);
     print_url( url_p );
+
     parseurl_destroy( url_p );
 }
 
 int main(){
-    parse_n_print("");
-    parse_n_print("212://kaslai.com/test");
-    parse_n_print("http://212://kaslai.com/test");
-    parse_n_print("http://kaslai.com/test?wow=whoa");
-    parse_n_print("http://kaslai.com/test?wow=whoa#haha");
-    parse_n_print("http://kaslai.com/test#haha");
-    parse_n_print("http://andrew@kaslai.com/test#haha");
-    parse_n_print("http://andrew:pass@kaslai.com/test#haha");
-    parse_n_print("http://:pass@kaslai.com/test#haha");
-    parse_n_print("http://:@kaslai.com/test#haha");
-    parse_n_print("http://@kaslai.com/test#haha");
-    parse_n_print("@kaslai.com/test#haha");
-    parse_n_print("mailto:kaslai@kaslai.com");
-    parse_n_print("kaslai@kaslai.com");
-    parse_n_print("kaslai.com");
-    parse_n_print("localhost:101");
-    parse_n_print("localhost:101/test");
-    parse_n_print("://@/?#");
-    parse_n_print("2://@/?#");
-    parse_n_print("//@/?#");
-    parse_n_print("/ad234asd?@!@#");
+    parse_n_print("ftp://ftp.is.co.za/rfc/rfc1808.txt");
+    parse_n_print("http://www.ietf.org/rfc/rfc2396.txt");
+    parse_n_print("ldap://[2001:db8::7]/c=GB?objectClass?one");
+    parse_n_print("mailto:John.Doe@example.com");
+    parse_n_print("news:comp.infosystems.www.servers.unix");
+    parse_n_print("tel:+1-816-555-1212");
+    parse_n_print("telnet://192.0.2.16:80/");
+    parse_n_print("urn:oasis:names:specification:docbook:dtd:xml:4.1.2");
+
     srand(time(0));
-    size_t count = 200000;
-    char chars[] = "abasdasdasafagsg223asfa:?/:#:&//1@@/?a";
+    size_t count = 2000000000;
+    char chars[] = "abasd[][][]:::?f23asfa:?/:#:&//1@@/?a";
     char url[100];
     for( size_t i = 0; i < count; ++i ){
-        size_t len = rand() % 9;
+        size_t len = rand() % 40;
         for( size_t j = 0; j < len; ++j ){
             url[j] = chars[rand() % (sizeof( chars )-1) ];
         }
         url[len] = 0;
         parseurl_t url_p = parseurl_create();
         parseurl_set( url_p, PARSEURL_URL, url );
+        parseurl_set( url_p, PARSEURL_URL_FORGIVING, url );
+        parseurl_set( url_p, PARSEURL_URL_STRICT, url );
         parseurl_destroy( url_p );
         //parse_n_print( url );
-        if( i % 10 == 0 ){
+        if( i % 10000 == 0 ){
             printf("%lld / %lld (%lld.%04lld%%)\r", i, count, 100 * i / count, 1000000 * i / count % 10000 );
             fflush(stdout);
         }
