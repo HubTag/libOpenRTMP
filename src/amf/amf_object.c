@@ -558,19 +558,30 @@ static amf_v_t *amf_push_item( amf_t amf ){
         return AMF_ERR_OOM;\
     }
 
-#define PUSH_STR(a,str,t) \
-    {\
-        if( str != a->allocation ){\
-            return AMF_ERR_BAD_ALLOC;\
-        }\
-        PUSH_PREP(a,target);\
-        target->string.data = a->allocation;\
-        target->string.length = a->allocation_len;\
-        target->string.type = t;\
-        a->allocation = nullptr;\
-        a->allocation_len = 0;\
-        return AMF_ERR_NONE;\
+static amf_err_t push_str( amf_t a, const void * str, amf0_type_t t) {
+    if( str != a->allocation ){
+        size_t len = strlen( str );
+        void * ptr = malloc( len + 1 );
+        if( !ptr ){
+            return AMF_ERR_OOM;
+        }
+        memcpy( ptr, str, len + 1 );
+        PUSH_PREP(a,target);
+        target->string.data = ptr;
+        target->string.length = len;
+        target->string.type = t;
+        return AMF_ERR_NONE;
     }
+    else{
+        PUSH_PREP(a,target);
+        target->string.data = a->allocation;
+        target->string.length = a->allocation_len;
+        target->string.type = t;
+        a->allocation = nullptr;
+        a->allocation_len = 0;
+        return AMF_ERR_NONE;
+    }
+}
 
 amf_err_t amf_push_number( amf_t amf, double number ){
     PUSH_PREP( amf, target );
@@ -598,7 +609,7 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_string( amf_t amf, const void *str ){
-    PUSH_STR( amf, str, AMF0_TYPE_STRING );
+    return push_str( amf, str, AMF0_TYPE_STRING );
 }
 amf_err_t amf_push_object_start( amf_t amf ){
     PUSH_PREP( amf, target );
@@ -684,10 +695,10 @@ amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone ){
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_long_string( amf_t amf, const void *str ){
-    PUSH_STR( amf, str, AMF0_TYPE_LONG_STRING );
+    return push_str( amf, str, AMF0_TYPE_LONG_STRING );
 }
 amf_err_t amf_push_xml( amf_t amf, const void *xml ){
-    PUSH_STR( amf, xml, AMF0_TYPE_XML_DOCUMENT );
+    return push_str( amf, xml, AMF0_TYPE_XML_DOCUMENT );
 }
 
 

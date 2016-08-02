@@ -642,6 +642,8 @@ amf_err_t amf_push_object_list( amf_t amf, va_list list ){
     const char *name;
 
     rtmp_arg_t arg = RTMP_ARG_NONE;
+    size_t membs = 0;
+
     while( arg != RTMP_ARG_END ){
         arg = va_arg( list, rtmp_arg_t );
         switch( arg ){
@@ -654,6 +656,12 @@ amf_err_t amf_push_object_list( amf_t amf, va_list list ){
             case RTMP_ARG_AUDIOCODECS: ret = amf_push_object_list_int( amf, "audioCodecs", va_arg( list, int ) ); break;
             case RTMP_ARG_VIDEOCODECS: ret = amf_push_object_list_int( amf, "videoCodecs", va_arg( list, int ) ); break;
             case RTMP_ARG_VIDEOFUNCTION: ret = amf_push_object_list_int( amf, "videoFunction", va_arg( list, int ) ); break;
+            case RTMP_ARG_FMSVER: ret = amf_push_object_list_int( amf, "fmsVer", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_CAPABILITIES: ret = amf_push_object_list_int( amf, "capabilities", va_arg( list, int ) ); break;
+            case RTMP_ARG_MODE: ret = amf_push_object_list_int( amf, "mode", va_arg( list, int ) ); break;
+            case RTMP_ARG_LEVEL: ret = amf_push_object_list_int( amf, "level", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_CODE: ret = amf_push_object_list_int( amf, "code", va_arg( list, const char* ) ); break;
+            case RTMP_ARG_DESCRIPTION: ret = amf_push_object_list_int( amf, "description", va_arg( list, const char* ) ); break;
             case RTMP_ARG_CUSTOM:
                 type = va_arg( list, amf0_type_t );
                 name = va_arg( list, const char* );
@@ -664,12 +672,17 @@ amf_err_t amf_push_object_list( amf_t amf, va_list list ){
                 default:
                     return AMF_ERR_INVALID_DATA;
                 }
-            case RTMP_ARG_END: break;
+            case RTMP_ARG_END:
+                if( membs == 0 ){
+                        ret = amf_push_null( amf );
+                }
+            break;
             default: return AMF_ERR_INVALID_DATA;
         }
         if( ret != AMF_ERR_NONE ){
             return ret;
         }
+        ++membs;
     }
     ret = amf_push_object_end( amf );
     return ret;
@@ -681,4 +694,78 @@ amf_err_t amf_push_object_simple( amf_t amf, ... ){
     amf_err_t ret = amf_push_object_list( amf, list );
     va_end(list);
     return ret;
+}
+
+rtmp_err_t rtmp_stream_call( rtmp_stream_t stream, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_call2_va( stream, 3, 0, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_respond( rtmp_stream_t stream, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_respond2_va( stream, 3, 0, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_connect( rtmp_stream_t stream, ... ){
+    va_list list;
+    va_start( list, stream );
+    rtmp_err_t ret = rtmp_stream_connect2_va( stream, 3, 0, list );
+    va_end( list );
+    return ret;
+}
+
+
+
+rtmp_err_t rtmp_stream_call2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_call2_va( stream, chunk_id, msg_id, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_respond2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_respond2_va( stream, chunk_id, msg_id, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_connect2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, ... ){
+    va_list list;
+    va_start( list, msg_id );
+    rtmp_err_t ret = rtmp_stream_connect2_va( stream, chunk_id, msg_id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list ){
+    amf_t amf = amf_create(0);
+    if( !amf ){
+        return RTMP_ERR_OOM;
+    }
+    amf_err_t err = AMF_ERR_NONE;
+    err = err ? err : amf_push_string( amf, name );
+    err = err ? err : amf_push_number( amf, id );
+    err = err ? err : amf_push_object_list( amf, list );
+    err = err ? err : rtmp_stream_send_amf( stream, RTMP_MSG_AMF0_CMD, chunk_id, msg_id, 0, amf, nullptr );
+
+    cleanup:
+    amf_destroy( amf );
+    return rtmp_amferr( err );
+}
+
+rtmp_err_t rtmp_stream_respond2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list ){
+
+}
+
+rtmp_err_t rtmp_stream_connect2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, va_list list ){
+    return rtmp_stream_call2_va( stream, chunk_id, msg_id, "connect", 1, list );
 }

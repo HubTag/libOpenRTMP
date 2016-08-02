@@ -1,5 +1,5 @@
 /*
-    rtmp.h
+    rtmp_server.c
 
     Copyright (C) 2016 Hubtag LLC.
 
@@ -21,34 +21,5 @@
 
 */
 
-#pragma once
-
-typedef struct rtmp_mgr * rtmp_t;
-
-#include "rtmp/rtmp_types.h"
-#include "amf/amf.h"
 #include "rtmp_client.h"
-#include "rtmp_server.h"
 
-
-typedef rtmp_cb_status_t (*rtmp_connect_proc)(
-    rtmp_server_t connection,
-    void *user;
-);
-
-typedef enum {
-    RTMP_EPOLL,
-    RTMP_POLL,
-    RTMP_SELECT
-} rtmp_loop_t;
-
-
-rtmp_t rtmp_create( rtmp_loop_t loop_type );
-void rtmp_destroy( rtmp_t mgr );
-
-rtmp_err_t rtmp_service( rtmp_t mgr );
-
-rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath );
-rtmp_server_t rtmp_listen( rtmp_t mgr, unsigned long long iface, short port, rtmp_connect_proc cb, void *user );
-
-rtmp_err_t rtmp_amferr( amf_err_t err );

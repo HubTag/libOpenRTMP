@@ -23,21 +23,25 @@
 
 #pragma once
 
-#include "rtmp/rtmp_types.h"
-
 typedef struct rtmp_client * rtmp_client_t;
+
+#include "rtmp/rtmp_types.h"
+#include "rtmp/rtmp_stream.h"
+#include "rtmp.h"
+
+
 
 
 rtmp_client_t rtmp_client_create( void );
 void rtmp_client_destroy( rtmp_client_t client );
 
-rtmp_err_t rtmp_client_easyconnect( rtmp_client_t client, const char *url );
-rtmp_err_t rtmp_client_easydisconnect( rtmp_client_t client );
+rtmp_err_t rtmp_client_disconnect( rtmp_client_t client );
+
+rtmp_stream_t rtmp_client_stream( rtmp_client_t client );
+
 
 //See NetConnect documentation for usage
-rtmp_err_t rtmp_client_call( rtmp_client_t client, const char *name, double id, ... );
-rtmp_err_t rtmp_client_respond( rtmp_client_t client, const char *name, double id, ... );
-rtmp_err_t rtmp_client_connect( rtmp_client_t client, ... );
+
 
 rtmp_err_t rtmp_client_play( rtmp_client_t client,
     const char *stream_name,

@@ -23,4 +23,24 @@
 
 #pragma once
 
+typedef struct rtmp_server * rtmp_server_t;
+
 #include "rtmp/rtmp_types.h"
+
+
+
+rtmp_server_t rtmp_server_create( void );
+void rtmp_server_destroy( rtmp_server_t server );
+
+rtmp_err_t rtmp_server_disconnect( rtmp_server_t server );
+
+rtmp_stream_t rtmp_server_stream( rtmp_server_t server );
+
+
+
+//See NetConnect documentation for usage
+rtmp_err_t rtmp_server_call( rtmp_server_t server, const char *name, double id, ... );
+rtmp_err_t rtmp_server_respond( rtmp_server_t server, const char *name, double id, ... );
+rtmp_err_t rtmp_server_connect( rtmp_server_t server, ... );
+
+
