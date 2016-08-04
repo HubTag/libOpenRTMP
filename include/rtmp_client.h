@@ -30,12 +30,11 @@ typedef struct rtmp_client * rtmp_client_t;
 #include "rtmp.h"
 
 
-
-
 rtmp_client_t rtmp_client_create( void );
 void rtmp_client_destroy( rtmp_client_t client );
 
 rtmp_err_t rtmp_client_disconnect( rtmp_client_t client );
+bool rtmp_client_connected( rtmp_client_t client );
 
 rtmp_stream_t rtmp_client_stream( rtmp_client_t client );
 

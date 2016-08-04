@@ -382,3 +382,14 @@ char *strwrite( char * restrict str, const char * restrict appending ){
     memcpy( str, appending, appending_len + 1 );
     return str + appending_len;
 }
+
+char * str_dupl( const char * input, size_t len ){
+    if( !input ){
+        return nullptr;
+    }
+    char * ret = malloc( len + 1 );
+    if( ret ){
+        memcpy( ret, input, len + 1 );
+    }
+    return ret;
+}

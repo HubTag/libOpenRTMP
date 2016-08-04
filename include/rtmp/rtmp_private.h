@@ -70,3 +70,61 @@ struct rtmp_chunk_conn {
     rtmp_limit_t peer_bandwidth_type;
 };
 
+struct rtmp_params{
+    char *app;
+    char *flashver;
+    char *swfUrl;
+    char *tcUrl;
+    char *pageUrl;
+    uint32_t audioCodecs;
+    uint32_t videoCodecs;
+    uint32_t videoFunction;
+    uint32_t objectEncoding;
+    bool fpad;
+};
+
+void rtmp_params_free( struct rtmp_params * params );
+
+
+typedef struct rtmp_amf_cb{
+    char* name;
+    rtmp_message_type_t type;
+    rtmp_stream_amf_proc callback;
+    void *user;
+} rtmp_amf_cb_t;
+
+typedef struct rtmp_msg_cb{
+    rtmp_message_type_t type;
+    rtmp_stream_msg_proc callback;
+    void *user;
+} rtmp_msg_cb_t;
+
+typedef struct rtmp_usr_cb{
+    rtmp_usr_evt_t type;
+    rtmp_stream_usr_proc callback;
+    void *user;
+} rtmp_usr_cb_t;
+
+struct rtmp_stream{
+    rtmp_chunk_conn_t connection;
+    rtmp_chunk_assembler_t assembler;
+
+    size_t chunk_id, message_id;
+    void *scratch;
+    size_t scratch_len;
+
+    rtmp_amf_cb_t *amf_callbacks;
+    size_t amf_callbacks_len;
+
+    rtmp_msg_cb_t *msg_callbacks;
+    size_t msg_callbacks_len;
+
+    rtmp_usr_cb_t *usr_callbacks;
+    size_t usr_callbacks_len;
+
+    rtmp_event_proc event_cb;
+    void *event_cb_data;
+
+    rtmp_log_proc log_cb;
+    void *log_cb_data;
+};

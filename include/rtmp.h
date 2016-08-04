@@ -49,6 +49,7 @@ void rtmp_destroy( rtmp_t mgr );
 rtmp_err_t rtmp_service( rtmp_t mgr );
 
 rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath );
-rtmp_server_t rtmp_listen( rtmp_t mgr, unsigned long long iface, short port, rtmp_connect_proc cb, void *user );
+
+rtmp_err_t rtmp_listen( rtmp_t mgr, unsigned long long iface, short port, rtmp_connect_proc cb, void *user );
 
 rtmp_err_t rtmp_amferr( amf_err_t err );

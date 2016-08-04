@@ -117,3 +117,15 @@ size_t amf_obj_get_count( amf_value_t target );
 
 void amf_print_value( amf_value_t val );
 void amf_print( amf_t val );
+
+
+
+#define AMF_DBL(...) AMF0_TYPE_NUMBER, __VA_ARGS__
+#define AMF_INT(...) AMF0_TYPE_NUMBER_INT, __VA_ARGS__
+#define AMF_STR(...) AMF0_TYPE_STRING, __VA_ARGS__
+#define AMF_BOOL(...) AMF0_TYPE_BOOLEAN, __VA_ARGS__
+#define AMF_OBJ(...) AMF0_TYPE_OBJECT, __VA_ARGS__ , AMF0_TYPE_OBJECT_END, ""
+#define AMF(...) __VA_ARGS__ , AMF0_TYPE_NONE
+
+amf_err_t amf_push_simple_list( amf_t amf, va_list list );
+amf_err_t amf_push_simple( amf_t amf, ... );

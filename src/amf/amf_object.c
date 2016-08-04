@@ -940,3 +940,119 @@ void amf_print( amf_t amf ){
         amf_print_value( amf_get_item( amf, i ) );
     }
 }
+
+
+
+
+static amf_err_t amf_push_simple_list_memb( amf_t amf, const char * restrict member_name ){
+    size_t len;
+    void *buffer;
+    amf_err_t ret = AMF_ERR_NONE;
+    if( member_name ){
+        len = strlen( member_name );
+        ret = amf_push_string_alloc( amf, &buffer, len );
+        if( ret != AMF_ERR_NONE ){
+            return ret;
+        }
+        memcpy( buffer, member_name, len );
+        ret = amf_push_member( amf, buffer );
+        if( ret != AMF_ERR_NONE ){
+            return ret;
+        }
+    }
+    return ret;
+}
+static amf_err_t amf_push_simple_list_str( amf_t amf, const char * restrict member_name, const char * restrict member_value ){
+    size_t len;
+    void *buffer;
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    len = strlen( member_value );
+    ret = amf_push_string_alloc( amf, &buffer, len );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    memcpy( buffer, member_value, len );
+    return amf_push_string( amf, buffer );
+}
+
+static amf_err_t amf_push_simple_list_bool( amf_t amf, const char * restrict member_name, int member_value ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+    return amf_push_boolean( amf, member_value );
+}
+
+static amf_err_t amf_push_simple_list_dbl( amf_t amf, const char * restrict member_name, double member_value ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_number( amf, member_value );
+}
+static amf_err_t amf_push_simple_list_start( amf_t amf, const char * restrict member_name ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_object_start( amf );
+}
+
+static amf_err_t amf_push_simple_list_end( amf_t amf, const char * restrict member_name ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_object_end( amf );
+}
+
+amf_err_t amf_push_simple_list( amf_t amf, va_list list ){
+    amf_err_t ret;
+    amf0_type_t arg = AMF0_TYPE_NONE;
+    int depth = 0;
+    while( true ){
+        arg = va_arg( list, amf0_type_t );
+        if( arg == AMF0_TYPE_NONE ){
+            break;
+        }
+        const char * membname = nullptr;
+        if( depth > 0 ){
+                membname = va_arg( list, const char* );
+        }
+        switch( arg ){
+            case AMF0_TYPE_BOOLEAN: ret = amf_push_simple_list_bool( amf, membname, va_arg( list, int ) ); break;
+            case AMF0_TYPE_STRING: ret = amf_push_simple_list_str( amf, membname, va_arg( list, const char* ) ); break;
+            case AMF0_TYPE_NUMBER: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, double ) ); break;
+            case AMF0_TYPE_NUMBER_INT: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, int ) ); break;
+            case AMF0_TYPE_NULL: ret = amf_push_null( amf ); break;
+            case AMF0_TYPE_UNDEFINED: ret = amf_push_undefined( amf ); break;
+            case AMF0_TYPE_UNSUPPORTED: ret = amf_push_unsupported( amf ); break;
+            case AMF0_TYPE_OBJECT:
+                ++ depth;
+                ret = amf_push_simple_list_start( amf, membname );
+                break;
+            case AMF0_TYPE_OBJECT_END:
+                -- depth;
+                ret = amf_push_simple_list_end( amf, membname );
+                break;
+            break;
+            default: return AMF_ERR_INVALID_DATA;
+        }
+        if( ret != AMF_ERR_NONE ){
+            return ret;
+        }
+    }
+    return ret;
+}
+
+
+amf_err_t amf_push_simple( amf_t amf, ... ){
+    va_list list;
+    va_start( list, amf );
+    amf_err_t ret = amf_push_simple_list( amf, list );
+    va_end(list);
+    return ret;
+}

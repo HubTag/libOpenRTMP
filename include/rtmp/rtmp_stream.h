@@ -26,6 +26,7 @@
 #include "rtmp/chunk/rtmp_chunk_conn.h"
 #include "rtmp/chunk/rtmp_chunk_assembler.h"
 #include "amf/amf.h"
+#include "amf/amf_constants.h"
 #include "amf/amf_object.h"
 
 typedef struct rtmp_stream * rtmp_stream_t;
@@ -55,31 +56,10 @@ typedef rtmp_cb_status_t (*rtmp_stream_usr_proc)(
 );
 
 
-typedef enum {
-    RTMP_ARG_NONE,
-    RTMP_ARG_APP,
-    RTMP_ARG_FLASHVER,
-    RTMP_ARG_SWFURL,
-    RTMP_ARG_TCURL,
-    RTMP_ARG_FPAD,
-    RTMP_ARG_AUDIOCODECS,
-    RTMP_ARG_VIDEOCODECS,
-    RTMP_ARG_VIDEOFUNCTION,
-    RTMP_ARG_PAGEURL,
-    RTMP_ARG_OBJ_ENCODING,
-    RTMP_ARG_CUSTOM,
-    RTMP_ARG_FMSVER,
-    RTMP_ARG_CAPABILITIES,
-    RTMP_ARG_MODE,
-    RTMP_ARG_LEVEL,
-    RTMP_ARG_CODE,
-    RTMP_ARG_DESCRIPTION,
-    RTMP_ARG_DATA,
-    RTMP_ARG_END
-} rtmp_arg_t;
-
 rtmp_stream_t rtmp_stream_create( bool client );
+void rtmp_stream_create_at( rtmp_stream_t location, bool client );
 void rtmp_stream_destroy( rtmp_stream_t stream );
+void rtmp_stream_destroy_at( rtmp_stream_t stream );
 
 rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char * restrict name, rtmp_stream_amf_proc proc, void * restrict user );
 rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void * restrict user );
@@ -90,10 +70,7 @@ rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream );
 
-amf_err_t amf_push_callhead( amf_t amf, const char );
 
-amf_err_t amf_push_object_list( amf_t amf, va_list list );
-amf_err_t amf_push_object_simple( amf_t amf, ... );
 
 void rtmp_stream_set_chunk_stream(          rtmp_stream_t stream, size_t chunk_id );
 void rtmp_stream_set_msg_stream(            rtmp_stream_t stream, size_t msg_id );
@@ -122,12 +99,8 @@ rtmp_err_t rtmp_stream_send_dat2(           rtmp_stream_t stream, size_t chunk_i
 
 rtmp_err_t rtmp_stream_call(                rtmp_stream_t stream, const char *name, double id, ... );
 rtmp_err_t rtmp_stream_respond(             rtmp_stream_t stream, const char *name, double id, ... );
-rtmp_err_t rtmp_stream_connect(             rtmp_stream_t stream, ... );
 
 rtmp_err_t rtmp_stream_call2(               rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... );
 rtmp_err_t rtmp_stream_respond2(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... );
-rtmp_err_t rtmp_stream_connect2(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, ... );
 
 rtmp_err_t rtmp_stream_call2_va(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list );
-rtmp_err_t rtmp_stream_respond2_va(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list );
-rtmp_err_t rtmp_stream_connect2_va(         rtmp_stream_t stream, size_t chunk_id, size_t msg_id, va_list list );

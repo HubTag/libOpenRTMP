@@ -55,7 +55,9 @@ typedef enum AMF_ERR {
 
 //AMF0 Type Markers             See AMF0 Specification
 typedef enum AMF0_TYPE{
+    AMF0_TYPE_NONE = 0,
     AMF0_TYPE_NUMBER,           //Page 5, §2.2
+    AMF0_TYPE_NUMBER_INT,       //Not a part of the spec, for internal use
     AMF0_TYPE_BOOLEAN,          //Page 5, §2.3
     AMF0_TYPE_STRING,           //Page 5, §2.4
     AMF0_TYPE_OBJECT,           //Page 5, §2.5

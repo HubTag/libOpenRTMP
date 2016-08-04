@@ -43,6 +43,10 @@
 #define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
 #define RTMP_ANY                            0xFFFFFF
 
+#define RTMP_FMSVER                         "LibOpenRTMP/0,0,0,0"
+#define RTMP_CAPABILITIES                   0x1F
+#define RTMP_MODE                           1
+
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,
     RTMP_EVENT_CONNECT_FAIL,

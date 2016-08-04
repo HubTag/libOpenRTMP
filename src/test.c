@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "amf/amf.h"
+#include "amf/amf_object.h"
 #include "rtmp/chunk/rtmp_chunk_conn.h"
 #include "rtmp/rtmp_constants.h"
 #include "rtmp/chunk/rtmp_chunk_assembler.h"
@@ -165,6 +166,28 @@ void parse_n_print( const char* url ){
 }
 
 int main(){
+
+    amf_t amf = amf_create(0);
+    amf_push_simple( amf,
+        AMF(
+            AMF_DBL(12.0),
+            AMF_STR("Hello there"),
+            AMF_OBJ(
+                AMF_STR("foo", "bar"),
+                AMF_STR("another", "one"),
+                AMF_BOOL("bool_is", true),
+                AMF_OBJ("nested",
+                    AMF_DBL("Year", 2016.0),
+                    AMF_DBL("Port", 12345.0)
+                ),
+                AMF_STR("end", "IS NEAR!")
+            ),
+            AMF_INT(42)
+        )
+    );
+    amf_print( amf );
+    amf_destroy( amf );
+    return 0;
 
     parse_n_print("ftp://ftp.is.co.za/rfc/rfc1808.txt");
     parse_n_print("http://www.ietf.org/rfc/rfc2396.txt");
