@@ -71,3 +71,15 @@
 
 //Maximum values
 #define RTMP_MAX_CHUNK_CACHE 0x1000
+
+//The technique used to poll connections.
+//#define RTMP_POLLTECH_SELECT
+//#define RTMP_POLLTECH_WSAPOLL
+//#define RTMP_POLLTECH_POLL
+#define RTMP_POLLTECH_EPOLL
+
+#define RTMP_EPOLL_MAX 100
+
+#define RTMP_LISTEN_SIZE 100
+
+

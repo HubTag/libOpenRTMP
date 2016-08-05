@@ -32,6 +32,58 @@ struct rtmp_chunk_assembler{
     ringbuffer_t buffer;
 };
 
+
+rtmp_cb_status_t rtmp_chunk_assembler_event_thunk(
+    rtmp_chunk_conn_t conn,
+    rtmp_event_t event,
+    void * restrict user
+){
+    return RTMP_CB_CONTINUE;
+}
+
+void rtmp_chunk_assembler_log_thunk(
+    rtmp_err_t err,
+    size_t line,
+    const char* restrict file,
+    const char* restrict message,
+    void * restrict user
+){
+    return RTMP_CB_CONTINUE;
+}
+
+rtmp_cb_status_t    rtmp_chunk_assembler_thunk(
+        rtmp_chunk_conn_t conn,
+        const byte * restrict contents,
+        size_t available,
+        size_t remaining,
+        const rtmp_chunk_stream_message_t *msg,
+        void * restrict user
+){
+    return RTMP_CB_CONTINUE;
+}
+
+
+rtmp_cb_status_t rtmp_chunk_assembler_event_cb(
+    rtmp_chunk_conn_t conn,
+    rtmp_event_t event,
+    void * restrict user
+){
+    rtmp_chunk_assembler_t self = user;
+    return self->event_cb(conn, event, self->user);
+}
+
+void rtmp_chunk_assembler_log_cb(
+    rtmp_err_t err,
+    size_t line,
+    const char* restrict file,
+    const char* restrict message,
+    void * restrict user
+){
+    rtmp_chunk_assembler_t self = user;
+    return self->log_cb(err, line, file, message, self->user);
+}
+
+
 rtmp_cb_status_t    rtmp_chunk_assembler_cb(
         rtmp_chunk_conn_t conn,
         const byte * restrict contents,
@@ -77,9 +129,9 @@ rtmp_cb_status_t    rtmp_chunk_assembler_cb(
 
 rtmp_chunk_assembler_t rtmp_chunk_assembler_create( size_t max_size, rtmp_chunk_proc chunk_cb, rtmp_event_proc event_cb, rtmp_log_proc log_cb, void *user ){
     rtmp_chunk_assembler_t ret = malloc( sizeof( struct rtmp_chunk_assembler ) );
-    ret->chunk_cb = chunk_cb;
-    ret->event_cb = event_cb;
-    ret->log_cb = log_cb;
+    ret->chunk_cb = chunk_cb ? chunk_cb : rtmp_chunk_assembler_thunk;
+    ret->event_cb = event_cb ? event_cb : rtmp_chunk_assembler_event_thunk;
+    ret->log_cb = log_cb ? log_cb : rtmp_chunk_assembler_log_thunk;
     ret->user = user;
     ret->buffer = ringbuffer_create( max_size );
     return ret;
@@ -91,6 +143,6 @@ void rtmp_chunk_assembler_destroy( rtmp_chunk_assembler_t assembler ){
 }
 
 void rtmp_chunk_assembler_assign( rtmp_chunk_assembler_t assembler, rtmp_chunk_conn_t connection ){
-    rtmp_chunk_conn_register_callbacks( connection, rtmp_chunk_assembler_cb, assembler->event_cb, assembler->log_cb, assembler );
+    rtmp_chunk_conn_register_callbacks( connection, rtmp_chunk_assembler_cb, rtmp_chunk_assembler_event_cb, rtmp_chunk_assembler_log_cb, assembler );
 }
 

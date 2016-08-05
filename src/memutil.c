@@ -390,6 +390,7 @@ char * str_dupl( const char * input, size_t len ){
     char * ret = malloc( len + 1 );
     if( ret ){
         memcpy( ret, input, len + 1 );
+        ret[len] = 0;
     }
     return ret;
 }

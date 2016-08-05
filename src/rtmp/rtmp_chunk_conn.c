@@ -608,10 +608,16 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
         if( io_status == RTMP_IO_IN ){
             committed = ringbuffer_unfreeze_read( conn->in, commit );
             conn->bytes_in += committed;
+            if( committed > 0 ){
+                rtmp_chunk_conn_call_event( conn, RTMP_EVENT_EMPTIED );
+            }
         }
         if( io_status == RTMP_IO_OUT ){
             committed = ringbuffer_unfreeze_write( conn->out, commit );
             conn->bytes_out += committed;
+            if( committed > 0 ){
+                rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
+            }
         }
 
         //Repeat if we didn't error and we've committed something
@@ -754,6 +760,7 @@ rtmp_chunk_conn_send_message(
     msg.message_length = length;
     msg.timestamp = timestamp;
     msg.message_type = message_type;
+    size_t start_size = conn->bytes_out;
 
     //We absolutely must have enough space in the output buffer for a whole chunk
     if( conn->self_chunk_size + 20 > ringbuffer_size( conn->out ) ){
@@ -804,6 +811,9 @@ rtmp_chunk_conn_send_message(
     else {
         //If we errored, the previous unfreeze should make this unfreeze return 0
         conn->bytes_out += ringbuffer_unfreeze_write( conn->out, true );
+    }
+    if( conn->bytes_out != start_size ){
+        rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
     }
     return RTMP_GEN_ERROR(conn, ret);
 }

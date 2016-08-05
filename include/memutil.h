@@ -26,6 +26,25 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 
+//Mutates all arguments.
+//Returns the item at base[len], allocating it if necessary.
+#define VEC_MK_SPACE(base,len,reserve)                      (                                               \
+/*  if len + 1 < reserve                       */  (len+1<reserve)?                                \
+/*      return base + len ++;                  */      (base+len++)                                \
+/*  else                                       */  :(                                              \
+/*      reserve = reserve * 2 + 1;             */      (reserve=reserve*2+1),                      \
+/*      //Abuses compound literals             */                                                  \
+/*      void ** temp = {base,                  */      (base = (void*)(void*[2]){base,             \
+/*          realloc(base, reserve * size )};   */          realloc(base,sizeof(*base)*reserve)}),  \
+/*      if temp[1] != nullptr                  */      (((void**)base)[1]?                         \
+/*          base = temp[1];                    */          ((base=((void**)base)[1]),              \
+/*          return base + len++;               */          base+len++)                             \
+/*      else                                   */      :                                           \
+/*          base = temp[0];                    */          ((base=((void**)base)[0]),              \
+/*          return nullptr;                    */          (void*)0))))
+
+#define VEC_RM_AT(base,len,reserve,idx) do{memmov(base+idx,base+idx+1,len-idx-1);len--;}while(0)
+
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len);

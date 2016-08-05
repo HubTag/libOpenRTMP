@@ -1,5 +1,5 @@
 /*
-    rtmp.h
+    rtmp_impl_wsapoll.c
 
     Copyright (C) 2016 Hubtag LLC.
 
@@ -21,30 +21,10 @@
 
 */
 
-#pragma once
+#include "rtmp_config.h"
 
-typedef struct rtmp_mgr * rtmp_t;
-
-#include "rtmp/rtmp_types.h"
-#include "amf/amf.h"
-#include "rtmp_client.h"
-#include "rtmp_server.h"
+#ifdef RTMP_POLLTECH_WSAPOLL
+#error "WSAPoll technique is not yet implemented. Implementation shouldn't be too hard."
 
 
-
-typedef rtmp_cb_status_t (*rtmp_connect_proc)(
-    rtmp_server_t connection,
-    void *user;
-);
-
-
-rtmp_t rtmp_create( void );
-void rtmp_destroy( rtmp_t mgr );
-
-rtmp_err_t rtmp_service( rtmp_t mgr, int timeout );
-
-rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath );
-
-rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user );
-
-rtmp_err_t rtmp_amferr( amf_err_t err );
+#endif

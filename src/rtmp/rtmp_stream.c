@@ -70,7 +70,7 @@ rtmp_cb_status_t rtmp_stream_call_amf(
                 }
             }
 
-            if( cb->name == nullptr || strncmp( cb->name, name, len ) ){
+            if( cb->name == nullptr || strncmp( cb->name, name, len ) == 0 ){
                 ret = cb->callback( stream, message, object, cb->user );
                 if( ret != RTMP_CB_CONTINUE ){
                     break;
@@ -144,7 +144,7 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
             if( !amf ){
                 return RTMP_CB_ERROR;
             }
-            if( amf_read( amf, contents, available, &amount ) != AMF_ERR_NONE ){
+            if( amf_read( amf, contents, available, &amount ) < 0 ){
                 amf_destroy( amf );
                 return RTMP_CB_ERROR;
             }
@@ -339,8 +339,8 @@ rtmp_err_t rtmp_stream_send_dat( rtmp_stream_t stream, rtmp_time_t timestamp, am
 
 
 static rtmp_err_t rtmp_stream_prepare_amf( rtmp_stream_t stream, amf_t amf ){
-    size_t len;
-    if( amf_write( amf, nullptr, 0, &len ) != AMF_ERR_NONE ){
+    size_t len = amf_write( amf, nullptr, 0, nullptr );
+    if( len < 0 ){
         return RTMP_ERR_BAD_WRITE;
     }
     free( stream->scratch );
@@ -349,7 +349,7 @@ static rtmp_err_t rtmp_stream_prepare_amf( rtmp_stream_t stream, amf_t amf ){
     if( !stream->scratch ){
         return RTMP_ERR_OOM;
     }
-    if( amf_write( amf, stream->scratch, len, &len ) != AMF_ERR_NONE ){
+    if( amf_write( amf, stream->scratch, len, &len ) < 0 ){
         return RTMP_ERR_BAD_WRITE;
     }
     return RTMP_ERR_NONE;

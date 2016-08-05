@@ -174,7 +174,7 @@ amf_err_t amf0_get_reference( const byte* data, size_t data_len, uint32_t *value
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_get_ecma_array( const byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to read ECMA Array from AMF!");
-    return 0;
+    return 1;
 }
 
 //Mostly a dummy; this is used to verify and skip an object end marker
@@ -188,7 +188,7 @@ amf_err_t amf0_get_object_end( const byte* data, size_t data_len ){
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_get_strict_array( const byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to read Strict Array from AMF!");
-    return 0;
+    return 1;
 }
 
 //Returns a timezone offset as well as a double essentially representing a Unix timestamp
@@ -207,7 +207,7 @@ amf_err_t amf0_get_date( const byte* data, size_t data_len, int* timezone, doubl
 //Dummy
 amf_err_t amf0_get_unsupported( const byte* data, size_t data_len ){
     emit_err("[Error] Trying to read an unsupported type from AMF!");
-    return 0;
+    return 1;
 }
 
 //Alias around amf0_get_string_length
@@ -231,12 +231,12 @@ amf_err_t amf0_get_xmldocument( const byte* data, size_t data_len, void *value, 
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_get_recordset( const byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to read Record Set from AMF!");
-    return 0;
+    return 1;
 }
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_get_typed_object( const byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to read Typed Object from AMF!");
-    return 0;
+    return 1;
 }
 amf_err_t amf0_get_continue( const byte* data, size_t data_len, void *value, size_t value_len, size_t *continuation ){
     value_len = value_len <= data_len ? value_len : data_len;

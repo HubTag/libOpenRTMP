@@ -30,6 +30,7 @@
 #include "amf/amf_object.h"
 #include "rtmp/chunk/rtmp_chunk_conn.h"
 #include "rtmp/rtmp_constants.h"
+#include "rtmp.h"
 #include "rtmp/chunk/rtmp_chunk_assembler.h"
 #include "ringbuffer.h"
 #include <stdarg.h>
@@ -165,7 +166,34 @@ void parse_n_print( const char* url ){
     parseurl_destroy( url_p );
 }
 
+static  rtmp_cb_status_t connect_proc(
+    rtmp_server_t connection,
+    void *user;
+){
+    printf("Got connection\n");
+    return RTMP_CB_CONTINUE;
+}
+
 int main(){
+
+
+    int *vec = nullptr;
+    size_t len = 0, reserve = 0;
+    for( size_t i = 0; i < 1000; ++i ){
+        int *ptr = VEC_MK_SPACE(vec, len, reserve );
+        if( ptr ){
+            *ptr = i;
+        }
+    }
+    for( size_t i = 0; i < len; ++i ){
+        printf("%d\n", vec[i] );
+    }
+    rtmp_t rtmp = rtmp_create();
+    rtmp_listen( rtmp, "0.0.0.0", 1935, connect_proc, nullptr );
+    while( true ){
+        rtmp_service( rtmp, -1 );
+        printf("Looped\n");
+    }
 
     amf_t amf = amf_create(0);
     amf_push_simple( amf,

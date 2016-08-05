@@ -23,22 +23,17 @@
 
 #pragma once
 
+#include <stdint.h>
+
 typedef unsigned int rtmp_time_t;
 typedef unsigned char byte;
 typedef unsigned long size_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-typedef int int32_t;
-typedef unsigned short uint16_t;
-typedef short int16_t;
+
 
 
 #ifndef __cplusplus
+#include <stdbool.h>
 #define nullptr ((void*)0x0)
-typedef enum{
-    false = 0,
-    true = 1
-} bool;
 #endif
 
 
@@ -68,3 +63,14 @@ typedef enum {
 #define DEFAULT(a)
 #endif
 
+#ifdef _WIN32
+    #include <windows.h>
+    #include <winsock2.h>
+    typedef SOCKET rtmp_sock_t;
+#else
+    #include <sys/socket.h>
+    #include <netinet/tcp.h>
+    #include <netinet/in.h>
+    #include <netdb.h>
+    typedef int rtmp_sock_t;
+#endif

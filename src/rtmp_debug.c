@@ -232,6 +232,8 @@ const char* rtmp_get_event_name( rtmp_event_t mtype ){
         case RTMP_EVENT_CLOSED:             return "Connection Closed";
         case RTMP_EVENT_INTERRUPTED:        return "Connection Interrupted";
         case RTMP_EVENT_FAILED:             return "Connection Failed";
+        case RTMP_EVENT_FILLED:             return "Buffer Filled Event";
+        case RTMP_EVENT_EMPTIED:            return "Buffer Emptied Event";
         default:                            return "Unknown Connection Event";
     }
 }
@@ -249,6 +251,9 @@ const char* rtmp_get_err_name( rtmp_err_t err ){
         case RTMP_ERR_INADEQUATE_CHUNK: return "Inadequate chunk cache";
         case RTMP_ERR_AGAIN: return "Try again later";
         case RTMP_ERR_DIVERGENCE_METER_ERROR: return "Divergence meter in erroneous state (time travel is possible?)";
+        case RTMP_ERR_CONNECTION_FAIL: return "Failed to connect or listen";
+        case RTMP_ERR_DNS_FAIL: return "Failed to lookup host";
+        case RTMP_ERR_POLL_FAIL: return "Polling system failed";
         default:
             snprintf( scratch_buffer, 511, "Unknown error code %d", err );
             return scratch_buffer;

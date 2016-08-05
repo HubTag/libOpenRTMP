@@ -26,6 +26,25 @@
 #include "rtmp_types.h"
 #include "rtmp_constants.h"
 #include "chunk/rtmp_chunk_conn.h"
+#include "rtmp/rtmp_stream.h"
+#include "rtmp_server.h"
+#include "rtmp_client.h"
+
+#if defined RTMP_POLLTECH_EPOLL
+#   include <sys/epoll.h>
+#elif defined RTMP_POLLTECH_SELECT
+#   include <sys/select.h>
+#elif defined RTMP_POLLTECH_POLL
+#   include <sys/poll.h>
+#elif defined RTMP_POLLTECH_WSAPOLL
+#   include <winsock2.h>
+#endif
+
+
+typedef enum{
+    RTMP_T_RTMP_T,
+    RTMP_T_STREAM_T
+} rtmp_t_t;
 
 struct rtmp_chunk_stream_message_internal{
     rtmp_chunk_stream_message_t msg;
@@ -127,4 +146,44 @@ struct rtmp_stream{
 
     rtmp_log_proc log_cb;
     void *log_cb_data;
+};
+
+typedef struct rtmp_mgr_svr{
+    rtmp_t_t type;
+    rtmp_sock_t socket;
+    rtmp_server_t server;
+    int flags;
+    rtmp_t mgr;
+} rtmp_mgr_svr_t;
+
+struct rtmp_mgr {
+    rtmp_t_t type;
+    rtmp_mgr_svr_t * servers;
+    size_t servers_count;
+    size_t servers_reserve;
+
+    union{
+        #if defined RTMP_POLLTECH_EPOLL
+        struct{
+            int epollfd;
+        } epoll_args;
+        #elif defined RTMP_POLLTECH_SELECT
+        struct{
+            fd_set rfds, wfds, efds;
+        } select_args;
+        #elif defined RTMP_POLLTECH_POLL
+        struct{
+
+        } poll_args;
+        #elif defined RTMP_POLLTECH_WSAPOLL
+        struct{
+
+        } wsapoll_args;
+        #endif
+    };
+    rtmp_err_t (*service_cb)( rtmp_t mgr );
+
+    rtmp_sock_t listen_socket;
+    rtmp_connect_proc callback;
+    void *callback_data;
 };
