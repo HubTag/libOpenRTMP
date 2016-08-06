@@ -158,9 +158,7 @@ typedef struct rtmp_mgr_svr{
 
 struct rtmp_mgr {
     rtmp_t_t type;
-    rtmp_mgr_svr_t * servers;
-    size_t servers_count;
-    size_t servers_reserve;
+    VEC_DECLARE(rtmp_mgr_svr_t) servers;
 
     union{
         #if defined RTMP_POLLTECH_EPOLL

@@ -23,6 +23,7 @@
 
 #include "amf/amf_object.h"
 #include "amf/amf.h"
+#include "memutil.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -73,10 +74,8 @@ typedef struct amf_v_member amf_v_member_t;
 
 typedef struct amf_v_object{
     unsigned char type;
-    uint32_t length;
-    uint32_t reserve;
     uint32_t write_offset;
-    amf_v_member_t *members;
+    VEC_DECLARE(amf_v_member_t) members;
 } amf_v_object_t;
 
 union amf_v{
@@ -100,14 +99,10 @@ struct amf_v_member{
 
 struct amf_object{
     char type;
-    size_t length;
-    size_t reserve;
     size_t depth;
-    amf_v_t *data;
+    VEC_DECLARE(amf_v_t) items;
 
-    size_t ref_reserve;
-    size_t ref_table_len;
-    amf_v_t **ref_table;
+    VEC_DECLARE(amf_v_t*) ref_table;
 
     void *allocation;
     size_t allocation_len;
@@ -141,11 +136,11 @@ void amf_free_value( amf_v_t * val){
             free( val->string.data );
             break;
         case AMF0_TYPE_OBJECT:
-            for( int i = 0; i < val->object.length; ++i ){
-                free( val->object.members[i].name );
-                amf_free_value( &val->object.members[i].value );
+            for( int i = 0; i < VEC_SIZE(val->object.members); ++i ){
+                free( VEC_AT(val->object.members, i).name );
+                amf_free_value( &VEC_AT(val->object.members, i).value );
             }
-            free( val->object.members );
+            VEC_DESTROY( val->object.members );
             break;
         default:
             break;
@@ -154,15 +149,17 @@ void amf_free_value( amf_v_t * val){
 
 amf_t amf_create( char type ){
     amf_t ret = calloc( 1, sizeof( struct amf_object ) );
+    VEC_INIT(ret->items);
+    VEC_INIT(ret->ref_table);
     return ret;
 }
 
 void amf_destroy( amf_t amf ){
-    for( int i = 0; i < amf->length; ++i ){
-        amf_free_value( &amf->data[i] );
+    for( int i = 0; i < VEC_SIZE(amf->items); ++i ){
+        amf_free_value( &amf->items[i] );
     }
-    free( amf->data );
-    free( amf->ref_table );
+    VEC_DESTROY( amf->items );
+    VEC_DESTROY( amf->ref_table );
     free( amf->allocation );
 }
 
@@ -225,8 +222,8 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
                 size -= amt;
             }
 
-            for( int i = 0; i < val->object.length; ++i ){
-                amt2 = amf0_write_prop_name( dest, size, val->object.members[i].name, val->object.members[i].length );
+            for( int i = 0; i < VEC_SIZE(val->object.members); ++i ){
+                amt2 = amf0_write_prop_name( dest, size, VEC_AT(val->object.members, i).name, VEC_AT(val->object.members, i).length );
                 if( amt2 < 0 ){
                     return amt2;
                 }
@@ -235,7 +232,7 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
                     dest += amt2;
                     size -= amt2;
                 }
-                amt2 = amf_write_value( &val->object.members[i].value.value, dest, size );
+                amt2 = amf_write_value( &VEC_AT(val->object.members, i).value.value, dest, size );
                 if( amt2 < 0 ){
                     return amt2;
                 }
@@ -278,11 +275,11 @@ amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written ){
     if( written ){
         i = *written;
     }
-    for( i = 0; i < amf->length; ++i ){
+    for( i = 0; i < VEC_SIZE(amf->items); ++i ){
         if( dest && offset > size ){
             break;
         }
-        int result = amf_write_value( &amf->data[i].value, dest + offset, size - offset );
+        int result = amf_write_value( &amf->items[i].value, dest + offset, size - offset );
         if( result < 0 ){
             goto end;
         }
@@ -492,11 +489,11 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
 }
 
 static amf_v_t * amf_v_get_object( amf_t amf ){
-    if( amf->length > 0 ){
+    if( VEC_SIZE(amf->items) > 0 ){
         size_t depth = 1;
-        amf_v_t *obj = amf->data + amf->length - 1;
-        while( amf_value_is( &obj->value, AMF0_TYPE_OBJECT ) && obj->object.length > 0 && depth < amf->depth ){
-            obj = &obj->object.members[obj->object.length-1].value;
+        amf_v_t *obj = &VEC_BACK(amf->items);
+        while( amf_value_is( &obj->value, AMF0_TYPE_OBJECT ) && VEC_SIZE(obj->object.members) > 0 && depth < amf->depth ){
+            obj = &VEC_BACK(obj->object.members).value;
             ++depth;
         }
         if( depth != amf->depth ){
@@ -512,37 +509,19 @@ static amf_v_t * amf_v_get_object( amf_t amf ){
 static amf_v_member_t * amf_v_push_member( amf_t amf ){
     amf_v_t* obj = amf_v_get_object( amf );
     if( obj ){
-        if( obj->object.length + 1 >= obj->object.reserve ){
-            obj->object.reserve ++;
-            obj->object.reserve *= 2;
-            void* data = realloc( obj->object.members, obj->object.reserve * sizeof( amf_v_member_t ) );
-            if( !data ){
-                return nullptr;
-            }
-            obj->object.members = data;
-        }
-        return obj->object.members + obj->object.length++;
+        return VEC_PUSH( obj->object.members );
     }
     return nullptr;
 }
 
 static amf_v_t *amf_push_item( amf_t amf ){
     if( amf->depth == 0 ){
-        if( amf->length + 1 >= amf->reserve ){
-            amf->reserve += 1;
-            amf->reserve *= 2;
-            void *data = realloc( amf->data, amf->reserve * sizeof( amf_v_t ) );
-            if( !data ){
-                return nullptr;
-            }
-            amf->data = data;
-        }
-        return amf->data + amf->length++;
+        return VEC_PUSH(amf->items);
     }
-    else if( amf->length > 0 ){
+    else if( VEC_SIZE(amf->items) > 0 ){
         amf_v_t* obj = amf_v_get_object( amf );
         if( obj ){
-            return &obj->object.members[obj->object.length - 1].value;
+            return &VEC_BACK(obj->object.members).value;
         }
     }
     return nullptr;
@@ -615,21 +594,14 @@ amf_err_t amf_push_object_start( amf_t amf ){
     PUSH_PREP( amf, target );
     amf->depth ++;
     target->object.type = AMF0_TYPE_OBJECT;
-    target->object.length = 0;
-    target->object.reserve = 0;
     target->object.write_offset = 0;
-    target->object.members = nullptr;
+    VEC_INIT(target->object.members);
 
-    if( amf->ref_table_len + 1 > amf->ref_reserve ){
-        amf->ref_reserve++;
-        amf->ref_reserve *= 2;
-        void* data = realloc( amf->ref_table, amf->ref_reserve * sizeof( amf_v_t* ) );
-        if( !data ){
-            return AMF_ERR_OOM;
-        }
-        amf->ref_table = data;
+    amf_v_t** temp = VEC_PUSH(amf->ref_table);
+    if( !temp ){
+        return AMF_ERR_OOM;
     }
-    amf->ref_table[ amf->ref_table_len++ ] = target;
+    *temp = target;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_member( amf_t amf, const void *str ){
@@ -667,7 +639,7 @@ amf_err_t amf_push_reference( amf_t amf, unsigned int ref ){
     target->reference.ref = nullptr;
     target->reference.ref_num = ref;
     target->reference.type = AMF0_TYPE_REFERENCE;
-    if( ref < amf->ref_table_len ){
+    if( ref < VEC_SIZE(amf->ref_table) ){
         target->reference.ref = amf->ref_table[ref];
     }
     return AMF_ERR_NONE;
@@ -676,9 +648,9 @@ amf_err_t amf_push_object_end( amf_t amf ){
     if( amf->member_ready ){
         amf->member_ready = false;
         amf_v_t* obj = amf_v_get_object( amf );
-        if( obj && obj->object.length > 0 ){
-            obj->object.length--;
-            free( obj->object.members[obj->object.length].name );
+        if( obj && VEC_SIZE(obj->object.members) > 0 ){
+            free( VEC_BACK(obj->object.members).name );
+            VEC_POP( obj->object.members );
         }
     }
     if( amf->depth > 0 ){
@@ -703,10 +675,10 @@ amf_err_t amf_push_xml( amf_t amf, const void *xml ){
 
 
 size_t amf_get_count( amf_t amf ){
-    return amf->length;
+    return VEC_SIZE(amf->items);
 }
 amf_value_t amf_get_item( amf_t amf, size_t idx ){
-    return (amf_value_t) (amf->data + idx);
+    return (amf_value_t) (amf->items + idx);
 }
 bool amf_value_is( amf_value_t value, amf0_type_t type ){
     if( type == value->type ){
@@ -829,9 +801,9 @@ const char* amf_value_get_xml( amf_value_t target, size_t *length ){
 
 amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
     const amf_v_t *v = (const amf_v_t*) target;
-    for( int i = 0; i < v->object.length; ++i ){
-        if( memcmp( key, v->object.members[i].name, v->object.members[i].length ) == 0 ){
-            return &v->object.members[i].value.value;
+    for( int i = 0; i < VEC_SIZE(v->object.members); ++i ){
+        if( memcmp( key, VEC_AT(v->object.members, i).name, VEC_AT(v->object.members, i).length ) == 0 ){
+            return &VEC_AT(v->object.members, i).value.value;
         }
     }
     return nullptr;
@@ -841,11 +813,11 @@ amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, s
     if( v->type == AMF0_TYPE_REFERENCE ){
         v = v->reference.ref;
     }
-    if( idx >= v->object.length ){
+    if( idx >= VEC_SIZE(v->object.members) ){
         return nullptr;
     }
     if( key ){
-        *key = v->object.members[idx].name;
+        *key = VEC_AT(v->object.members, idx).name;
     }
     if( key_len ){
         *key_len = v->object.members[idx].length;
@@ -855,7 +827,7 @@ amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, s
 
 size_t amf_obj_get_count( const amf_value_t target ){
     const amf_v_t *v = (const amf_v_t*) target;
-    return v->object.length;
+    return VEC_SIZE(v->object.members);
 }
 
 #include <stdio.h>
@@ -914,7 +886,7 @@ void amf_print_value_internal( amf_v_t * val, int depth ){
             break;
         case AMF0_TYPE_OBJECT:
             printf( "Object: {\n");
-            for( int i = 0; i < val->object.length; ++i ){
+            for( int i = 0; i < VEC_SIZE(val->object.members); ++i ){
                 for( int i = 0; i <= depth; ++i ){
                     printf("    ");
                 }

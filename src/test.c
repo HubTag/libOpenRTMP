@@ -175,18 +175,24 @@ static  rtmp_cb_status_t connect_proc(
 }
 
 int main(){
+    VEC_DECLARE(int) vec;
+    VEC_DECLARE(int) vec2;
+    VEC_INIT(vec);
 
-
-    int *vec = nullptr;
-    size_t len = 0, reserve = 0;
-    for( size_t i = 0; i < 1000; ++i ){
-        int *ptr = VEC_MK_SPACE(vec, len, reserve );
+    for( size_t i = 0; i < 100; ++i ){
+        int *ptr = VEC_PUSH(vec);
         if( ptr ){
             *ptr = i;
         }
     }
-    for( size_t i = 0; i < len; ++i ){
+    for( size_t i = 0; i < VEC_SIZE(vec); ++i ){
         printf("%d\n", vec[i] );
+    }
+    for( size_t i = 0; i < 100; ++i ){
+        VEC_POP(vec);
+        for( size_t i = 0; i < VEC_SIZE(vec); ++i ){
+            printf("%d\n", vec[i] );
+        }
     }
     rtmp_t rtmp = rtmp_create();
     rtmp_listen( rtmp, "0.0.0.0", 1935, connect_proc, nullptr );

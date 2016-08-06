@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef RTMP_POLLTECH_EPOLL
 
@@ -36,11 +37,13 @@ rtmp_t rtmp_create( void ){
     rtmp_t mgr = calloc( 1, sizeof( struct rtmp_mgr ) );
     mgr->type = RTMP_T_RTMP_T;
     mgr->epoll_args.epollfd = epoll_create(1);
+    VEC_INIT(mgr->servers);
     return mgr;
 }
 
 void rtmp_destroy( rtmp_t mgr ){
     close( mgr->epoll_args.epollfd );
+    VEC_DESTROY( mgr->servers );
     free( mgr );
 }
 
@@ -81,8 +84,7 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
             return RTMP_ERR_POLL_FAIL;
         }
 
-        rtmp_mgr_svr_t *item = VEC_MK_SPACE( mgr->servers, mgr->servers_count, mgr->servers_reserve );
-
+        rtmp_mgr_svr_t *item = VEC_PUSH(mgr->servers);
 
         if( !item ){
             return RTMP_ERR_OOM;

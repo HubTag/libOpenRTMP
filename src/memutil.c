@@ -394,3 +394,5 @@ char * str_dupl( const char * input, size_t len ){
     }
     return ret;
 }
+
+void * VEC_PRIV_REALLOC(void**ptr, size_t size);

@@ -48,7 +48,7 @@ void rtmp_chunk_assembler_log_thunk(
     const char* restrict message,
     void * restrict user
 ){
-    return RTMP_CB_CONTINUE;
+
 }
 
 rtmp_cb_status_t    rtmp_chunk_assembler_thunk(
