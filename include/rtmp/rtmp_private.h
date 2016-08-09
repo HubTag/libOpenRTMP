@@ -124,6 +124,18 @@ typedef struct rtmp_usr_cb{
     void *user;
 } rtmp_usr_cb_t;
 
+typedef struct rtmp_evt_cb{
+    rtmp_event_t type;
+    rtmp_stream_evt_proc callback;
+    void *user;
+} rtmp_evt_cb_t;
+
+typedef struct rtmp_log_cb{
+    rtmp_log_proc callback;
+    void *user;
+} rtmp_log_cb_t;
+
+
 struct rtmp_stream{
     rtmp_chunk_conn_t connection;
     rtmp_chunk_assembler_t assembler;
@@ -132,20 +144,15 @@ struct rtmp_stream{
     void *scratch;
     size_t scratch_len;
 
-    rtmp_amf_cb_t *amf_callbacks;
-    size_t amf_callbacks_len;
+    VEC_DECLARE(rtmp_amf_cb_t) amf_callback;
 
-    rtmp_msg_cb_t *msg_callbacks;
-    size_t msg_callbacks_len;
+    VEC_DECLARE(rtmp_msg_cb_t) msg_callback;
 
-    rtmp_usr_cb_t *usr_callbacks;
-    size_t usr_callbacks_len;
+    VEC_DECLARE(rtmp_usr_cb_t) usr_callback;
 
-    rtmp_event_proc event_cb;
-    void *event_cb_data;
+    VEC_DECLARE(rtmp_evt_cb_t) event_callback;
 
-    rtmp_log_proc log_cb;
-    void *log_cb_data;
+    VEC_DECLARE(rtmp_log_cb_t) log_callback;
 };
 
 typedef struct rtmp_mgr_svr{
@@ -154,6 +161,7 @@ typedef struct rtmp_mgr_svr{
     rtmp_server_t server;
     int flags;
     rtmp_t mgr;
+    bool closing;
 } rtmp_mgr_svr_t;
 
 struct rtmp_mgr {
@@ -184,4 +192,6 @@ struct rtmp_mgr {
     rtmp_sock_t listen_socket;
     rtmp_connect_proc callback;
     void *callback_data;
+
+    rtmp_app_list_t applist;
 };

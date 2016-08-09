@@ -48,6 +48,8 @@
 #define RTMP_CAPABILITIES                   0x1F
 #define RTMP_MODE                           1
 
+#define RTMP_ADDR_ANY                       "0.0.0.0"
+
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,
     RTMP_EVENT_CONNECT_FAIL,
@@ -194,7 +196,8 @@ typedef enum {
     RTMP_ERR_AGAIN,
     RTMP_ERR_CONNECTION_FAIL,
     RTMP_ERR_DNS_FAIL,
-    RTMP_ERR_POLL_FAIL
+    RTMP_ERR_POLL_FAIL,
+    RTMP_ERR_ABORT
 } rtmp_err_t;
 
 #define RTMP_CONTROL_MSG_STREAM 0
@@ -217,4 +220,5 @@ typedef enum {
 #define RTMP_CMD_SEEK "seek"
 #define RTMP_CMD_PAUSE "pause"
 
-#define RTMP_NETCON_SUCCESS "NetConnection.Connect.Success"
+#define RTMP_NETCON_ACCEPT "NetConnection.Connect.Success"
+#define RTMP_NETCON_REJECT "NetConnection.Connect.Rejected"

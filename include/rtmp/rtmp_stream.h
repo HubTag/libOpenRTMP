@@ -55,6 +55,12 @@ typedef rtmp_cb_status_t (*rtmp_stream_usr_proc)(
     void *user
 );
 
+typedef rtmp_cb_status_t (*rtmp_stream_evt_proc)(
+    rtmp_stream_t stream,
+    rtmp_event_t event,
+    void * user
+);
+
 
 rtmp_stream_t rtmp_stream_create( bool client );
 void rtmp_stream_create_at( rtmp_stream_t location, bool client );
@@ -65,7 +71,7 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
 rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void * restrict user );
 rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_stream_usr_proc proc, void * restrict user );
 
-rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_proc proc, void * restrict user );
+rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_t type, rtmp_stream_evt_proc proc, void * restrict user );
 rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void * restrict user );
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream );

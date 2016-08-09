@@ -44,3 +44,27 @@ rtmp_err_t rtmp_amferr( amf_err_t err ){
 
 
 
+char * rtmp_params_get_s( rtmp_params_t params, rtmp_param_name_t name ){
+    switch( name ){
+        case RTMP_APP: return params->app;
+        case RTMP_FLASHVER: return params->flashver;
+        case RTMP_TCURL: return params->tcUrl;
+        case RTMP_PAGEURL: return params->pageUrl;
+        default: return nullptr;
+    }
+}
+
+uint32_t rtmp_params_get_d( rtmp_params_t params, rtmp_param_name_t name ){
+    switch( name ){
+        case RTMP_ACODEC: return params->audioCodecs;
+        case RTMP_VCODEC: return params->videoCodecs;
+        case RTMP_VFUNC: return params->videoFunction;
+        case RTMP_OENC: return params->objectEncoding;
+        case RTMP_FPAD: return params->fpad;
+        default: return 0;
+    }
+}
+
+void rtmp_set_app_list( rtmp_t mgr, rtmp_app_list_t list ){
+    mgr->applist = list;
+}

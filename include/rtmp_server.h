@@ -25,7 +25,9 @@
 
 typedef struct rtmp_server * rtmp_server_t;
 
+
 #include "rtmp/rtmp_types.h"
+#include "rtmp_app.h"
 #include "rtmp.h"
 
 
@@ -36,3 +38,4 @@ bool rtmp_server_connected( rtmp_server_t server );
 
 rtmp_stream_t rtmp_server_stream( rtmp_server_t server );
 
+void rtmp_server_set_app_list( rtmp_server_t server, rtmp_app_list_t list );

@@ -185,3 +185,4 @@ byte* safe_alloc(size_t amount);
 
 
 char * str_dupl( const char * input, size_t len );
+char * str_dup( const char * input );

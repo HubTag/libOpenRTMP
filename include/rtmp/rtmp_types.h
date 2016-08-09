@@ -25,9 +25,9 @@
 
 #include <stdint.h>
 
-typedef unsigned int rtmp_time_t;
-typedef unsigned char byte;
+typedef uint8_t byte;
 typedef unsigned long size_t;
+typedef size_t rtmp_time_t;
 
 
 

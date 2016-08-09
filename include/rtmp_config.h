@@ -23,10 +23,13 @@
 
 #pragma once
 
-//Defaults. These may all be negotiated at runtime.
+#define RTMP_DEFAULT_PORT                   1935
+
+//Protocol defaults. These may all be negotiated at runtime.
 #define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
 #define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
 #define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
+
 
 //The max chunk size this implementation will allow to be used.
 //The peer may still use a larger chunk size than this.
@@ -81,5 +84,6 @@
 #define RTMP_EPOLL_MAX 100
 
 #define RTMP_LISTEN_SIZE 100
+
 
 

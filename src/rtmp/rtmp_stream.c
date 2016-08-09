@@ -37,8 +37,8 @@ static rtmp_cb_status_t rtmp_stream_call_msg(
 ){
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
 
-    for( size_t i = 0; i < stream->msg_callbacks_len; ++i ){
-        rtmp_msg_cb_t *cb = &stream->msg_callbacks[i];
+    for( size_t i = 0; i < VEC_SIZE(stream->msg_callback); ++i ){
+        rtmp_msg_cb_t *cb = &stream->msg_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
             ret = cb->callback( stream, message, data, length, remaining, cb->user );
             if( ret != RTMP_CB_CONTINUE ){
@@ -59,8 +59,8 @@ rtmp_cb_status_t rtmp_stream_call_amf(
     const char* name = nullptr;
     size_t len;
 
-    for( size_t i = 0; i < stream->amf_callbacks_len; ++i ){
-        rtmp_amf_cb_t *cb = &stream->amf_callbacks[i];
+    for( size_t i = 0; i < VEC_SIZE(stream->amf_callback); ++i ){
+        rtmp_amf_cb_t *cb = &stream->amf_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
 
             if( amf_get_count( object ) > 0 ){
@@ -90,8 +90,8 @@ rtmp_cb_status_t rtmp_stream_call_usr(
 ){
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
 
-    for( size_t i = 0; i < stream->usr_callbacks_len; ++i ){
-        rtmp_usr_cb_t *cb = &stream->usr_callbacks[i];
+    for( size_t i = 0; i < VEC_SIZE(stream->usr_callback); ++i ){
+        rtmp_usr_cb_t *cb = &stream->usr_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
             ret = cb->callback( stream, message, param1, param2, cb->user );
             if( ret != RTMP_CB_CONTINUE ){
@@ -172,10 +172,16 @@ rtmp_cb_status_t rtmp_stream_event_proc(
     void * restrict user
 ){
     rtmp_stream_t self = (rtmp_stream_t) user;
-    if( self->event_cb ){
-        return self->event_cb( conn, event, self->event_cb_data );
+    rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
+    for( int i = 0; i < VEC_SIZE( self->event_callback ); ++i ){
+        if( self->event_callback[i].type == RTMP_ANY || self->event_callback[i].type == event ){
+            ret = self->event_callback[i].callback( self, event, self->event_callback[i].user );
+        }
+        if( ret != RTMP_CB_CONTINUE ){
+            break;
+        }
     }
-    return RTMP_CB_CONTINUE;
+    return ret;
 }
 
 //Procedure prototype for handling logging
@@ -187,8 +193,8 @@ void rtmp_stream_log_proc(
     void * restrict user
 ){
     rtmp_stream_t self = (rtmp_stream_t) user;
-    if( self->log_cb ){
-        self->log_cb( err, line, file, message, self->log_cb_data );
+    for( int i = 0; i < VEC_SIZE( self->log_callback ); ++i ){
+        self->log_callback[i].callback( err, line, file, message, self->log_callback[i].user );
     }
 }
 
@@ -204,6 +210,11 @@ void rtmp_stream_create_at( rtmp_stream_t location, bool client ){
     location->connection = rtmp_chunk_conn_create( client );
     location->assembler = rtmp_chunk_assembler_create( RTMP_MAX_CHUNK_CACHE, rtmp_stream_chunk_proc, rtmp_stream_event_proc, rtmp_stream_log_proc, location );
     rtmp_chunk_assembler_assign( location->assembler, location->connection );
+    VEC_INIT( location->event_callback );
+    VEC_INIT( location->amf_callback );
+    VEC_INIT( location->log_callback );
+    VEC_INIT( location->msg_callback );
+    VEC_INIT( location->usr_callback );
 }
 
 void rtmp_stream_destroy( rtmp_stream_t stream ){
@@ -214,12 +225,14 @@ void rtmp_stream_destroy( rtmp_stream_t stream ){
 void rtmp_stream_destroy_at( rtmp_stream_t stream ){
     rtmp_chunk_conn_close( stream->connection );
     rtmp_chunk_assembler_destroy( stream->assembler );
-    for( size_t i = 0; i < stream->amf_callbacks_len; ++i ){
-        free( stream->amf_callbacks[i].name );
+    for( size_t i = 0; i < VEC_SIZE(stream->amf_callback); ++i ){
+        free( stream->amf_callback[i].name );
     }
-    free( stream->amf_callbacks );
-    free( stream->msg_callbacks );
-    free( stream->usr_callbacks );
+    VEC_DESTROY( stream->event_callback );
+    VEC_DESTROY( stream->amf_callback );
+    VEC_DESTROY( stream->log_callback );
+    VEC_DESTROY( stream->msg_callback );
+    VEC_DESTROY( stream->usr_callback );
     free( stream->scratch );
 }
 
@@ -227,13 +240,12 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
     if( !proc ){
         return AMF_ERR_INVALID_DATA;
     }
-    rtmp_amf_cb_t *ptr = realloc( stream->amf_callbacks, sizeof(rtmp_amf_cb_t) * (stream->amf_callbacks_len + 1) );
-    if( !ptr ){
-        return AMF_ERR_OOM;
-    }
-    stream->amf_callbacks = ptr;
 
-    rtmp_amf_cb_t *value = &ptr[stream->amf_callbacks_len];
+    rtmp_amf_cb_t *value = VEC_PUSH( stream->amf_callback );
+    if(!value){
+        return RTMP_ERR_OOM;
+    }
+
     value->callback = proc;
     value->name = nullptr;
     value->type = type;
@@ -241,7 +253,7 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
 
     if( name != nullptr ){
         size_t len = strlen( name );
-        value->name = malloc( sizeof( char ) * len );
+        value->name = malloc( sizeof( char ) * len + 1 );
         if( !value->name ){
             //Since the length hasn't been incremented, we can safely abort without completing initialization.
             return AMF_ERR_OOM;
@@ -249,7 +261,6 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
         strcpy( value->name, name );
     }
 
-    stream->amf_callbacks_len ++;
     return AMF_ERR_NONE;
 }
 
@@ -257,18 +268,15 @@ rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, 
     if( !proc ){
         return AMF_ERR_INVALID_DATA;
     }
-    rtmp_msg_cb_t *ptr = realloc( stream->msg_callbacks, sizeof( rtmp_msg_cb_t ) * (stream->msg_callbacks_len + 1) );
-    if( !ptr ){
-        return AMF_ERR_OOM;
-    }
-    stream->msg_callbacks = ptr;
 
-    rtmp_msg_cb_t *value = &ptr[stream->msg_callbacks_len];
+    rtmp_msg_cb_t *value = VEC_PUSH( stream->msg_callback );
+    if(!value){
+        return RTMP_ERR_OOM;
+    }
     value->callback = proc;
     value->type = type;
     value->user = user;
 
-    stream->msg_callbacks_len ++;
     return AMF_ERR_NONE;
 }
 
@@ -276,31 +284,50 @@ rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_
     if( !proc ){
         return AMF_ERR_INVALID_DATA;
     }
-    rtmp_usr_cb_t *ptr = realloc( stream->usr_callbacks, sizeof( rtmp_usr_cb_t ) * (stream->usr_callbacks_len + 1) );
-    if( !ptr ){
-        return AMF_ERR_OOM;
-    }
-    stream->usr_callbacks = ptr;
 
-    rtmp_usr_cb_t *value = &ptr[stream->usr_callbacks_len];
+    rtmp_usr_cb_t *value = VEC_PUSH( stream->usr_callback );
+    if(!value){
+        return RTMP_ERR_OOM;
+    }
+
     value->callback = proc;
     value->type = type;
     value->user = user;
 
-    stream->usr_callbacks_len ++;
     return AMF_ERR_NONE;
 }
 
-rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_proc proc, void *user ){
-    stream->event_cb = proc;
-    stream->event_cb_data = user;
-    return RTMP_ERR_NONE;
+rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_t type, rtmp_stream_evt_proc proc, void *user ){
+    if( !proc ){
+        return AMF_ERR_INVALID_DATA;
+    }
+
+    rtmp_evt_cb_t *value = VEC_PUSH( stream->event_callback );
+    if(!value){
+        return RTMP_ERR_OOM;
+    }
+
+    value->callback = proc;
+    value->type = type;
+    value->user = user;
+
+    return AMF_ERR_NONE;
 }
 
 rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *user ){
-    stream->log_cb = proc;
-    stream->log_cb_data = user;
-    return RTMP_ERR_NONE;
+    if( !proc ){
+        return AMF_ERR_INVALID_DATA;
+    }
+
+    rtmp_log_cb_t *value = VEC_PUSH( stream->log_callback );
+    if(!value){
+        return RTMP_ERR_OOM;
+    }
+
+    value->callback = proc;
+    value->user = user;
+
+    return AMF_ERR_NONE;
 }
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream ){

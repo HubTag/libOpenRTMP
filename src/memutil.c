@@ -244,16 +244,27 @@ char *strwrite( char * restrict str, const char * restrict appending ){
     return str + appending_len;
 }
 
-char * str_dupl( const char * input, size_t len ){
-    if( !input ){
-        return nullptr;
-    }
+static char * str_dupl_priv( const char * input, size_t len ){
     char * ret = malloc( len + 1 );
     if( ret ){
         memcpy( ret, input, len + 1 );
         ret[len] = 0;
     }
     return ret;
+}
+
+char * str_dupl( const char * input, size_t len ){
+    if( !input ){
+        return nullptr;
+    }
+    return str_dupl_priv( input, len );
+}
+
+char * str_dup( const char * input ){
+    if( !input ){
+        return nullptr;
+    }
+    return str_dupl_priv( input, strlen( input ) );
 }
 
 void * VEC_PRIV_REALLOC(void**ptr, size_t size);

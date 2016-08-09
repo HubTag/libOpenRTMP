@@ -24,13 +24,29 @@
 #pragma once
 
 typedef struct rtmp_mgr * rtmp_t;
+typedef struct rtmp_params *rtmp_params_t;
+
+typedef enum {
+    RTMP_APP,
+    RTMP_FLASHVER,
+    RTMP_TCURL,
+    RTMP_PAGEURL,
+    RTMP_ACODEC,
+    RTMP_VCODEC,
+    RTMP_VFUNC,
+    RTMP_OENC,
+    RTMP_FPAD
+} rtmp_param_name_t;
 
 #include "rtmp/rtmp_types.h"
 #include "amf/amf.h"
 #include "rtmp_client.h"
 #include "rtmp_server.h"
+#include "rtmp_app.h"
 
 
+char * rtmp_params_get_s( rtmp_params_t params, rtmp_param_name_t name );
+uint32_t rtmp_params_get_d( rtmp_params_t params, rtmp_param_name_t name );
 
 typedef rtmp_cb_status_t (*rtmp_connect_proc)(
     rtmp_server_t connection,
@@ -40,6 +56,8 @@ typedef rtmp_cb_status_t (*rtmp_connect_proc)(
 
 rtmp_t rtmp_create( void );
 void rtmp_destroy( rtmp_t mgr );
+
+void rtmp_set_app_list( rtmp_t mgr, rtmp_app_list_t list );
 
 rtmp_err_t rtmp_service( rtmp_t mgr, int timeout );
 

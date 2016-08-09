@@ -48,9 +48,9 @@ void rtmp_destroy( rtmp_t mgr ){
 }
 
 static rtmp_cb_status_t stream_event(
-    rtmp_chunk_conn_t conn,             //The originating connection
-    rtmp_event_t event,                 //The event
-    void * restrict user                //User-specified data
+    rtmp_stream_t conn,
+    rtmp_event_t event,
+    void * restrict user
 ){
     rtmp_mgr_svr_t * self = (rtmp_mgr_svr_t *) user;
     struct epoll_event e;
@@ -58,12 +58,10 @@ static rtmp_cb_status_t stream_event(
     e.events = self->flags;
     if( event == RTMP_EVENT_FILLED && (e.events & EPOLLOUT) == 0 ){
         e.events |= EPOLLOUT;
-        printf("%d add pollout\n", self->socket);
         epoll_ctl( self->mgr->epoll_args.epollfd, EPOLL_CTL_MOD, self->socket, &e );
     }
     if( event == RTMP_EVENT_EMPTIED && (e.events & EPOLLIN) == 0 ){
         e.events |= EPOLLIN;
-        printf("%d add pollin\n", self->socket);
         epoll_ctl( self->mgr->epoll_args.epollfd, EPOLL_CTL_MOD, self->socket, &e );
     }
     self->flags = e.events;
@@ -95,14 +93,18 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
         item->server = rtmp_server_create();
         item->flags = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLPRI | EPOLLHUP;
         item->mgr = mgr;
+        item->closing = false;
 
-        rtmp_stream_reg_event( (rtmp_stream_t)item->server, stream_event, item );
+        rtmp_stream_reg_event( (rtmp_stream_t)item->server, RTMP_EVENT_FILLED, stream_event, item );
+        rtmp_stream_reg_event( (rtmp_stream_t)item->server, RTMP_EVENT_EMPTIED, stream_event, item );
 
         event.data.ptr = item;
         event.events = item->flags;
 
 
         epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_ADD, sock, &event );
+
+        rtmp_server_set_app_list( item->server, mgr->applist );
         if( mgr->callback ){
             return mgr->callback( item->server, mgr->callback_data );
         }
@@ -125,9 +127,11 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
         rtmp_chunk_conn_t conn = s ? rtmp_stream_get_conn( s ) : nullptr;
         if( conn && rtmp_chunk_conn_get_out_buff( conn, &buffer, &size ) == RTMP_ERR_NONE ){
             if( size == 0 ){
+                if( stream->closing ){
+                    goto confail;
+                }
                 e.events &= ~EPOLLOUT;
                 stream->flags &= ~EPOLLOUT;
-                printf("%d rem pollout\n", stream->socket);
                 epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
             }
             else{
@@ -136,7 +140,9 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_out_buff( conn, size );
-                rtmp_chunk_conn_service( conn );
+                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_ERROR ){
+                    goto confail;
+                }
             }
         }
     }
@@ -149,7 +155,6 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
             if( size == 0 ){
                 e.events &= ~EPOLLIN;
                 stream->flags &= ~EPOLLIN;
-                printf("%d rem pollin\n", stream->socket);
                 epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
             }
             else{
@@ -158,7 +163,12 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_in_buff( conn, size );
-                rtmp_chunk_conn_service( conn );
+                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_ERROR ){
+                    stream->closing = true;
+                    stream->flags = EPOLLOUT;
+                    e.events = EPOLLOUT;
+                    epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
+                }
             }
         }
     }
