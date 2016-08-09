@@ -27,6 +27,7 @@
 #include "memutil.h"
 #include "amf/amf.h"
 #include "data_stream.h"
+#include "ieee754_double.h"
 
 //Returns an IEEE 754 float from the data
 amf_err_t amf0_write_number( byte* data, size_t data_len, double value ){

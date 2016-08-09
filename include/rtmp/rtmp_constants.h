@@ -43,7 +43,8 @@
 #define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
 #define RTMP_ANY                            0xFFFFFF
 
-#define RTMP_FMSVER                         "LibOpenRTMP/0,0,0,0"
+#define RTMP_FMSVER                         "0,0,0,0"
+#define RTMP_FMSVER_STR                     "LibOpenRTMP/" RTMP_FMSVER
 #define RTMP_CAPABILITIES                   0x1F
 #define RTMP_MODE                           1
 
@@ -215,3 +216,5 @@ typedef enum {
 #define RTMP_CMD_PUBLISH "publish"
 #define RTMP_CMD_SEEK "seek"
 #define RTMP_CMD_PAUSE "pause"
+
+#define RTMP_NETCON_SUCCESS "NetConnection.Connect.Success"

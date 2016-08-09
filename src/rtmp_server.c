@@ -82,12 +82,30 @@ rtmp_cb_status_t rtmp_server_onconnect(
 
     printf("Got connection for app %s\n", self->params.app );
 
-    rtmp_stream_respond( &self->stream, "_result", 1,
+    byte stream_id[6];
+    ntoh_write_s(stream_id, RTMP_USR_EVT_STREAM_BEGIN);
+    ntoh_write_d( stream_id, 0 );
+
+    rtmp_chunk_conn_set_window_ack_size( rtmp_stream_get_conn( stream ), RTMP_DEFAULT_WINDOW_SIZE );
+    rtmp_chunk_conn_set_peer_bwidth( rtmp_stream_get_conn( stream ), RTMP_DEFAULT_WINDOW_SIZE, RTMP_LIMIT_DYNAMIC );
+    rtmp_chunk_conn_set_chunk_size( rtmp_stream_get_conn( stream ), RTMP_DEFAULT_CHUNK_SIZE );
+    rtmp_stream_send_stream_begin( stream, 0 );
+
+    rtmp_stream_respond( stream, "_result", 1,
         AMF(
             AMF_OBJ(
-                AMF_STR("fmsVer", RTMP_FMSVER),
+                AMF_STR("fmsVer", RTMP_FMSVER_STR),
                 AMF_INT("capabilities", RTMP_CAPABILITIES),
                 AMF_INT("mode", RTMP_MODE)
+            ),
+            AMF_OBJ(
+                AMF_STR("level", "status"),
+                AMF_STR("code", RTMP_NETCON_SUCCESS),
+                AMF_STR("description", "Connection Accepted"),
+                AMF_OBJ( "data",
+                        AMF_STR("string", RTMP_FMSVER)
+                ),
+                AMF_INT("objectEncoding", 0)
             )
         )
     );

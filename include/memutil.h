@@ -26,6 +26,7 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 #include <string.h>
+#include <stdlib.h>
 
 
 #ifdef __cplusplus
@@ -182,7 +183,5 @@ unsigned long long si_convert_ull(unsigned long long number, const si_prefix fro
 
 byte* safe_alloc(size_t amount);
 
-double read_double_ieee(const void *ptr);
-void write_double_ieee(void *ptr, double value);
 
 char * str_dupl( const char * input, size_t len );
