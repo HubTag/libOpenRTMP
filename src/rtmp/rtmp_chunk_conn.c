@@ -84,8 +84,10 @@ rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t even
             case RTMP_CB_CONTINUE:
                 break;
             case RTMP_CB_ERROR:
-            case RTMP_CB_ABORT:
                 err = RTMP_ERR_ERROR;
+                break;
+            case RTMP_CB_ABORT:
+                err = RTMP_ERR_ABORT;
                 break;
         }
     }
@@ -99,8 +101,10 @@ rtmp_err_t rtmp_chunk_conn_call_chunk( rtmp_chunk_conn_t conn, const void *input
             case RTMP_CB_CONTINUE:
                 break;
             case RTMP_CB_ERROR:
-            case RTMP_CB_ABORT:
                 err = RTMP_ERR_ERROR;
+                break;
+            case RTMP_CB_ABORT:
+                err = RTMP_ERR_ABORT;
                 break;
         }
     }
@@ -608,20 +612,23 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
         if( io_status == RTMP_IO_IN ){
             committed = ringbuffer_unfreeze_read( conn->in, commit );
             conn->bytes_in += committed;
-            if( committed > 0 ){
-                rtmp_chunk_conn_call_event( conn, RTMP_EVENT_EMPTIED );
+            if( commit && committed > 0 ){
+                ret = rtmp_chunk_conn_call_event( conn, RTMP_EVENT_EMPTIED );
             }
         }
         if( io_status == RTMP_IO_OUT ){
             committed = ringbuffer_unfreeze_write( conn->out, commit );
             conn->bytes_out += committed;
-            if( committed > 0 ){
-                rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
+            if( commit && committed > 0 ){
+                ret = rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
             }
         }
 
         //Repeat if we didn't error and we've committed something
     } while( committed > 0 && ret == RTMP_ERR_NONE );
+    if( ret >= RTMP_ERR_FATAL ){
+        ringbuffer_clear( conn->in );
+    }
     return RTMP_GEN_ERROR(conn, ret);
 }
 

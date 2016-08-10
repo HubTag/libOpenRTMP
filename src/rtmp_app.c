@@ -30,19 +30,22 @@
 
 struct rtmp_app {
     char *name;
-    rtmp_app_on_connect_proc on_connect;
+    rtmp_app_on_amf_proc on_connect;
     void * on_connect_data;
 
-    rtmp_app_on_disconnect_proc on_disconnect;
+    rtmp_app_on_amf_proc on_disconnect;
     void * on_disconnect_data;
 
-    rtmp_app_on_release_proc on_release;
+    rtmp_app_on_amf_proc on_release;
     void * on_release_data;
 
-    rtmp_app_on_publish_proc on_publish;
+    rtmp_app_on_fcpub_proc on_fcpublish;
+    void * on_fcpublish_data;
+
+    rtmp_app_on_pub_proc on_publish;
     void * on_publish_data;
 
-    rtmp_app_on_metadata_proc on_metadata;
+    rtmp_app_on_amf_proc on_metadata;
     void * on_metadata_data;
 
     rtmp_app_on_video_proc on_video;
@@ -73,7 +76,12 @@ void rtmp_app_list_destroy( rtmp_app_list_t list ){
 }
 
 rtmp_app_t rtmp_app_list_register( rtmp_app_list_t list, const char *appname ){
-    rtmp_app_t app = calloc( 1, sizeof( struct rtmp_app ) );
+    rtmp_app_t app = rtmp_app_list_get( list, appname );
+    if( app ){
+        return app;
+    }
+
+    app = calloc( 1, sizeof( struct rtmp_app ) );
     if( !app ){
         return nullptr;
     }
@@ -104,31 +112,37 @@ rtmp_app_t rtmp_app_list_get( rtmp_app_list_t list, const char *appname ){
     return nullptr;
 }
 
-rtmp_cb_status_t rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_connect_proc proc, void *user ){
+rtmp_cb_status_t rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_connect = proc;
     app->on_connect_data = user;
     return RTMP_ERR_NONE;
 }
 
-rtmp_cb_status_t rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_disconnect_proc proc, void *user ){
+rtmp_cb_status_t rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_disconnect = proc;
     app->on_disconnect_data = user;
     return RTMP_ERR_NONE;
 }
 
-rtmp_cb_status_t rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_release_proc proc, void *user ){
+rtmp_cb_status_t rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_release = proc;
     app->on_release_data = user;
     return RTMP_ERR_NONE;
 }
 
-rtmp_cb_status_t rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_publish_proc proc, void *user ){
+rtmp_cb_status_t rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user ){
     app->on_publish = proc;
     app->on_publish_data = user;
     return RTMP_ERR_NONE;
 }
 
-rtmp_cb_status_t rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_metadata_proc proc, void *user ){
+rtmp_cb_status_t rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *user ){
+    app->on_fcpublish = proc;
+    app->on_fcpublish_data = user;
+    return RTMP_ERR_NONE;
+}
+
+rtmp_cb_status_t rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_metadata = proc;
     app->on_metadata_data = user;
     return RTMP_ERR_NONE;
@@ -147,24 +161,28 @@ rtmp_cb_status_t rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_audio_proc proc
 }
 
 
-rtmp_cb_status_t rtmp_app_connect( rtmp_stream_t stream, rtmp_app_t app, rtmp_params_t params ){
-    return app->on_connect ? app->on_connect( stream, app, params, app->on_connect_data ) : RTMP_CB_CONTINUE;
+rtmp_cb_status_t rtmp_app_connect( rtmp_stream_t stream, rtmp_app_t app, amf_value_t value ){
+    return app->on_connect ? app->on_connect( stream, app, value, app->on_connect_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_disconnect( rtmp_stream_t stream, rtmp_app_t app ){
-    return app->on_disconnect ? app->on_disconnect( stream, app, app->on_disconnect_data ) : RTMP_CB_CONTINUE;
+rtmp_cb_status_t rtmp_app_disconnect( rtmp_stream_t stream, rtmp_app_t app, amf_value_t value ){
+    return app->on_disconnect ? app->on_disconnect( stream, app, value, app->on_disconnect_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app ){
-    return app->on_release ? app->on_release( stream, app, app->on_release_data ) : RTMP_CB_CONTINUE;
+rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_value_t value ){
+    return app->on_release ? app->on_release( stream, app, value, app->on_release_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app ){
-    return app->on_publish ? app->on_publish( stream, app, app->on_publish_data ) : RTMP_CB_CONTINUE;
+size_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type, char * new_name, size_t len ){
+    return app->on_publish ? app->on_publish( stream, app, name, type, new_name, len, app->on_publish_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app ){
-    return app->on_metadata ? app->on_metadata( stream, app, app->on_metadata_data ) : RTMP_CB_CONTINUE;
+size_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name, char * new_name, size_t len ){
+    return app->on_fcpublish ? app->on_fcpublish( stream, app, name, new_name, len, app->on_fcpublish_data ) : RTMP_CB_CONTINUE;
+}
+
+rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_value_t value ){
+    return app->on_metadata ? app->on_metadata( stream, app, value, app->on_metadata_data ) : RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app ){

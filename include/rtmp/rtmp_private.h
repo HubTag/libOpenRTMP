@@ -29,6 +29,7 @@
 #include "rtmp/rtmp_stream.h"
 #include "rtmp_server.h"
 #include "rtmp_client.h"
+#include "vec.h"
 
 #if defined RTMP_POLLTECH_EPOLL
 #   include <sys/epoll.h>

@@ -24,6 +24,7 @@
 #include "amf/amf_object.h"
 #include "amf/amf.h"
 #include "memutil.h"
+#include "vec.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -579,11 +580,12 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
     if( amf->allocation ){
         free( amf->allocation );
     }
-    amf->allocation = malloc( length * sizeof( char ) );
+    amf->allocation = malloc( length * sizeof( char ) + 1 );
     if( amf->allocation == nullptr ){
         return AMF_ERR_OOM;
     }
     amf->allocation_len = length;
+    ((byte*)amf->allocation)[length] = 0;
     *destination = amf->allocation;
     return AMF_ERR_NONE;
 }

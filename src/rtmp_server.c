@@ -31,7 +31,6 @@
 
 struct rtmp_server{
     struct rtmp_stream stream;
-    struct rtmp_params params;
     rtmp_app_list_t applist;
     rtmp_app_t app;
 };
@@ -90,28 +89,26 @@ rtmp_cb_status_t rtmp_server_onconnect(
     if( !amf_value_is( args, AMF0_TYPE_OBJECT ) ){
         return RTMP_CB_ABORT;
     }
-    LOAD_ARG_S(app);
-    LOAD_ARG_S(flashver);
-    LOAD_ARG_S(swfUrl);
-    LOAD_ARG_S(tcUrl);
-    LOAD_ARG_S(pageUrl);
-    LOAD_ARG_D(audioCodecs);
-    LOAD_ARG_D(videoCodecs);
-    LOAD_ARG_D(videoFunction);
-    LOAD_ARG_D(objectEncoding);
 
-    if( self->applist == nullptr || self->app != nullptr ){
+    amf_value_t val = amf_obj_get_value( args, "app" );
+    if( !val ){
         goto fail;
     }
-    printf("Got connection for app %s\n", self->params.app );
+    size_t len;
+    const char *str = amf_value_get_string(val, &len);
 
-    self->app = rtmp_app_list_get( self->applist, self->params.app );
+    if( !str || self->applist == nullptr || self->app != nullptr ){
+        goto fail;
+    }
+    printf("Got connection for app %s\n", str );
+
+    self->app = rtmp_app_list_get( self->applist, str );
 
     if( !self->app ){
         goto fail;
     }
 
-    rtmp_cb_status_t status = rtmp_app_connect( stream, self->app, &self->params );
+    rtmp_cb_status_t status = rtmp_app_connect( stream, self->app, args );
     if( status != RTMP_CB_CONTINUE ){
         goto fail;
     }
@@ -163,11 +160,128 @@ rtmp_cb_status_t rtmp_server_onconnect(
     return RTMP_CB_ABORT;
 }
 
+rtmp_cb_status_t rtmp_server_onreleaseStream( rtmp_stream_t stream, rtmp_message_type_t message, amf_t object, void *user ){
+    rtmp_server_t self = user;
+    if(!self->app){
+        return RTMP_CB_ERROR;
+    }
+    if( amf_get_count( object ) < 4 || !amf_value_is( amf_get_item( object, 3 ), AMF0_TYPE_STRING ) ){
+        return RTMP_CB_ERROR;
+    }
+    return rtmp_app_release( stream, self->app, amf_get_item( object, 2 ) );
+}
+
+rtmp_cb_status_t rtmp_server_onFCPublish( rtmp_stream_t stream, rtmp_message_type_t message, amf_t object, void *user ){
+    rtmp_server_t self = user;
+    if(!self->app){
+        return RTMP_CB_ERROR;
+    }
+    if( amf_get_count( object ) < 4 ||
+       !amf_value_is( amf_get_item( object, 1 ), AMF0_TYPE_NUMBER ) ||
+       !amf_value_is( amf_get_item( object, 3 ), AMF0_TYPE_STRING ) ){
+        return RTMP_CB_ERROR;
+    }
+
+    char buffer[RTMP_TEMP_BUFF_SIZE+22] = "FCPublish to stream ";
+    const char * target = amf_value_get_string( amf_get_item( object, 3 ), nullptr );
+
+    size_t len = rtmp_app_fcpublish( stream, self->app, target, buffer + strlen(buffer), RTMP_TEMP_BUFF_SIZE );
+    if( len >= RTMP_TEMP_BUFF_SIZE || len <= 0 ){
+        return RTMP_CB_ERROR;
+    }
+    rtmp_err_t err = RTMP_ERR_NONE;
+    err = err ? err : rtmp_stream_respond( stream, "onFCPublish", amf_value_get_number(amf_get_item( object, 1 )),
+        AMF(
+            AMF_NULL(),
+            AMF_OBJ(
+                AMF_STR("level", "status"),
+                AMF_STR("code", RTMP_NETSTREAM_START),
+                AMF_STR("description", buffer)
+            )
+        )
+    );
+    return err ? RTMP_CB_ERROR : RTMP_CB_CONTINUE;
+}
+
+rtmp_cb_status_t rtmp_server_onpublish( rtmp_stream_t stream, rtmp_message_type_t message, amf_t object, void *user ){
+    rtmp_server_t self = user;
+    if(!self->app){
+        return RTMP_CB_ERROR;
+    }
+    if( amf_get_count( object ) < 4 ||
+       !amf_value_is( amf_get_item( object, 1 ), AMF0_TYPE_NUMBER ) ||
+       !amf_value_is( amf_get_item( object, 3 ), AMF0_TYPE_STRING ) ||
+       !amf_value_is( amf_get_item( object, 4 ), AMF0_TYPE_STRING ) ){
+        return RTMP_CB_ERROR;
+    }
+
+    char buffer[RTMP_TEMP_BUFF_SIZE+22] = "Publishing ";
+    size_t offset = strlen(buffer);
+    const char * target = amf_value_get_string( amf_get_item( object, 3 ), nullptr );
+    const char * type = amf_value_get_string( amf_get_item( object, 4 ), nullptr );
+
+    size_t len = rtmp_app_publish( stream, self->app, target, type, buffer + offset, RTMP_TEMP_BUFF_SIZE );
+    if( len >= RTMP_TEMP_BUFF_SIZE || len <= 0 ){
+        return RTMP_CB_ERROR;
+    }
+    offset += len;
+    buffer[offset++] = '.';
+    buffer[offset++] = 0;
+
+    rtmp_err_t err = RTMP_ERR_NONE;
+    err = err ? err : rtmp_stream_respond2( stream, 3, 1, "onStatus", amf_value_get_number(amf_get_item( object, 1 )),
+        AMF(
+            AMF_NULL(),
+            AMF_OBJ(
+                AMF_STR("level", "status"),
+                AMF_STR("code", RTMP_NETSTREAM_START),
+                AMF_STR("description", buffer)
+            )
+        )
+    );
+
+    return err ? RTMP_CB_ERROR : RTMP_CB_CONTINUE;
+}
+
+rtmp_cb_status_t rtmp_server_oncreateStream( rtmp_stream_t stream, rtmp_message_type_t message, amf_t object, void *user ){
+    rtmp_server_t self = user;
+    if(!self->app){
+        return RTMP_CB_ERROR;
+    }
+    if( amf_get_count( object ) < 3 ||
+       !amf_value_is( amf_get_item( object, 1 ), AMF0_TYPE_NUMBER )){
+        return RTMP_CB_ERROR;
+    }
+
+    //TODO: Make this proper
+    int stream_id = 1;
+
+    rtmp_err_t err = RTMP_ERR_NONE;
+    err = err ? err : rtmp_stream_respond( stream, "_result", amf_value_get_number(amf_get_item( object, 1 )),
+        AMF(
+            AMF_NULL(),
+            AMF_INT(stream_id)
+        )
+    );
+    err = err ? err : rtmp_stream_send_stream_begin( stream, stream_id );
+
+    return err ? RTMP_CB_ERROR : RTMP_CB_CONTINUE;
+}
+
+rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_t stream, rtmp_message_type_t message, amf_t object, void *user ){
+    return RTMP_CB_CONTINUE;
+}
+
 
 rtmp_server_t rtmp_server_create( void ){
     rtmp_server_t server = calloc( 1, sizeof( struct rtmp_server ) );
     rtmp_stream_create_at( &server->stream, false );
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "connect", rtmp_server_onconnect, server );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "releaseStream", rtmp_server_onreleaseStream, server );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "FCPublish", rtmp_server_onFCPublish, server );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "publish", rtmp_server_onpublish, server );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "createStream", rtmp_server_oncreateStream, server );
+    //rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "@setDataFrame", rtmp_server_onsetDataFrame, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_SUCCESS, rtmp_server_shake_done, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_FAIL, rtmp_server_shake_fail, server );
 
@@ -176,7 +290,6 @@ rtmp_server_t rtmp_server_create( void ){
 
 void rtmp_server_destroy( rtmp_server_t server ){
     rtmp_stream_destroy_at( &server->stream );
-    rtmp_params_free( &server->params );
     free( server );
 }
 

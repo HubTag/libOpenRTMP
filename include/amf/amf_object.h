@@ -118,7 +118,11 @@ size_t amf_obj_get_count( amf_value_t target );
 void amf_print_value( amf_value_t val );
 void amf_print( amf_t val );
 
-
+#define AMF_PRIV_NULL_0() AMF0_TYPE_NULL
+#define AMF_PRIV_NULL_1(A) AMF0_TYPE_NULL, A
+#define AMF_PRIV_NULL_I(x,A,FUNC, ...)  FUNC
+#define AMF_PRIV_NULL(...)  AMF_PRIV_NULL_I(,##__VA_ARGS__, AMF_PRIV_NULL_1(__VA_ARGS__),AMF_PRIV_NULL_0(__VA_ARGS__) )
+#define AMF_NULL(...) AMF_PRIV_NULL(__VA_ARGS__)
 
 #define AMF_DBL(...) AMF0_TYPE_NUMBER, __VA_ARGS__
 #define AMF_INT(...) AMF0_TYPE_NUMBER_INT, __VA_ARGS__

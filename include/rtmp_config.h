@@ -73,7 +73,7 @@
 #define RTMP_MIN_PEER_WINDOW_SIZE 1
 
 //Maximum values
-#define RTMP_MAX_CHUNK_CACHE 0x1000
+#define RTMP_MAX_CHUNK_CACHE 0x3FFFF
 
 //The technique used to poll connections.
 //#define RTMP_POLLTECH_SELECT

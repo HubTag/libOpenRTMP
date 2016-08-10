@@ -267,4 +267,3 @@ char * str_dup( const char * input ){
     return str_dupl_priv( input, strlen( input ) );
 }
 
-void * VEC_PRIV_REALLOC(void**ptr, size_t size);

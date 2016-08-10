@@ -118,7 +118,11 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
     e.data.ptr = stream;
     e.events = stream->flags;
     if( (flags & EPOLLERR) || (flags & EPOLLHUP) ){
+        if( 1 == 1 ){
+            putchar('a');
+        }
         goto confail;
+
     }
     if( flags & EPOLLOUT ){
         const void * buffer;
@@ -128,6 +132,9 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
         if( conn && rtmp_chunk_conn_get_out_buff( conn, &buffer, &size ) == RTMP_ERR_NONE ){
             if( size == 0 ){
                 if( stream->closing ){
+                    if( 1 == 1 ){
+                        putchar('a');
+                    }
                     goto confail;
                 }
                 e.events &= ~EPOLLOUT;
@@ -137,10 +144,16 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
             else{
                 size = send( stream->socket, buffer, size, MSG_NOSIGNAL );
                 if( size == -1 || size == 0 ){
+                    if( 1 == 1 ){
+                        putchar('a');
+                    }
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_out_buff( conn, size );
-                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_ERROR ){
+                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
+                    if( 1 == 1 ){
+                        putchar('a');
+                    }
                     goto confail;
                 }
             }
@@ -160,10 +173,13 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
             else{
                 size = recv( stream->socket, buffer, size, MSG_NOSIGNAL );
                 if( size == -1 || size == 0 ){
+                    if( 1 == 1 ){
+                        putchar('a');
+                    }
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_in_buff( conn, size );
-                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_ERROR ){
+                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
                     stream->closing = true;
                     stream->flags = EPOLLOUT;
                     e.events = EPOLLOUT;
