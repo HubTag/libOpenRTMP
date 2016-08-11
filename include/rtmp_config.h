@@ -26,8 +26,8 @@
 #define RTMP_DEFAULT_PORT                   1935
 
 //Protocol defaults. These may all be negotiated at runtime.
-#define RTMP_DEFAULT_CHUNK_SIZE             0x00000FFF
-#define RTMP_DEFAULT_WINDOW_SIZE            0x000FFFFF
+#define RTMP_DEFAULT_WINDOW_SIZE            0x0000FFFF
+#define RTMP_DEFAULT_PEER_WINDOW_SIZE       0x0
 #define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
 
 
@@ -73,7 +73,7 @@
 #define RTMP_MIN_PEER_WINDOW_SIZE 1
 
 //Maximum values
-#define RTMP_MAX_CHUNK_CACHE 0x3FFFF
+#define RTMP_MAX_CHUNK_CACHE 0x3FFFFF
 
 //The technique used to poll connections.
 //#define RTMP_POLLTECH_SELECT
@@ -85,5 +85,5 @@
 
 #define RTMP_LISTEN_SIZE 100
 
-
+#define RTMP_REFRESH_TIME 1000
 

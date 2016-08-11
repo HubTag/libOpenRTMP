@@ -21,6 +21,7 @@
 
 */
 
+#include <errno.h>
 #include "rtmp_config.h"
 #include "rtmp.h"
 #include "rtmp/rtmp_private.h"
@@ -38,12 +39,13 @@ rtmp_t rtmp_create( void ){
     mgr->type = RTMP_T_RTMP_T;
     mgr->epoll_args.epollfd = epoll_create(1);
     VEC_INIT(mgr->servers);
+    mgr->last_refresh = rtmp_get_time();
     return mgr;
 }
 
 void rtmp_destroy( rtmp_t mgr ){
     close( mgr->epoll_args.epollfd );
-    VEC_DESTROY( mgr->servers );
+    VEC_DESTROY_DTOR( mgr->servers, free );
     free( mgr );
 }
 
@@ -52,7 +54,7 @@ static rtmp_cb_status_t stream_event(
     rtmp_event_t event,
     void * restrict user
 ){
-    rtmp_mgr_svr_t * self = (rtmp_mgr_svr_t *) user;
+    rtmp_mgr_svr_t self = (rtmp_mgr_svr_t) user;
     struct epoll_event e;
     e.data.ptr = user;
     e.events = self->flags;
@@ -78,15 +80,19 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
     if( (flags & EPOLLIN) ){
         struct epoll_event event;
         rtmp_sock_t sock = accept( mgr->listen_socket, nullptr, 0 );
+        int err = errno;
         if( sock <= 0 ){
+            perror( "accept" );
             return RTMP_ERR_POLL_FAIL;
         }
 
-        rtmp_mgr_svr_t *item = VEC_PUSH(mgr->servers);
+        rtmp_mgr_svr_t *item_loc = VEC_PUSH(mgr->servers);
 
-        if( !item ){
+        if( !item_loc ){
             return RTMP_ERR_OOM;
         }
+        rtmp_mgr_svr_t item = calloc( 1, sizeof( struct rtmp_mgr_svr ) );
+        *item_loc = item;
 
         item->type = RTMP_T_STREAM_T;
         item->socket = sock;
@@ -113,7 +119,7 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
 }
 
 
-static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags ){
+static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
     struct epoll_event e;
     e.data.ptr = stream;
     e.events = stream->flags;
@@ -169,6 +175,12 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t * stream, int flags 
                 e.events &= ~EPOLLIN;
                 stream->flags &= ~EPOLLIN;
                 epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
+                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
+                    stream->closing = true;
+                    stream->flags = EPOLLOUT;
+                    e.events = EPOLLOUT;
+                    epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
+                }
             }
             else{
                 size = recv( stream->socket, buffer, size, MSG_NOSIGNAL );
@@ -201,6 +213,13 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
     struct epoll_event events[RTMP_EPOLL_MAX];
     rtmp_err_t err = RTMP_ERR_NONE;
     int fd_count = epoll_wait( mgr->epoll_args.epollfd, events, RTMP_EPOLL_MAX, timeout );
+    if( rtmp_get_time() > mgr->last_refresh + RTMP_REFRESH_TIME ){
+        size_t s = VEC_SIZE(mgr->servers);
+        for( size_t i = 0; i < s; ++i ){
+            rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ) );
+        }
+        mgr->last_refresh = rtmp_get_time();
+    }
     if( fd_count < 0 ){
         return RTMP_ERR_POLL_FAIL;
     }

@@ -54,7 +54,7 @@ rtmp_chunk_conn_t rtmp_chunk_conn_create( bool is_client ){
     ret->peer_chunk_size = RTMP_DEFAULT_CHUNK_SIZE;
 
     ret->self_window_size = RTMP_DEFAULT_WINDOW_SIZE;
-    ret->peer_window_size = RTMP_DEFAULT_WINDOW_SIZE;
+    ret->peer_window_size = RTMP_DEFAULT_PEER_WINDOW_SIZE;
 
     ret->peer_bandwidth_type = RTMP_DEFAULT_BANDWIDTH_TYPE;
     return ret;
@@ -570,6 +570,7 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
 }
 
 rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
+
     size_t committed = 0;
     rtmp_err_t ret = RTMP_ERR_NONE;
     rtmp_io_t io_status = 0;

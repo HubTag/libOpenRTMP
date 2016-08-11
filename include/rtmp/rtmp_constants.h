@@ -50,6 +50,8 @@
 
 #define RTMP_ADDR_ANY                       "0.0.0.0"
 
+#define RTMP_DEFAULT_CHUNK_SIZE             128
+
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,
     RTMP_EVENT_CONNECT_FAIL,

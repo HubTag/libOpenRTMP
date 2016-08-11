@@ -40,6 +40,7 @@ amf_err_t amf_push_number( amf_t amf, double number );
 amf_err_t amf_push_boolean( amf_t amf, char boolean );
 amf_err_t amf_push_string( amf_t amf, const void *str );
 amf_err_t amf_push_object_start( amf_t amf );
+amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members );
 amf_err_t amf_push_member( amf_t amf, const void *str );
 amf_err_t amf_push_null( amf_t amf );
 amf_err_t amf_push_undefined( amf_t amf );
@@ -65,6 +66,7 @@ size_t amf_get_count( amf_t amf );
 
 //Returns an item by index
 amf_value_t amf_get_item( amf_t amf, const size_t idx );
+
 
 //Returns true if the given value is of the specified type.
 //Reference values will return true if the type is reference
@@ -115,6 +117,18 @@ amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, s
 //Get the number of members in object
 size_t amf_obj_get_count( amf_value_t target );
 
+//Same as with the obj functions, but with arrays
+//Associative values
+amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key );
+amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+size_t amf_arr_get_assoc_count( const amf_value_t target );
+//Ordinal values
+amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key );
+amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+size_t amf_arr_get_ord_count( const amf_value_t target );
+
+
+
 void amf_print_value( amf_value_t val );
 void amf_print( amf_t val );
 
@@ -124,6 +138,8 @@ void amf_print( amf_t val );
 #define AMF_PRIV_NULL(...)  AMF_PRIV_NULL_I(,##__VA_ARGS__, AMF_PRIV_NULL_1(__VA_ARGS__),AMF_PRIV_NULL_0(__VA_ARGS__) )
 #define AMF_NULL(...) AMF_PRIV_NULL(__VA_ARGS__)
 
+#define AMF_ARR_ORD(...) AMF0_TYPE_ECMA_ARRAY_ASSOC_END, "", __VA_ARGS__
+#define AMF_ARR(...) AMF0_TYPE_ECMA_ARRAY, __VA_ARGS__, AMF0_TYPE_OBJECT_END, ""
 #define AMF_DBL(...) AMF0_TYPE_NUMBER, __VA_ARGS__
 #define AMF_INT(...) AMF0_TYPE_NUMBER_INT, __VA_ARGS__
 #define AMF_STR(...) AMF0_TYPE_STRING, __VA_ARGS__

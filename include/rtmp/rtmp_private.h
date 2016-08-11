@@ -163,11 +163,12 @@ typedef struct rtmp_mgr_svr{
     int flags;
     rtmp_t mgr;
     bool closing;
-} rtmp_mgr_svr_t;
+} *rtmp_mgr_svr_t;
 
 struct rtmp_mgr {
     rtmp_t_t type;
     VEC_DECLARE(rtmp_mgr_svr_t) servers;
+    rtmp_time_t last_refresh;
 
     union{
         #if defined RTMP_POLLTECH_EPOLL

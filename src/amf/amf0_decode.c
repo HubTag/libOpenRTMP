@@ -172,10 +172,12 @@ amf_err_t amf0_get_reference( const byte* data, size_t data_len, uint32_t *value
     return 3;
 }
 
-//Unimplemented. Will implement if necessary.
-amf_err_t amf0_get_ecma_array( const byte* data, size_t data_len ){
-    emit_err("[Unimplemented] Trying to read ECMA Array from AMF!");
-    return 1;
+amf_err_t amf0_get_ecma_array( const byte* data, size_t data_len, uint32_t *num_memb ){
+    size_t count = 0;
+    AMF0_HARVEST_LENGTH(data, data_len, count, 5);
+    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_ECMA_ARRAY, AMF_ERR_INVALID_DATA );
+    *num_memb = ntoh_read_ud(buffer + 1);
+    return 5;
 }
 
 //Mostly a dummy; this is used to verify and skip an object end marker
@@ -309,8 +311,9 @@ void amf0_print( const byte* data, size_t data_len, rtmp_printer_t printer ){
                 printer->u( uinteger );
                 break;
             case AMF0_TYPE_ECMA_ARRAY:
-                r += amf0_get_ecma_array( data + r, data_len - r);
-                printer->s("ECMA Array");
+                r += amf0_get_ecma_array( data + r, data_len - r, &uinteger);
+                printer->s("ECMA Array, assoc len ");
+                printer->u(uinteger);
                 break;
             case AMF0_TYPE_OBJECT_END:
                 r += amf0_get_object_end( data + r, data_len - r );

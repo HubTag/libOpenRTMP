@@ -75,6 +75,8 @@ typedef enum AMF0_TYPE{
     AMF0_TYPE_AVMPLUS,          //Page 8, §3.1
     AMF0_TYPE_NUMBER_INT,       //Not a part of the spec, for internal use
     AMF0_TYPE_NONE,
+    AMF0_TYPE_COMPLEX,
+    AMF0_TYPE_ECMA_ARRAY_ASSOC_END
 } amf0_type_t;
 
 //AMF3 Type Markers             See AMF3 Specification

@@ -54,22 +54,22 @@ rtmp_cb_status_t rtmp_stream_call_amf(
     rtmp_message_type_t message,
     amf_t object
 ){
+    amf_print( object );
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
 
     const char* name = nullptr;
     size_t len;
 
+    if( amf_get_count( object ) > 0 ){
+        amf_value_t item = amf_get_item( object, 0 );
+        if( amf_value_is_like( item, AMF0_TYPE_STRING ) ){
+            name = amf_value_get_string( item, &len );
+        }
+    }
+
     for( size_t i = 0; i < VEC_SIZE(stream->amf_callback); ++i ){
         rtmp_amf_cb_t *cb = &stream->amf_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
-
-            if( amf_get_count( object ) > 0 ){
-                amf_value_t item = amf_get_item( object, 0 );
-                if( amf_value_is_like( item, AMF0_TYPE_STRING ) ){
-                    name = amf_value_get_string( item, &len );
-                }
-            }
-
             if( cb->name == nullptr || strncmp( cb->name, name, len ) == 0 ){
                 ret = cb->callback( stream, message, object, cb->user );
                 if( ret != RTMP_CB_CONTINUE ){
@@ -603,7 +603,7 @@ rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t m
     err = err ? err : amf_push_number( amf, id );
     err = err ? err : amf_push_simple_list( amf, list );
     err = err ? err : rtmp_stream_send_amf( stream, RTMP_MSG_AMF0_CMD, chunk_id, msg_id, 0, amf, nullptr );
-
+    amf_print(amf);
     amf_destroy( amf );
     return rtmp_amferr( err );
 }

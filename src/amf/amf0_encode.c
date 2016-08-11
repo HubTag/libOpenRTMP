@@ -164,9 +164,16 @@ amf_err_t amf0_write_reference( byte* data, size_t data_len, uint32_t value){
 }
 
 //Unimplemented. Will implement if necessary.
-amf_err_t amf0_write_ecma_array( byte* data, size_t data_len ){
-    emit_err("[Unimplemented] Trying to write ECMA Array to AMF!");
-    return 0;
+amf_err_t amf0_write_ecma_array( byte* data, size_t data_len, uint32_t array_len ){
+    if( data == nullptr ){
+        return 5;
+    }
+    if( data_len < 5 ){
+        return AMF_ERR_INCOMPLETE;
+    }
+    data[0] = AMF0_TYPE_ECMA_ARRAY;
+    ntoh_write_ud( data + 1, array_len );
+    return 1;
 }
 
 //Mostly a dummy; this is used to verify and skip an object end marker
