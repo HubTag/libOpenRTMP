@@ -34,6 +34,7 @@ typedef struct rtmp_stream * rtmp_stream_t;
 typedef rtmp_cb_status_t (*rtmp_stream_amf_proc)(
     rtmp_stream_t stream,
     rtmp_message_type_t message,
+    rtmp_time_t timestamp,
     amf_t object,
     void *user
 );
@@ -41,6 +42,7 @@ typedef rtmp_cb_status_t (*rtmp_stream_amf_proc)(
 typedef rtmp_cb_status_t (*rtmp_stream_msg_proc)(
     rtmp_stream_t stream,
     rtmp_message_type_t message,
+    rtmp_time_t timestamp,
     const byte *data,
     size_t length,
     size_t remaining,
@@ -50,6 +52,7 @@ typedef rtmp_cb_status_t (*rtmp_stream_msg_proc)(
 typedef rtmp_cb_status_t (*rtmp_stream_usr_proc)(
     rtmp_stream_t stream,
     rtmp_usr_evt_t message,
+    rtmp_time_t timestamp,
     uint32_t param1,
     uint32_t param2,
     void *user

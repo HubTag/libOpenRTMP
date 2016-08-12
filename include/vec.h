@@ -86,18 +86,24 @@ do{                                                                             
     else{                                                                       \
         len = idx;                                                              \
     }                                                                           \
-    if( len * 2 < reserve ){                                                    \
+    /*if( len * 2 < reserve ){                                                  \
         reserve /= 2;                                                           \
-        VEC_PRIV_REALLOC((void**)&base, VEC_PRIV_CALCRES(base,reserve)); \
-    }                                                                           \
+        VEC_PRIV_REALLOC((void**)&base, VEC_PRIV_CALCRES(base,reserve));        \
+    }*/                                                                         \
 }while(0)
 
-#define VEC_PRIV_RESERVE(base,len,reserve,amt) do{if(reserve<amt){void*tmp=realloc(base,amt*sizeof(*base));base=tmp?tmp:base;reserve=amt;}}while(0)
+#define VEC_PRIV_RESERVE(base,len,reserve,amt) \
+do{\
+    if(reserve<amt){\
+        VEC_PRIV_REALLOC((void**)&base, VEC_PRIV_CALCRES(base,amt));\
+        reserve=amt;\
+    }\
+}while(0)
 
 
 #define VEC_PRIV_RESERVED(name) (VEC_PRIV_ACCESS(name)[1])
 #define VEC_DECLARE(type) type *
-#define VEC_INIT(vec) (vec=(VEC_PRIV_T(vec))VEC_PRIV_BASE(calloc(1,sizeof(size_t)*2)))
+#define VEC_INIT(vec) (vec=(VEC_PRIV_T(vec))VEC_PRIV_BASE(calloc(2,sizeof(size_t))))
 
 #define VEC_INSERT_N(name,idx,n) VEC_PRIV_MK_SPACE_AT(name,VEC_SIZE(name),VEC_PRIV_RESERVED(name),idx,n)
 #define VEC_PUSH_N(name,n) VEC_INSERT_N(name,-1,n)

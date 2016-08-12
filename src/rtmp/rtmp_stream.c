@@ -31,6 +31,7 @@
 static rtmp_cb_status_t rtmp_stream_call_msg(
     rtmp_stream_t stream,
     rtmp_message_type_t message,
+    rtmp_time_t timestamp,
     const byte *data,
     size_t length,
     size_t remaining
@@ -40,7 +41,7 @@ static rtmp_cb_status_t rtmp_stream_call_msg(
     for( size_t i = 0; i < VEC_SIZE(stream->msg_callback); ++i ){
         rtmp_msg_cb_t *cb = &stream->msg_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
-            ret = cb->callback( stream, message, data, length, remaining, cb->user );
+            ret = cb->callback( stream, message, timestamp, data, length, remaining, cb->user );
             if( ret != RTMP_CB_CONTINUE ){
                 break;
             }
@@ -52,6 +53,7 @@ static rtmp_cb_status_t rtmp_stream_call_msg(
 rtmp_cb_status_t rtmp_stream_call_amf(
     rtmp_stream_t stream,
     rtmp_message_type_t message,
+    rtmp_time_t timestamp,
     amf_t object
 ){
     amf_print( object );
@@ -71,7 +73,7 @@ rtmp_cb_status_t rtmp_stream_call_amf(
         rtmp_amf_cb_t *cb = &stream->amf_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
             if( cb->name == nullptr || strncmp( cb->name, name, len ) == 0 ){
-                ret = cb->callback( stream, message, object, cb->user );
+                ret = cb->callback( stream, message, timestamp, object, cb->user );
                 if( ret != RTMP_CB_CONTINUE ){
                     break;
                 }
@@ -85,6 +87,7 @@ rtmp_cb_status_t rtmp_stream_call_amf(
 rtmp_cb_status_t rtmp_stream_call_usr(
     rtmp_stream_t stream,
     rtmp_usr_evt_t message,
+    rtmp_time_t timestamp,
     uint32_t param1,
     uint32_t param2
 ){
@@ -93,7 +96,7 @@ rtmp_cb_status_t rtmp_stream_call_usr(
     for( size_t i = 0; i < VEC_SIZE(stream->usr_callback); ++i ){
         rtmp_usr_cb_t *cb = &stream->usr_callback[i];
         if( cb->callback && ( cb->type == RTMP_ANY || cb->type == message ) ){
-            ret = cb->callback( stream, message, param1, param2, cb->user );
+            ret = cb->callback( stream, message, timestamp, param1, param2, cb->user );
             if( ret != RTMP_CB_CONTINUE ){
                 break;
             }
@@ -103,8 +106,6 @@ rtmp_cb_status_t rtmp_stream_call_usr(
 }
 
 
-
-//Procedure prototype for handling partial chunk information
 rtmp_cb_status_t rtmp_stream_chunk_proc(
     rtmp_chunk_conn_t conn,
     const byte * restrict contents,
@@ -113,9 +114,6 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
     const rtmp_chunk_stream_message_t *msg,
     void * restrict user
 ){
-    if( remaining != 0 ){
-        return RTMP_CB_ABORT;
-    }
     rtmp_stream_t self = (rtmp_stream_t) user;
     amf_t amf;
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
@@ -124,7 +122,7 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
     uint32_t param2 = 0;
     int amf_ver = -1;
 
-    ret = rtmp_stream_call_msg( self, msg->message_type, contents, available, remaining );
+    ret = rtmp_stream_call_msg( self, msg->message_type, msg->timestamp, contents, available, remaining );
     if( ret != RTMP_CB_CONTINUE ){
         return ret;
     }
@@ -140,6 +138,11 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
             if( amf_ver == -1 ){
                 amf_ver = 3;
             }
+            if( remaining != 0 ){
+                //We don't have the full chunk, which means our assembler is full.
+                //Don't even try to deal with it; kill the connection.
+                return RTMP_CB_ABORT;
+            }
             amf = amf_create( amf_ver );
             if( !amf ){
                 return RTMP_CB_ERROR;
@@ -148,17 +151,22 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
                 amf_destroy( amf );
                 return RTMP_CB_ERROR;
             }
-            ret = rtmp_stream_call_amf( self, msg->message_type, amf );
+            ret = rtmp_stream_call_amf( self, msg->message_type, msg->timestamp, amf );
             amf_destroy( amf );
             break;
         case RTMP_MSG_USER_CTL:
+            if( remaining != 0 ){
+                //We don't have the full chunk, which means our assembler is full.
+                //Don't even try to deal with it; kill the connection.
+                return RTMP_CB_ABORT;
+            }
             if( available >= 4 ){
                 param1 = ntoh_read_ud( contents );
             }
             if( available >= 8 ){
                 param2 = ntoh_read_ud( contents + 4 );
             }
-            ret = rtmp_stream_call_usr( self, msg->message_type, param1, param2 );
+            ret = rtmp_stream_call_usr( self, msg->message_type, msg->timestamp, param1, param2 );
             break;
     }
 

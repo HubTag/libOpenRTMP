@@ -35,6 +35,7 @@ void amf_destroy( amf_t amf );
 
 amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written );
 amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read );
+amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size );
 
 amf_err_t amf_push_number( amf_t amf, double number );
 amf_err_t amf_push_boolean( amf_t amf, char boolean );

@@ -386,7 +386,7 @@ void rtmp_print_message( rtmp_chunk_stream_message_t *msg ){
     printf("Message: \n"
             "\tChunk Stream:   %d\n"
             "\tMessage Stream: %d\n"
-            "\tTimestamp:      %d\n"
+            "\tTimestamp:      %lu\n"
             "\tType:           %s\n"
             "\tMessage Length: %lu\n\n",
             msg->chunk_stream_id,

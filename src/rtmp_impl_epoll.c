@@ -80,7 +80,7 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
     if( (flags & EPOLLIN) ){
         struct epoll_event event;
         rtmp_sock_t sock = accept( mgr->listen_socket, nullptr, 0 );
-        int err = errno;
+
         if( sock <= 0 ){
             perror( "accept" );
             return RTMP_ERR_POLL_FAIL;
@@ -202,9 +202,10 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
     }
     return RTMP_ERR_NONE;
     confail:
+        printf("DEAD\n");
+    epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_DEL, stream->socket, &e );
     shutdown( stream->socket, SHUT_RDWR );
     close( stream->socket );
-    epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_DEL, stream->socket, nullptr );
     return RTMP_ERR_CONNECTION_FAIL;
 }
 

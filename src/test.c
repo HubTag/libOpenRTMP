@@ -88,23 +88,6 @@ void sig_terminate(int foo){
 #include "vec.h"
 
 int main(){
-    amf_t amf = amf_create( 0 );
-    amf_push_simple( amf,
-        AMF(
-            AMF_ARR(
-                AMF_STR("foo", "bar"),
-                AMF_STR("likes", "coffee"),
-                AMF_ARR_ORD(
-                    AMF_STR("0", "Ayy"),
-                    AMF_STR("1", "Lmao"),
-                    AMF_STR("2", "M'Lady")
-                )
-            )
-        )
-    );
-    amf_print( amf );
-    //return 0;
-
     signal(SIGINT, sig_terminate);
 	signal(SIGTERM, sig_terminate);
 

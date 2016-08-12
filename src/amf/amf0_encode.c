@@ -173,7 +173,7 @@ amf_err_t amf0_write_ecma_array( byte* data, size_t data_len, uint32_t array_len
     }
     data[0] = AMF0_TYPE_ECMA_ARRAY;
     ntoh_write_ud( data + 1, array_len );
-    return 1;
+    return 5;
 }
 
 //Mostly a dummy; this is used to verify and skip an object end marker

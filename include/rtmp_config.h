@@ -73,7 +73,14 @@
 #define RTMP_MIN_PEER_WINDOW_SIZE 1
 
 //Maximum values
-#define RTMP_MAX_CHUNK_CACHE 0x3FFFFF
+#define RTMP_MAX_CHUNK_CACHE 0x12F
+
+//Max number of buffers per assembler
+#define RTMP_MAX_ASM_HARD_BUFFER 20
+//Max number of persistent buffers (going over this will cause
+//a buffer allocation and deallocation for every message)
+#define RTMP_MAX_ASM_SOFT_BUFFER 5
+
 
 //The technique used to poll connections.
 //#define RTMP_POLLTECH_SELECT

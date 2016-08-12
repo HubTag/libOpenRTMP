@@ -162,8 +162,21 @@ void amf_free_value( amf_v_t * val){
 
 amf_t amf_create( char type ){
     amf_t ret = calloc( 1, sizeof( struct amf_object ) );
+    if( !ret ){
+        return ret;
+    }
     VEC_INIT(ret->items);
     VEC_INIT(ret->ref_table);
+    if( !ret->items ){
+        free(ret);
+        return nullptr;
+    }
+    if( !ret->ref_table ){
+        VEC_DESTROY( ret->items );
+        free(ret);
+        return nullptr;
+    }
+
     return ret;
 }
 
@@ -174,6 +187,7 @@ void amf_destroy( amf_t amf ){
     VEC_DESTROY( amf->items );
     VEC_DESTROY( amf->ref_table );
     free( amf->allocation );
+    free( amf );
 }
 
 
@@ -313,7 +327,6 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
     uint32_t temp_d32;
     double temp_f;
     size_t temp_size;
-    size_t old_offset = 0;
     while( offset < size ){
         if( amf->depth > 0 ){
             result = result < 0 ? result : amf0_get_prop_length( src + offset, size - offset, &temp_size );
@@ -397,14 +410,7 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
             goto aborted;
         }
         offset += result;
-        for( int i = old_offset; i < offset; ++i ){
-            printf("%02X ", src[i] );
-        }
-        printf("\n");
-        old_offset = offset;
     }
-    printf("\n");
-    printf("\n");
     return offset;
 
     aborted:
@@ -550,6 +556,7 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
     if( mem ){
         mem->length = amf->allocation_len;
         mem->name = amf->allocation;
+        mem->value.value.type = AMF0_TYPE_UNDEFINED;
         amf->allocation_len = 0;
         amf->allocation = nullptr;
         amf->member_ready = true;
@@ -560,7 +567,7 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
 amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members ){
     PUSH_PREP( amf, target );
     amf->depth ++;
-    target->object.type = AMF0_TYPE_ECMA_ARRAY;
+    target->array.type = AMF0_TYPE_ECMA_ARRAY;
     target->array.assoc_len = assoc_members;
     VEC_INIT(target->array.assoc);
     VEC_INIT(target->array.ordinal);
