@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_MEMUTIL_H
+#define RTMP_H_MEMUTIL_H
 
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
@@ -87,3 +88,5 @@ byte* safe_alloc(size_t amount);
 
 char * str_dupl( const char * input, size_t len );
 char * str_dup( const char * input );
+
+#endif

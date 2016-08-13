@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_AMF_H
+#define RTMP_H_AMF_H
 
 #include "rtmp/rtmp_types.h"
 #include "amf_constants.h"
@@ -123,3 +124,5 @@ amf_err_t amf3_get_vec_object( byte *data, size_t len, );
 amf_err_t amf3_get_dict( byte *data, size_t len, );
 //If AMF_ERR_NOT_A_REFERENCE is returned, then obviously the value is not a reference.
 amf_err_t amf3_get_reference( byte *data, size_t len, amf3_type_t *type, size_t *index );*/
+
+#endif

@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_CHUNK_ASSEMBLER_H
+#define RTMP_H_CHUNK_ASSEMBLER_H
 
 #include "rtmp_chunk_conn.h"
 
@@ -32,3 +33,5 @@ rtmp_chunk_assembler_t rtmp_chunk_assembler_create( size_t max_size, rtmp_chunk_
 void rtmp_chunk_assembler_destroy( rtmp_chunk_assembler_t assembler );
 void rtmp_chunk_assembler_assign( rtmp_chunk_assembler_t assembler,  rtmp_chunk_conn_t connection );
 
+
+#endif

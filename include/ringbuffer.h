@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_RINGBUFFER_H
+#define RTMP_H_RINGBUFFER_H
 
 typedef struct ringbuffer * ringbuffer_t;
 
@@ -88,3 +89,5 @@ unsigned long ringbuffer_copy_read( ringbuffer_t buffer, void *dst, unsigned lon
 //the buffer so long as the buffer has the free space available. Any issues with the buffer
 //wrapping is handled internally.
 unsigned long ringbuffer_copy_write( ringbuffer_t buffer, const void *src, unsigned long length );
+
+#endif

@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_PARSEURL_H
+#define RTMP_H_PARSEURL_H
 
 #include "rtmp/rtmp_types.h"
 
@@ -45,3 +46,5 @@ parseurl_t parseurl_create( void );
 void parseurl_destroy( parseurl_t parser );
 const char * parseurl_get( parseurl_t parser, parseurl_part_t part, const char *fallback );
 bool parseurl_set( parseurl_t parser, parseurl_part_t part, const char *value );
+
+#endif

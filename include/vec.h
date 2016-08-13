@@ -21,7 +21,9 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_VEC_H
+#define RTMP_H_VEC_H
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -129,3 +131,5 @@ inline void * VEC_PRIV_REALLOC(void**ptr, size_t size){
 	}
 	return ret;
 }
+
+#endif

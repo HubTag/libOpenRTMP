@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_TYPES_H
+#define RTMP_H_TYPES_H
 
 #include <stdint.h>
 
@@ -73,4 +74,6 @@ typedef enum {
     #include <netinet/in.h>
     #include <netdb.h>
     typedef int rtmp_sock_t;
+#endif
+
 #endif

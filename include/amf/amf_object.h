@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_AMF_OBJECT_H
+#define RTMP_H_AMF_OBJECT_H
 
 #include "amf_constants.h"
 #include "rtmp/rtmp_types.h"
@@ -150,3 +151,5 @@ void amf_print( amf_t val );
 
 amf_err_t amf_push_simple_list( amf_t amf, va_list list );
 amf_err_t amf_push_simple( amf_t amf, ... );
+
+#endif

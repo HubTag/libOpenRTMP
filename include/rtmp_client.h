@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_CLIENT_H
+#define RTMP_H_CLIENT_H
 
 typedef struct rtmp_client * rtmp_client_t;
 
@@ -76,3 +77,5 @@ rtmp_err_t rtmp_client_pause( rtmp_client_t client,
     bool paused,
     rtmp_time_t pause_ms);
 
+
+#endif

@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_CHUNK_CONN_H
+#define RTMP_H_CHUNK_CONN_H
 
 #include "rtmp/rtmp_types.h"
 #include "data_stream.h"
@@ -112,3 +113,5 @@ rtmp_chunk_conn_send_message(
     size_t length,
     size_t *written
 );
+
+#endif

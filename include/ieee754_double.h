@@ -21,7 +21,11 @@
 
 */
 
+#ifndef RTMP_H_IEEE754_DOUBLE_H
+#define RTMP_H_IEEE754_DOUBLE_H
 
 double read_double_ieee(const void *ptr);
 void write_double_ieee(void *ptr, double value);
 bool double_is_ieee754();
+
+#endif

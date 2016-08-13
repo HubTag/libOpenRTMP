@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_APP_H
+#define RTMP_H_APP_H
 
 typedef struct rtmp_app * rtmp_app_t;
 typedef struct rtmp_app_list * rtmp_app_list_t;
@@ -88,3 +89,5 @@ size_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name
 rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_value_t params  );
 rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app );
 rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app );
+
+#endif

@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_CHUNK_FLOW_H
+#define RTMP_H_CHUNK_FLOW_H
 
 #include "rtmp/rtmp_types.h"
 #include "data_stream.h"
@@ -71,3 +72,5 @@ rtmp_err_t rtmp_chunk_read_hdr_basic( ringbuffer_t input, byte *format, size_t *
 
 //Print the contents of a chunk header. For debugging.
 void rtmp_print_message( rtmp_chunk_stream_message_t *msg );
+
+#endif

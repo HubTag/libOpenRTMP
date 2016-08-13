@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_CONFIG_H
+#define RTMP_H_CONFIG_H
 
 #define RTMP_DEFAULT_PORT                   1935
 
@@ -94,3 +95,4 @@
 
 #define RTMP_REFRESH_TIME 1000
 
+#endif

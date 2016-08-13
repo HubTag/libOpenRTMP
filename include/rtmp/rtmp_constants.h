@@ -30,7 +30,8 @@
     Date: June 29th, 2016
 */
 
-#pragma once
+#ifndef RTMP_H_CONSTANTS_H
+#define RTMP_H_CONSTANTS_H
 
 #include "rtmp_config.h"
 #include "rtmp_types.h"
@@ -227,3 +228,5 @@ typedef enum {
 #define RTMP_NETCON_REJECT "NetConnection.Connect.Rejected"
 #define RTMP_NETSTREAM_START "NetStream.Publish.Start"
 #define RTMP_TEMP_BUFF_SIZE 600
+
+#endif

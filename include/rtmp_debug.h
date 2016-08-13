@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_DEBUG_H
+#define RTMP_H_DEBUG_H
 
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
@@ -50,3 +51,5 @@ const char* rtmp_get_usr_evt_type_name( rtmp_usr_evt_t mtype );
 const char* rtmp_get_event_name( rtmp_event_t mtype );
 
 const char* rtmp_get_err_name( rtmp_err_t err );
+
+#endif

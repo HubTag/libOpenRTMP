@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_ALGORITHM_H
+#define RTMP_H_ALGORITHM_H
 
 #include "rtmp/rtmp_types.h"
 
@@ -50,4 +51,6 @@ size_t alg_search_lin(
 );
 
 
+
+#endif
 

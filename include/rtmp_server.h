@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_SERVER_H
+#define RTMP_H_SERVER_H
 
 typedef struct rtmp_server * rtmp_server_t;
 
@@ -39,3 +40,5 @@ bool rtmp_server_connected( rtmp_server_t server );
 rtmp_stream_t rtmp_server_stream( rtmp_server_t server );
 
 void rtmp_server_set_app_list( rtmp_server_t server, rtmp_app_list_t list );
+
+#endif

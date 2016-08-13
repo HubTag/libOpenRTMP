@@ -38,7 +38,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_AMF_CONSTANTS_H
+#define RTMP_H_AMF_CONSTANTS_H
 
 #include "rtmp/rtmp_types.h"
 
@@ -103,3 +104,5 @@ typedef enum AMF3_TYPE{
 
 #define AMF0_LEN_PROP 2
 
+
+#endif

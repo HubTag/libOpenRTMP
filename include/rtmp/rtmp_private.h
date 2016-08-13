@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_PRIVATE_H
+#define RTMP_H_PRIVATE_H
 
 #include "rtmp_types.h"
 #include "rtmp_constants.h"
@@ -197,3 +198,5 @@ struct rtmp_mgr {
 
     rtmp_app_list_t applist;
 };
+
+#endif

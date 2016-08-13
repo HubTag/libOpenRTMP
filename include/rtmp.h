@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_H
+#define RTMP_H_H
 
 typedef struct rtmp_mgr * rtmp_t;
 typedef struct rtmp_params *rtmp_params_t;
@@ -66,3 +67,5 @@ rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath 
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user );
 
 rtmp_err_t rtmp_amferr( amf_err_t err );
+
+#endif

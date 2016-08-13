@@ -21,7 +21,8 @@
 
 */
 
-#pragma once
+#ifndef RTMP_H_DATA_STREAM_H
+#define RTMP_H_DATA_STREAM_H
 
 #include "rtmp/rtmp_types.h"
 
@@ -71,3 +72,5 @@ ors_data_t ors_data_create_memsrc(void *memory, unsigned int length);
 ors_data_t ors_data_create_memsnk(size_t reserve);
 ors_data_t ors_data_create_file(const char* fname, const char* mode);
 
+
+#endif
