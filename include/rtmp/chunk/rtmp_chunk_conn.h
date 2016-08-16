@@ -25,7 +25,6 @@
 #define RTMP_H_CHUNK_CONN_H
 
 #include "rtmp/rtmp_types.h"
-#include "data_stream.h"
 #include "rtmp/rtmp_constants.h"
 #include "rtmp_chunk_flow.h"
 

@@ -23,6 +23,7 @@
 #include "rtmp/rtmp_private.h"
 #include "rtmp/chunk/rtmp_chunk_conn.h"
 #include "rtmp_debug.h"
+#include "memutil.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

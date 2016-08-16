@@ -43,7 +43,7 @@
 #endif
 
 
-typedef enum{
+typedef enum {
     RTMP_T_RTMP_T,
     RTMP_T_STREAM_T
 } rtmp_t_t;

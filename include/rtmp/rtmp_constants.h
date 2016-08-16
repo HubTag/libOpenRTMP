@@ -96,14 +96,14 @@ typedef enum {
 } rtmp_chunk_conn_status_t;
 
 //Set Peer Bandwidth Limit Type         //Page 21, §5.4.5
-typedef enum{
+typedef enum {
     RTMP_LIMIT_HARD = 0,
     RTMP_LIMIT_SOFT,
     RTMP_LIMIT_DYNAMIC
 } rtmp_limit_t;
 
 //RTMP Chunk Stream Message Types       //Page 18
-typedef enum{
+typedef enum {
     //Chunk Control Messages            //Page 18, §5.4
     RTMP_MSG_SET_CHUNK_SIZE = 1,        //Page 19, §5.4.1
     RTMP_MSG_ABORT = 2,                 //Page 19, §5.4.2
@@ -127,7 +127,7 @@ typedef enum{
 } rtmp_message_type_t;
 
 //Audio Codec Support Bitflags          //Page 31
-typedef enum{
+typedef enum {
     RTMP_SUPPORT_SND_NONE       = 0x0001,
     RTMP_SUPPORT_SND_ADPCM      = 0x0002,
     RTMP_SUPPORT_SND_MP3        = 0x0004,
@@ -144,7 +144,7 @@ typedef enum{
 } rtmp_support_codec_snd_t;
 
 //Video Codec Support Bitflags          //Page 32
-typedef enum{
+typedef enum {
     RTMP_SUPPORT_VID_UNUSED     = 0x0001,
     RTMP_SUPPORT_VID_JPEG       = 0x0002,
     RTMP_SUPPORT_VID_SORENSON   = 0x0004,
@@ -157,19 +157,19 @@ typedef enum{
 } rtmp_support_codec_vid_t;
 
 //Video Function Bitflags               //Page 32
-typedef enum{
+typedef enum {
     RTMP_SUPPORT_VID_CLIENT_SEEK = 0x0001
 } rtmp_support_func_vid_t;
 
 //Object Encoding Version               //Page 33
-typedef enum{
+typedef enum {
     RTMP_AMF0 = 0,
     RTMP_AMF3 = 3
 } rtmp_amf_version_t;
 
 
 //Shared Object Message Event Types     //Page 25
-typedef enum{
+typedef enum {
     RTMP_SO_EVT_USE = 1,
     RTMP_SO_EVT_RELEASE,
     RTMP_SO_EVT_REQ_CHANGE,
@@ -184,7 +184,7 @@ typedef enum{
 } rtmp_so_evt_t;
 
 //User Control Message Event Types      //Page 27
-typedef enum{
+typedef enum {
     RTMP_USR_EVT_STREAM_BEGIN = 0,
     RTMP_USR_EVT_STREAM_EOF,
     RTMP_USR_EVT_STREAM_DRY,

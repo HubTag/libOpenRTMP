@@ -188,7 +188,7 @@ rtmp_time_t rtmp_get_time( void ){
 }
 
 //Static array of powers of ten for use in si_convert
-static const unsigned long long pow10[] = {
+static const unsigned long long si_pow10_table[] = {
     1ull,
     10ull,
     100ull,
@@ -220,14 +220,14 @@ unsigned long long si_convert_ull(unsigned long long number, const si_prefix fro
             change = -20;
         }
         //Divide by 10^-change
-        return number / pow10[-change];
+        return number / si_pow10_table[-change];
     }
     if( change > 20 ){
         //prevent overflow
         change = 20;
     }
     //Multiply by 10^change
-    return number * pow10[change];
+    return number * si_pow10_table[change];
 }
 
 

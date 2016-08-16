@@ -26,7 +26,6 @@
 
 #include "rtmp/rtmp_types.h"
 #include "amf_constants.h"
-#include "data_stream.h"
 #include "rtmp_debug.h"
 
 amf_err_t amf0_write_number( byte* data, size_t len, double value );

@@ -1090,7 +1090,7 @@ amf_err_t amf_push_simple_list( amf_t amf, va_list list ){
     amf_type_t arg = AMF_TYPE_NONE;
     int depth = 0;
     while( true ){
-        arg = va_arg( list, amf_type_t );
+        arg = (amf_type_t) va_arg( list, int );
         if( arg == AMF_TYPE_NONE ){
             break;
         }

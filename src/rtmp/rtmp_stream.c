@@ -26,6 +26,7 @@
 #include "rtmp/rtmp_stream.h"
 #include "rtmp.h"
 #include "rtmp/rtmp_private.h"
+#include "memutil.h"
 
 
 static rtmp_cb_status_t rtmp_stream_call_msg(
@@ -251,7 +252,7 @@ void rtmp_stream_destroy_at( rtmp_stream_t stream ){
 
 rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char *name, rtmp_stream_amf_proc proc, void *user ){
     if( !proc ){
-        return AMF_ERR_INVALID_DATA;
+        return RTMP_ERR_INVALID;
     }
 
     rtmp_amf_cb_t *value = VEC_PUSH( stream->amf_callback );
@@ -269,17 +270,17 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
         value->name = malloc( sizeof( char ) * len + 1 );
         if( !value->name ){
             //Since the length hasn't been incremented, we can safely abort without completing initialization.
-            return AMF_ERR_OOM;
+            return RTMP_ERR_OOM;
         }
         strcpy( value->name, name );
     }
 
-    return AMF_ERR_NONE;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void *user ){
     if( !proc ){
-        return AMF_ERR_INVALID_DATA;
+        return RTMP_ERR_INVALID;
     }
 
     rtmp_msg_cb_t *value = VEC_PUSH( stream->msg_callback );
@@ -290,12 +291,12 @@ rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, 
     value->type = type;
     value->user = user;
 
-    return AMF_ERR_NONE;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_stream_usr_proc proc, void *user ){
     if( !proc ){
-        return AMF_ERR_INVALID_DATA;
+        return RTMP_ERR_INVALID;
     }
 
     rtmp_usr_cb_t *value = VEC_PUSH( stream->usr_callback );
@@ -307,12 +308,12 @@ rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_
     value->type = type;
     value->user = user;
 
-    return AMF_ERR_NONE;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_t type, rtmp_stream_evt_proc proc, void *user ){
     if( !proc ){
-        return AMF_ERR_INVALID_DATA;
+        return RTMP_ERR_INVALID;
     }
 
     rtmp_evt_cb_t *value = VEC_PUSH( stream->event_callback );
@@ -324,12 +325,12 @@ rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_t type, rtmp_
     value->type = type;
     value->user = user;
 
-    return AMF_ERR_NONE;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *user ){
     if( !proc ){
-        return AMF_ERR_INVALID_DATA;
+        return RTMP_ERR_INVALID;
     }
 
     rtmp_log_cb_t *value = VEC_PUSH( stream->log_callback );
@@ -340,7 +341,7 @@ rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *
     value->callback = proc;
     value->user = user;
 
-    return AMF_ERR_NONE;
+    return RTMP_ERR_NONE;
 }
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream ){

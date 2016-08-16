@@ -35,6 +35,8 @@ typedef size_t rtmp_time_t;
 #ifndef __cplusplus
 #include <stdbool.h>
 #define nullptr ((void*)0x0)
+#else
+#define restrict
 #endif
 
 

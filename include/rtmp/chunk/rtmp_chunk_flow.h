@@ -25,7 +25,6 @@
 #define RTMP_H_CHUNK_FLOW_H
 
 #include "rtmp/rtmp_types.h"
-#include "data_stream.h"
 #include "ringbuffer.h"
 
 //A chunk message header

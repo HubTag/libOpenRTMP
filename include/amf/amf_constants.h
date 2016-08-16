@@ -55,7 +55,7 @@ typedef enum AMF_ERR {
 } amf_err_t;
 
 //AMF0 Type Markers             See AMF0 Specification
-typedef enum AMF0_TYPE{
+typedef enum AMF0_TYPE {
     AMF0_TYPE_NUMBER,           //Page 5, §2.2
     AMF0_TYPE_BOOLEAN,          //Page 5, §2.3
     AMF0_TYPE_STRING,           //Page 5, §2.4
@@ -81,7 +81,7 @@ typedef enum AMF0_TYPE{
 } amf0_type_t;
 
 //AMF3 Type Markers             See AMF3 Specification
-typedef enum AMF3_TYPE{
+typedef enum AMF3_TYPE {
     AMF3_TYPE_UNDEFINED,        //Page 6, §3.2
     AMF3_TYPE_NULL,             //Page 6, §3.3
     AMF3_TYPE_FALSE,            //Page 7, §3.4
@@ -103,7 +103,7 @@ typedef enum AMF3_TYPE{
 } amf3_type_t;
 
 //AMF Object Type Markers
-typedef enum AMF_TYPE{
+typedef enum AMF_TYPE {
     AMF_TYPE_UNDEFINED,
     AMF_TYPE_NULL,
     AMF_TYPE_BOOLEAN,

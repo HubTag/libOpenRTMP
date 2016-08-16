@@ -25,7 +25,6 @@
 #include <string.h>
 #include "memutil.h"
 #include "amf/amf.h"
-#include "data_stream.h"
 #include "ieee754_double.h"
 
 

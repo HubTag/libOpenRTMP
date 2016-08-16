@@ -26,6 +26,7 @@
 #include "rtmp.h"
 #include "rtmp/rtmp_private.h"
 #include "rtmp/rtmp_types.h"
+#include "memutil.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -112,7 +113,7 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
 
         rtmp_server_set_app_list( item->server, mgr->applist );
         if( mgr->callback ){
-            return mgr->callback( item->server, mgr->callback_data );
+            return mgr->callback( item->server, mgr->callback_data ) == RTMP_CB_CONTINUE ? RTMP_ERR_NONE : RTMP_ERR_ABORT ;
         }
     }
     return RTMP_ERR_NONE;

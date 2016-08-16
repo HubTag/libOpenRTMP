@@ -27,6 +27,7 @@
 #include "rtmp/rtmp_private.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "memutil.h"
 
 
 typedef struct rtmp_server_stream{
@@ -82,6 +83,9 @@ rtmp_cb_status_t rtmp_server_onconnect(
     void *user
 ){
     const rtmp_stream_t stream = args->stream;
+    rtmp_err_t err = RTMP_ERR_NONE;
+    rtmp_cb_status_t status = RTMP_CB_CONTINUE;
+    const char *str = nullptr;
 
     rtmp_server_t self = user;
     if( amf_get_count( object ) < 3 ){
@@ -102,7 +106,7 @@ rtmp_cb_status_t rtmp_server_onconnect(
         goto fail;
     }
     size_t len;
-    const char *str = amf_value_get_string(val, &len);
+    str = amf_value_get_string(val, &len);
 
     if( !str || self->applist == nullptr || self->app != nullptr ){
         goto fail;
@@ -115,12 +119,12 @@ rtmp_cb_status_t rtmp_server_onconnect(
         goto fail;
     }
 
-    rtmp_cb_status_t status = rtmp_app_connect( stream, self->app, amf_args );
+    status = rtmp_app_connect( stream, self->app, amf_args );
     if( status != RTMP_CB_CONTINUE ){
         goto fail;
     }
 
-    rtmp_err_t err = RTMP_ERR_NONE;
+    err = RTMP_ERR_NONE;
     err = err ? err : rtmp_stream_send_stream_begin( stream, 0 );
     err = err ? err : rtmp_stream_respond( stream, "_result", 1,
         AMF(
@@ -256,6 +260,8 @@ rtmp_cb_status_t rtmp_server_onpublish( rtmp_stream_args_t args, amf_t object, v
 rtmp_cb_status_t rtmp_server_oncreateStream( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_stream_t stream = args->stream;
     rtmp_server_t self = user;
+    size_t stream_id = 0;
+    rtmp_server_stream_t * s;
     if(!self->app){
         return RTMP_CB_ERROR;
     }
@@ -269,11 +275,11 @@ rtmp_cb_status_t rtmp_server_oncreateStream( rtmp_stream_args_t args, amf_t obje
     if( VEC_BACK(self->streams).stream_id >= RTMP_MAX_STREAMS ){
         goto fail;
     }
-    rtmp_server_stream_t * s = VEC_PUSH( self->streams );
+    s = VEC_PUSH( self->streams );
     if( !s ){
         goto fail;
     }
-    size_t stream_id = self->next_stream++;
+    stream_id = self->next_stream++;
     s->stream_id = stream_id;
     err = err ? err : rtmp_stream_respond( stream, "_result", amf_value_get_integer(amf_get_item( object, 1 )),
         AMF(

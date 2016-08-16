@@ -27,6 +27,7 @@
 #include "rtmp/rtmp_private.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "memutil.h"
 
 struct rtmp_app {
     char *name;
@@ -115,49 +116,49 @@ rtmp_app_t rtmp_app_list_get( rtmp_app_list_t list, const char *appname ){
 rtmp_cb_status_t rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_connect = proc;
     app->on_connect_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_disconnect = proc;
     app->on_disconnect_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_release = proc;
     app->on_release_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user ){
     app->on_publish = proc;
     app->on_publish_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *user ){
     app->on_fcpublish = proc;
     app->on_fcpublish_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_metadata = proc;
     app->on_metadata_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_video( rtmp_app_t app, rtmp_app_on_video_proc proc, void *user ){
     app->on_video = proc;
     app->on_video_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_audio_proc proc, void *user ){
     app->on_audio = proc;
     app->on_audio_data = user;
-    return RTMP_ERR_NONE;
+    return RTMP_CB_CONTINUE;
 }
 
 
