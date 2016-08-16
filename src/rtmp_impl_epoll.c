@@ -101,8 +101,8 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
         item->mgr = mgr;
         item->closing = false;
 
-        rtmp_stream_reg_event( (rtmp_stream_t)item->server, RTMP_EVENT_FILLED, stream_event, item );
-        rtmp_stream_reg_event( (rtmp_stream_t)item->server, RTMP_EVENT_EMPTIED, stream_event, item );
+        rtmp_stream_reg_event( rtmp_server_stream(item->server), RTMP_EVENT_FILLED, stream_event, item );
+        rtmp_stream_reg_event( rtmp_server_stream(item->server), RTMP_EVENT_EMPTIED, stream_event, item );
 
         event.data.ptr = item;
         event.events = item->flags;
@@ -139,7 +139,7 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             if( size == 0 ){
                 if( stream->closing ){
                     if( 1 == 1 ){
-                        putchar('a');
+                        putchar('b');
                     }
                     goto confail;
                 }
@@ -149,16 +149,16 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             }
             else{
                 size = send( stream->socket, buffer, size, MSG_NOSIGNAL );
-                if( size == -1 || size == 0 ){
+                if( size == (size_t)-1 || size == 0 ){
                     if( 1 == 1 ){
-                        putchar('a');
+                        putchar('c');
                     }
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_out_buff( conn, size );
                 if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
                     if( 1 == 1 ){
-                        putchar('a');
+                        putchar('d');
                     }
                     goto confail;
                 }
@@ -184,9 +184,9 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             }
             else{
                 size = recv( stream->socket, buffer, size, MSG_NOSIGNAL );
-                if( size == -1 || size == 0 ){
+                if( size == (size_t)-1 || size == 0 ){
                     if( 1 == 1 ){
-                        putchar('a');
+                        putchar('e');
                     }
                     goto confail;
                 }
@@ -224,7 +224,7 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
     if( fd_count < 0 ){
         return RTMP_ERR_POLL_FAIL;
     }
-    for( size_t i = 0; i < fd_count; ++i ){
+    for( size_t i = 0; i < (size_t)fd_count; ++i ){
         rtmp_t_t * type = events[i].data.ptr;
         switch( *type ){
         case RTMP_T_RTMP_T:
@@ -248,7 +248,10 @@ rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath 
 
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user ){
     rtmp_sock_t sock;
-    struct sockaddr_in svr;
+    union{
+        struct sockaddr_in sin;
+        struct sockaddr s;
+    } svr;
     struct hostent *host;
 
     host = gethostbyname( iface );
@@ -265,10 +268,10 @@ rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof( one ) );
 
     memset( &svr, 0, sizeof( svr ) );
-    svr.sin_addr.s_addr = *((in_addr_t**)host->h_addr_list)[0];
-    svr.sin_family = AF_INET;
-    svr.sin_port = htons(port);
-    if( bind( sock, (struct sockaddr*) &svr, sizeof( svr ) ) < 0 ){
+    svr.sin.sin_addr.s_addr = *((in_addr_t**)host->h_addr_list)[0];
+    svr.sin.sin_family = AF_INET;
+    svr.sin.sin_port = htons(port);
+    if( bind( sock, &svr.s, sizeof( svr ) ) < 0 ){
         close( sock );
         return RTMP_ERR_CONNECTION_FAIL;
     }

@@ -172,7 +172,7 @@ void write_double_ieee(void *ptr, double value){
     #endif
 }
 
-int double_is_ieee754(){
+int double_is_ieee754( void ){
     if( sizeof( double ) != 8 ){
         return 0;
     }

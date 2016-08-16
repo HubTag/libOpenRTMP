@@ -31,7 +31,7 @@
 #define abs(a) ((a)<0?-(a):(a))
 
 #define PEEK_MAX 50
-#define PEEK_TYPE char
+#define PEEK_TYPE unsigned char
 
 struct ors_data {
     ors_io_t *vtable;
@@ -239,7 +239,7 @@ static int ors_data_memsrc_seek(void *data, int amount, enum ORS_SEEK whence){
     struct ors_data_memsrc *this = data;
     switch( whence ){
         case ORS_SEEK_START:
-            this->offset = min(this->length, abs(amount));
+            this->offset = min(this->length, (size_t)abs(amount));
             break;
         case ORS_SEEK_OFFSET:
             this->offset = min(this->length, max(this->offset + amount, 0));
@@ -275,7 +275,7 @@ ors_data_t ors_data_create_memsrc(void *memory, unsigned int length){
 
 static int ors_data_memsnk_write(void *data, const byte *in, unsigned int in_len){
     struct ors_data_memsnk *this = data;
-    const int newlen = this->parent.offset + in_len;
+    const unsigned int newlen = this->parent.offset + in_len;
     if( newlen >= this->reserve ){
         this->reserve = newlen * 5/3;
         void *result = realloc( this->parent.ptr, this->reserve );

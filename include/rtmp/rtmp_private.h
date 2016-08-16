@@ -157,6 +157,7 @@ struct rtmp_stream{
     VEC_DECLARE(rtmp_log_cb_t) log_callback;
 };
 
+
 typedef struct rtmp_mgr_svr{
     rtmp_t_t type;
     rtmp_sock_t socket;

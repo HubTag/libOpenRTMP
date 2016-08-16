@@ -25,9 +25,9 @@
 #define RTMP_H_TYPES_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef uint8_t byte;
-typedef unsigned long size_t;
 typedef size_t rtmp_time_t;
 
 

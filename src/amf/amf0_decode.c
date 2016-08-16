@@ -101,7 +101,7 @@ amf_err_t amf0_get_string( const byte* data, size_t data_len, void *value, size_
     if( offset < 0 ){
         return offset;
     }
-    if( offset >= data_len ){
+    if( (size_t)offset >= data_len ){
         return 0;
     }
     value_len = len > value_len ? value_len : len;
@@ -129,7 +129,7 @@ amf_err_t amf0_get_prop_length( const byte* data, size_t data_len, size_t *value
 }
 
 //If inside an object, use this to obtain a copy of the property name
-amf_err_t amf0_get_prop_name( const byte* data, size_t data_len, void *value, int value_len ){
+amf_err_t amf0_get_prop_name( const byte* data, size_t data_len, void *value, size_t value_len ){
     size_t count = 0;
     AMF0_HARVEST_LENGTH(data, data_len, count, 2);
     size_t len = ntoh_read_us(buffer);

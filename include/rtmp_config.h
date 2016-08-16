@@ -36,6 +36,9 @@
 //The peer may still use a larger chunk size than this.
 #define RTMP_MAX_CHUNK_SIZE                 0x0000FFFF
 
+//Desired chunk size
+#define RTMP_DESIRED_CHUNK_SIZE             0x00000FFF
+
 //Size of the IO buffers used to feed data in and out of the RTMP object.
 //This must be at least 1600 bytes.
 #define RTMP_DEFAULT_IO_BUFFER_SIZE         0x0000FFFF
@@ -65,16 +68,10 @@
 //The max size of a 'safe alloc'
 #define RTMP_MAX_ALLOC 10000
 
-//Minimum RTMP values.
-#define RTMP_MIN_WINDOW_SIZE 1
-#define RTMP_MIN_CHUNK_SIZE 1
-#define RTMP_MIN_PEER_CHUNK_SIZE 1
-#define RTMP_MIN_PEER_WINDOW_SIZE 1
-#define RTMP_MIN_WINDOW_ACK_SIZE 1
-#define RTMP_MIN_PEER_WINDOW_SIZE 1
 
 //Maximum values
-#define RTMP_MAX_CHUNK_CACHE 0x12F
+#define RTMP_MAX_CHUNK_CACHE 0xFFFF
+#define RTMP_MAX_STREAMS 10
 
 //Max number of buffers per assembler
 #define RTMP_MAX_ASM_HARD_BUFFER 20

@@ -90,7 +90,7 @@ void rtmp_chunk_assembler_log_cb(
     void * restrict user
 ){
     rtmp_chunk_assembler_t self = user;
-    return self->log_cb(err, line, file, message, self->user);
+    self->log_cb(err, line, file, message, self->user);
 }
 
 
@@ -130,7 +130,6 @@ static rtmp_asm_buf_t * rtmp_chunk_assembler_get_buffer( rtmp_chunk_assembler_t 
 static void rtmp_chunk_assembler_rm_buffer( rtmp_chunk_assembler_t self, rtmp_asm_buf_t * buffer ){
     if( VEC_SIZE(self->buffers) > RTMP_MAX_ASM_SOFT_BUFFER ){
         size_t idx = buffer - self->buffers;
-        idx /= sizeof( rtmp_asm_buf_t );
         ringbuffer_destroy( buffer->buffer );
         VEC_ERASE( self->buffers, idx );
     }

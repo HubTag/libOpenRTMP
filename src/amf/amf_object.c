@@ -28,23 +28,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct amf_value{
-    unsigned char type;
-};
-typedef union amf_v amf_v_t;
 
-typedef struct amf_v_number{
-    unsigned char type;
+typedef struct amf_v_dbl{
+    amf_type_t type;
     double number;
-} amf_v_number_t;
+} amf_v_double_t;
+
+typedef struct amf_v_int{
+    amf_type_t type;
+    int32_t number;
+} amf_v_int_t;
 
 typedef struct amf_v_boolean{
-    unsigned char type;
+    amf_type_t type;
     bool boolean;
 } amf_v_boolean_t;
 
 typedef struct amf_v_string{
-    unsigned char type;
+    amf_type_t type;
     size_t length;
     char *data;
 } amf_v_string_t;
@@ -52,21 +53,21 @@ typedef struct amf_v_string{
 
 
 typedef struct amf_v_null{
-    unsigned char type;
+    amf_type_t type;
 } amf_v_null_t;
 
 typedef struct amf_v_undefined{
-    unsigned char type;
+    amf_type_t type;
 } amf_v_undefined_t;
 
 typedef struct amf_v_reference{
-    unsigned char type;
+    amf_type_t type;
     size_t ref_num;
-    amf_v_t *ref;
+    amf_value_t ref;
 } amf_v_reference_t;
 
 typedef struct amf_v_date{
-    unsigned char type;
+    amf_type_t type;
     double timestamp;
     signed char timezone;
 } amf_v_date_t;
@@ -74,19 +75,20 @@ typedef struct amf_v_date{
 typedef struct amf_v_member amf_v_member_t;
 
 typedef struct amf_v_object{
-    unsigned char type;
+    amf_type_t type;
     VEC_DECLARE(amf_v_member_t) members;
 } amf_v_object_t;
 
 typedef struct amf_v_array{
-    unsigned char type;
+    amf_type_t type;
     uint32_t assoc_len;
     VEC_DECLARE(amf_v_member_t) assoc;
     VEC_DECLARE(amf_v_member_t) ordinal;
 } amf_v_array_t;
 
-union amf_v{
-    amf_v_number_t number;
+union amf_value{
+    amf_v_double_t dbl;
+    amf_v_int_t integer;
     amf_v_boolean_t boolean;
     amf_v_string_t string;
     amf_v_object_t object;
@@ -95,22 +97,21 @@ union amf_v{
     amf_v_reference_t reference;
     amf_v_date_t date;
     amf_v_array_t array;
-    unsigned char type;
-    struct amf_value value;
+    amf_type_t type;
 };
 
 struct amf_v_member{
     size_t length;
     char *name;
-    amf_v_t value;
+    union amf_value value;
 };
 
 struct amf_object{
-    char type;
+    amf_type_t type;
     size_t depth;
-    VEC_DECLARE(amf_v_t) items;
+    VEC_DECLARE(union amf_value) items;
 
-    VEC_DECLARE(amf_v_t*) ref_table;
+    VEC_DECLARE(amf_value_t) ref_table;
 
     void *allocation;
     size_t allocation_len;
@@ -118,40 +119,39 @@ struct amf_object{
     bool member_ready;
 };
 
-void amf_free_value( amf_v_t * val);
+void amf_free_value( amf_value_t val);
 
 static void amf_free_member( amf_v_member_t member ){
     free( member.name );
     amf_free_value( &member.value );
-};
+}
 
-void amf_free_value( amf_v_t * val){
+void amf_free_value( amf_value_t val){
     switch( val->type ){
-        case AMF0_TYPE_AVMPLUS:
-        case AMF0_TYPE_BOOLEAN:
-        case AMF0_TYPE_DATE:
-        case AMF0_TYPE_MOVIECLIP:
-        case AMF0_TYPE_NULL:
-        case AMF0_TYPE_NUMBER:
-        case AMF0_TYPE_RECORDSET:
-        case AMF0_TYPE_REFERENCE:
-        case AMF0_TYPE_UNDEFINED:
-        case AMF0_TYPE_UNSUPPORTED:
+        case AMF_TYPE_AVMPLUS:
+        case AMF_TYPE_BOOLEAN:
+        case AMF_TYPE_DATE:
+        case AMF_TYPE_MOVIECLIP:
+        case AMF_TYPE_NULL:
+        case AMF_TYPE_DOUBLE:
+        case AMF_TYPE_INTEGER:
+        case AMF_TYPE_RECORDSET:
+        case AMF_TYPE_REFERENCE:
+        case AMF_TYPE_UNDEFINED:
+        case AMF_TYPE_UNSUPPORTED:
 
         //Complex but not supported
-        case AMF0_TYPE_STRICT_ARRAY:
-        case AMF0_TYPE_TYPED_OBJECT:
+        case AMF_TYPE_TYPED_OBJECT:
             break;
 
-        case AMF0_TYPE_STRING:
-        case AMF0_TYPE_LONG_STRING:
-        case AMF0_TYPE_XML_DOCUMENT:
+        case AMF_TYPE_STRING:
+        case AMF_TYPE_XML_DOCUMENT:
             free( val->string.data );
             break;
-        case AMF0_TYPE_OBJECT:
+        case AMF_TYPE_OBJECT:
             VEC_DESTROY_DTOR( val->object.members, amf_free_member );
             break;
-        case AMF0_TYPE_ECMA_ARRAY:
+        case AMF_TYPE_ARRAY:
             VEC_DESTROY_DTOR( val->array.assoc, amf_free_member );
             VEC_DESTROY_DTOR( val->array.ordinal, amf_free_member );
             break;
@@ -181,7 +181,7 @@ amf_t amf_create( char type ){
 }
 
 void amf_destroy( amf_t amf ){
-    for( int i = 0; i < VEC_SIZE(amf->items); ++i ){
+    for( size_t i = 0; i < VEC_SIZE(amf->items); ++i ){
         amf_free_value( &amf->items[i] );
     }
     VEC_DESTROY( amf->items );
@@ -205,28 +205,28 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size );
     }                           \
 }while(0)
 
-static amf_err_t amf_write_value_obj(amf_v_t *val, byte *dest, size_t size){
+static amf_err_t amf_write_value_obj(amf_value_t val, byte *dest, size_t size){
     int wrote = 0;
     DO(amf0_write_object( dest, size ));
-    for( int i = 0; i < VEC_SIZE(val->object.members); ++i ){
+    for( size_t i = 0; i < VEC_SIZE(val->object.members); ++i ){
         DO( amf0_write_prop_name( dest, size, val->object.members[i].name, val->object.members[i].length ) );
-        DO( amf_write_value( &VEC_AT(val->object.members, i).value.value, dest, size ) );
+        DO( amf_write_value( &VEC_AT(val->object.members, i).value, dest, size ) );
     }
     DO(amf0_write_prop_name( dest, size, "", 0 ));
     DO(amf0_write_object_end( dest, size ));
     return wrote;
 }
 
-static amf_err_t amf_write_value_ecma(amf_v_t *val, byte *dest, size_t size){
+static amf_err_t amf_write_value_ecma(amf_value_t val, byte *dest, size_t size){
     int wrote = 0;
     DO( amf0_write_ecma_array( dest, size, VEC_SIZE( val->array.assoc ) ) );
-    for( int i = 0; i < VEC_SIZE(val->array.assoc); ++i ){
+    for( size_t i = 0; i < VEC_SIZE(val->array.assoc); ++i ){
         DO( amf0_write_prop_name( dest, size, val->array.assoc[i].name, val->array.assoc[i].length ) );
-        DO( amf_write_value( &VEC_AT(val->array.assoc, i).value.value, dest, size ) );
+        DO( amf_write_value( &VEC_AT(val->array.assoc, i).value, dest, size ) );
     }
-    for( int i = 0; i < VEC_SIZE(val->array.ordinal); ++i ){
+    for( size_t i = 0; i < VEC_SIZE(val->array.ordinal); ++i ){
         DO( amf0_write_prop_name( dest, size, val->array.ordinal[i].name, val->array.ordinal[i].length ) );
-        DO( amf_write_value( &VEC_AT(val->array.ordinal, i).value.value, dest, size ) );
+        DO( amf_write_value( &VEC_AT(val->array.ordinal, i).value, dest, size ) );
     }
     DO(amf0_write_prop_name( dest, size, "", 0 ));
     DO(amf0_write_object_end( dest, size ));
@@ -241,50 +241,47 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
     double temp_d;
     size_t temp_lu;
     const char *temp_pc;
-    amf_v_t *val = (amf_v_t*) value;
 
 
-    switch( val->type ){
-        case AMF0_TYPE_AVMPLUS:
+
+    switch( value->type ){
+        case AMF_TYPE_AVMPLUS:
             return amf0_write_unsupported( dest, size );
-        case AMF0_TYPE_BOOLEAN:
+        case AMF_TYPE_BOOLEAN:
             return amf0_write_boolean( dest, size, amf_value_get_bool( value ) );
-        case AMF0_TYPE_DATE:
+        case AMF_TYPE_DATE:
             temp_d = amf_value_get_date( value, &temp_b );
             return amf0_write_date( dest, size, temp_b, temp_d );
-        case AMF0_TYPE_MOVIECLIP:
+        case AMF_TYPE_MOVIECLIP:
             return amf0_write_movieclip( dest, size );
-        case AMF0_TYPE_NULL:
+        case AMF_TYPE_NULL:
             return amf0_write_null( dest, size );
-        case AMF0_TYPE_NUMBER:
-            return amf0_write_number( dest, size, amf_value_get_number( value ) );
-        case AMF0_TYPE_RECORDSET:
+        case AMF_TYPE_DOUBLE:
+            return amf0_write_number( dest, size, amf_value_get_double( value ) );
+        case AMF_TYPE_INTEGER:
+            return amf0_write_number( dest, size, amf_value_get_integer( value ) );
+        case AMF_TYPE_RECORDSET:
             return amf0_write_recordset( dest, size );
-        case AMF0_TYPE_REFERENCE:
+        case AMF_TYPE_REFERENCE:
             return amf0_write_reference( dest, size, amf_value_get_ref( value ) );
-        case AMF0_TYPE_UNDEFINED:
+        case AMF_TYPE_UNDEFINED:
             return amf0_write_undefined( dest, size );
-        case AMF0_TYPE_UNSUPPORTED:
+        case AMF_TYPE_UNSUPPORTED:
             return amf0_write_unsupported( dest, size );
 
-        case AMF0_TYPE_STRICT_ARRAY:
-            return amf0_write_strict_array( dest, size );
-        case AMF0_TYPE_TYPED_OBJECT:
+        case AMF_TYPE_TYPED_OBJECT:
             return amf0_write_typed_object( dest, size );
 
-        case AMF0_TYPE_STRING:
+        case AMF_TYPE_STRING:
             temp_pc = amf_value_get_string( value, &temp_lu );
             return amf0_write_string( dest, size, temp_pc, temp_lu );
-        case AMF0_TYPE_LONG_STRING:
-            temp_pc = amf_value_get_string( value, &temp_lu );
-            return amf0_write_long_string( dest, size, temp_pc, temp_lu );
-        case AMF0_TYPE_XML_DOCUMENT:
+        case AMF_TYPE_XML_DOCUMENT:
             temp_pc = amf_value_get_string( value, &temp_lu );
             return amf0_write_xmldocument( dest, size, temp_pc, temp_lu );
-        case AMF0_TYPE_ECMA_ARRAY:
-            return amf_write_value_ecma( val, dest, size );
-        case AMF0_TYPE_OBJECT:
-            return amf_write_value_obj( val, dest, size );
+        case AMF_TYPE_ARRAY:
+            return amf_write_value_ecma( value, dest, size );
+        case AMF_TYPE_OBJECT:
+            return amf_write_value_obj( value, dest, size );
         default:
             break;
     }
@@ -303,7 +300,7 @@ amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written ){
         if( dest && offset > size ){
             break;
         }
-        int result = amf_write_value( &amf->items[i].value, dest + offset, size - offset );
+        int result = amf_write_value( &amf->items[i], dest + offset, size - offset );
         if( result < 0 ){
             goto end;
         }
@@ -393,7 +390,7 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
             case AMF0_TYPE_LONG_STRING:     result = amf_push_long_string( amf, buffer );   break;
             case AMF0_TYPE_MOVIECLIP:       result = AMF_ERR_INVALID_DATA;                  break;
             case AMF0_TYPE_NULL:            result = amf_push_null( amf );                  break;
-            case AMF0_TYPE_NUMBER:          result = amf_push_number( amf, temp_f );        break;
+            case AMF0_TYPE_NUMBER:          result = amf_push_double( amf, temp_f );        break;
             case AMF0_TYPE_OBJECT:          result = amf_push_object_start( amf );          break;
             case AMF0_TYPE_OBJECT_END:      result = amf_push_object_end( amf );            break;
             case AMF0_TYPE_RECORDSET:       result = AMF_ERR_INVALID_DATA;                  break;
@@ -420,18 +417,18 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
     return result;
 }
 
-static amf_v_t * amf_v_get_object( amf_t amf ){
+static amf_value_t amf_v_get_object( amf_t amf ){
     if( VEC_SIZE(amf->items) > 0 ){
         size_t depth = 1;
-        amf_v_t *obj = &VEC_BACK(amf->items);
-        while( amf_value_is( &obj->value, AMF0_TYPE_COMPLEX ) && VEC_SIZE(obj->object.members) > 0 && depth < amf->depth ){
+        amf_value_t obj = &VEC_BACK(amf->items);
+        while( amf_value_is( obj, AMF_TYPE_COMPLEX ) && VEC_SIZE(obj->object.members) > 0 && depth < amf->depth ){
             obj = &VEC_BACK(obj->object.members).value;
             ++depth;
         }
         if( depth != amf->depth ){
             return nullptr;
         }
-        if( amf_value_is( &obj->value, AMF0_TYPE_COMPLEX ) ){
+        if( amf_value_is( obj, AMF_TYPE_COMPLEX ) ){
             return obj;
         }
     }
@@ -439,11 +436,11 @@ static amf_v_t * amf_v_get_object( amf_t amf ){
 }
 
 static amf_v_member_t * amf_v_push_member( amf_t amf ){
-    amf_v_t* obj = amf_v_get_object( amf );
-    if( amf_value_is( &obj->value, AMF0_TYPE_OBJECT ) ){
+    amf_value_t obj = amf_v_get_object( amf );
+    if( amf_value_is( obj, AMF_TYPE_OBJECT ) ){
         return VEC_PUSH( obj->object.members );
     }
-    if( amf_value_is( &obj->value, AMF0_TYPE_ECMA_ARRAY ) ){
+    if( amf_value_is( obj, AMF_TYPE_ARRAY ) ){
         if( obj->array.assoc_len > VEC_SIZE( obj->array.assoc ) ){
             return VEC_PUSH( obj->array.assoc );
         }
@@ -452,16 +449,27 @@ static amf_v_member_t * amf_v_push_member( amf_t amf ){
     return nullptr;
 }
 
-static amf_v_t *amf_push_item( amf_t amf ){
+static amf_value_t amf_push_item( amf_t amf ){
     if( amf->depth == 0 ){
-        return VEC_PUSH(amf->items);
+        VEC_DECLARE( union amf_value ) old = amf->items;
+        amf_value_t ret = VEC_PUSH(amf->items);
+        if( amf->items != old ){
+            //Move the reference table entries.
+            for( size_t i = 0; i < VEC_SIZE(amf->ref_table); ++i ){
+                size_t idx = amf->ref_table[i] - old;
+                if( idx < VEC_SIZE(amf->items) ){
+                    amf->ref_table[i] = amf->items + idx;
+                }
+            }
+        }
+        return ret;
     }
     else if( VEC_SIZE(amf->items) > 0 ){
-        amf_v_t* obj = amf_v_get_object( amf );
-        if( obj && amf_value_is( &obj->value, AMF0_TYPE_OBJECT ) ){
+        amf_value_t obj = amf_v_get_object( amf );
+        if( obj && amf_value_is( obj, AMF_TYPE_OBJECT ) ){
             return &VEC_BACK(obj->object.members).value;
         }
-        else if( obj && amf_value_is( &obj->value, AMF0_TYPE_ECMA_ARRAY ) ){
+        else if( obj && amf_value_is( obj, AMF_TYPE_ARRAY ) ){
             if( obj->array.assoc_len >= VEC_SIZE( obj->array.assoc ) ){
                 return &VEC_BACK( obj->array.assoc ).value;
             }
@@ -476,12 +484,12 @@ static amf_v_t *amf_push_item( amf_t amf ){
         return AMF_ERR_NEED_NAME;\
     }\
     a->member_ready = false;\
-    amf_v_t * name = amf_push_item( a );\
+    amf_value_t name = amf_push_item( a );\
     if( !name ){\
         return AMF_ERR_OOM;\
     }
 
-static amf_err_t push_str( amf_t a, const void * str, amf0_type_t t) {
+static amf_err_t push_str( amf_t a, const void * str, amf_type_t t) {
     if( str != a->allocation ){
         size_t len = strlen( str );
         void * ptr = malloc( len + 1 );
@@ -506,17 +514,24 @@ static amf_err_t push_str( amf_t a, const void * str, amf0_type_t t) {
     }
 }
 
-amf_err_t amf_push_number( amf_t amf, double number ){
+amf_err_t amf_push_double( amf_t amf, double number ){
     PUSH_PREP( amf, target );
-    target->number.number = number;
-    target->number.type = AMF0_TYPE_NUMBER;
+    target->dbl.number = number;
+    target->dbl.type = AMF_TYPE_DOUBLE;
+    return AMF_ERR_NONE;
+}
+
+amf_err_t amf_push_integer( amf_t amf, int32_t number ){
+    PUSH_PREP( amf, target );
+    target->integer.number = number;
+    target->integer.type = AMF_TYPE_INTEGER;
     return AMF_ERR_NONE;
 }
 
 amf_err_t amf_push_boolean( amf_t amf, char boolean ){
     PUSH_PREP( amf, target );
     target->boolean.boolean = boolean;
-    target->boolean.type = AMF0_TYPE_BOOLEAN;
+    target->boolean.type = AMF_TYPE_BOOLEAN;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
@@ -533,15 +548,15 @@ amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length ){
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_string( amf_t amf, const void *str ){
-    return push_str( amf, str, AMF0_TYPE_STRING );
+    return push_str( amf, str, AMF_TYPE_STRING );
 }
 amf_err_t amf_push_object_start( amf_t amf ){
     PUSH_PREP( amf, target );
     amf->depth ++;
-    target->object.type = AMF0_TYPE_OBJECT;
+    target->object.type = AMF_TYPE_OBJECT;
     VEC_INIT(target->object.members);
 
-    amf_v_t** temp = VEC_PUSH(amf->ref_table);
+    amf_value_t* temp = VEC_PUSH(amf->ref_table);
     if( !temp ){
         return AMF_ERR_OOM;
     }
@@ -556,7 +571,7 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
     if( mem ){
         mem->length = amf->allocation_len;
         mem->name = amf->allocation;
-        mem->value.value.type = AMF0_TYPE_UNDEFINED;
+        mem->value.type = AMF_TYPE_UNDEFINED;
         amf->allocation_len = 0;
         amf->allocation = nullptr;
         amf->member_ready = true;
@@ -567,12 +582,12 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
 amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members ){
     PUSH_PREP( amf, target );
     amf->depth ++;
-    target->array.type = AMF0_TYPE_ECMA_ARRAY;
+    target->array.type = AMF_TYPE_ARRAY;
     target->array.assoc_len = assoc_members;
     VEC_INIT(target->array.assoc);
     VEC_INIT(target->array.ordinal);
 
-    amf_v_t** temp = VEC_PUSH(amf->ref_table);
+    amf_value_t* temp = VEC_PUSH(amf->ref_table);
     if( !temp ){
         return AMF_ERR_OOM;
     }
@@ -581,17 +596,17 @@ amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members ){
 }
 amf_err_t amf_push_null( amf_t amf ){
     PUSH_PREP( amf, target );
-    target->null.type = AMF0_TYPE_NULL;
+    target->null.type = AMF_TYPE_NULL;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_undefined( amf_t amf ){
     PUSH_PREP( amf, target );
-    target->undefined.type = AMF0_TYPE_UNDEFINED;
+    target->undefined.type = AMF_TYPE_UNDEFINED;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_unsupported( amf_t amf ){
     PUSH_PREP( amf, target );
-    target->undefined.type = AMF0_TYPE_UNSUPPORTED;
+    target->undefined.type = AMF_TYPE_UNSUPPORTED;
     return AMF_ERR_NONE;
 }
 
@@ -600,7 +615,7 @@ amf_err_t amf_push_reference( amf_t amf, unsigned int ref ){
     PUSH_PREP( amf, target );
     target->reference.ref = nullptr;
     target->reference.ref_num = ref;
-    target->reference.type = AMF0_TYPE_REFERENCE;
+    target->reference.type = AMF_TYPE_REFERENCE;
     if( ref < VEC_SIZE(amf->ref_table) ){
         target->reference.ref = amf->ref_table[ref];
     }
@@ -609,13 +624,13 @@ amf_err_t amf_push_reference( amf_t amf, unsigned int ref ){
 amf_err_t amf_push_object_end( amf_t amf ){
     if( amf->member_ready ){
         amf->member_ready = false;
-        amf_v_t* obj = amf_v_get_object( amf );
+        amf_value_t obj = amf_v_get_object( amf );
         if( obj ){
-            if( amf_value_is( &obj->value, AMF0_TYPE_OBJECT ) && VEC_SIZE(obj->object.members) > 0 ){
+            if( amf_value_is( obj, AMF_TYPE_OBJECT ) && VEC_SIZE(obj->object.members) > 0 ){
                 free( VEC_BACK(obj->object.members).name );
                 VEC_POP( obj->object.members );
             }
-            else if( amf_value_is( &obj->value, AMF0_TYPE_ECMA_ARRAY ) ){
+            else if( amf_value_is( obj, AMF_TYPE_ARRAY ) ){
                 if( VEC_SIZE(obj->array.ordinal) > 0 ){
                     free( VEC_BACK(obj->array.ordinal).name );
                     VEC_POP( obj->array.ordinal );
@@ -634,8 +649,8 @@ amf_err_t amf_push_object_end( amf_t amf ){
     return AMF_ERR_INVALID_DATA;
 }
 amf_err_t amf_push_assoc_end( amf_t amf ){
-    amf_v_t* obj = amf_v_get_object( amf );
-    if( obj && amf_value_is( &obj->value, AMF0_TYPE_ECMA_ARRAY ) ){
+    amf_value_t obj = amf_v_get_object( amf );
+    if( obj && amf_value_is( obj, AMF_TYPE_ARRAY ) ){
         if( amf->member_ready ){
             amf->member_ready = false;
 
@@ -654,14 +669,14 @@ amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone ){
     PUSH_PREP( amf, target );
     target->date.timestamp = timestamp;
     target->date.timezone = timezone;
-    target->string.type = AMF0_TYPE_DATE;
+    target->string.type = AMF_TYPE_DATE;
     return AMF_ERR_NONE;
 }
 amf_err_t amf_push_long_string( amf_t amf, const void *str ){
-    return push_str( amf, str, AMF0_TYPE_LONG_STRING );
+    return push_str( amf, str, AMF_TYPE_STRING );
 }
 amf_err_t amf_push_xml( amf_t amf, const void *xml ){
-    return push_str( amf, xml, AMF0_TYPE_XML_DOCUMENT );
+    return push_str( amf, xml, AMF_TYPE_XML_DOCUMENT );
 }
 
 
@@ -669,88 +684,90 @@ size_t amf_get_count( amf_t amf ){
     return VEC_SIZE(amf->items);
 }
 amf_value_t amf_get_item( amf_t amf, size_t idx ){
-    return (amf_value_t) (amf->items + idx);
+    return amf->items + idx;
 }
-bool amf_value_is( amf_value_t value, amf0_type_t type ){
+bool amf_value_is( amf_value_t value, amf_type_t type ){
     if( type == value->type ){
         return true;
     }
-    if( type == AMF0_TYPE_COMPLEX ){
+    if( type == AMF_TYPE_COMPLEX ){
         switch( value->type ){
-            case AMF0_TYPE_OBJECT:
-            case AMF0_TYPE_ECMA_ARRAY:
-            case AMF0_TYPE_RECORDSET:
-            case AMF0_TYPE_STRICT_ARRAY:
-            case AMF0_TYPE_TYPED_OBJECT:
+            case AMF_TYPE_OBJECT:
+            case AMF_TYPE_ARRAY:
+            case AMF_TYPE_RECORDSET:
+            case AMF_TYPE_TYPED_OBJECT:
+            case AMF_TYPE_VECTOR_DOUBLE:
+            case AMF_TYPE_VECTOR_INT:
+            case AMF_TYPE_VECTOR_OBJECT:
+            case AMF_TYPE_VECTOR_UINT:
+            case AMF_TYPE_BYTE_ARRAY:
+            case AMF_TYPE_MOVIECLIP:
                 return true;
+            default:
+                break;
         }
     }
-    if( value->type == AMF0_TYPE_REFERENCE ){
-        amf_v_reference_t *ref = (amf_v_reference_t *) value;
-        if( ref->ref->type != AMF0_TYPE_REFERENCE ){
-            return amf_value_is( &ref->ref->value, type );
+    if( value->type == AMF_TYPE_REFERENCE ){
+        if( value->reference.ref->type != AMF_TYPE_REFERENCE ){
+            return amf_value_is( value->reference.ref, type );
         }
     }
     return false;
 }
 
-bool amf_value_is_like( amf_value_t value, amf0_type_t type ){
+bool amf_value_is_like( amf_value_t value, amf_type_t type ){
     if( amf_value_is( value, type ) ){
         return true;
     }
-    if( value->type == AMF0_TYPE_REFERENCE ){
-        amf_v_reference_t *ref = (amf_v_reference_t *) value;
-        value = (amf_value_t)ref->ref;
+    if( value->type == AMF_TYPE_REFERENCE ){
+        value = value->reference.ref;
     }
     switch( value->type ){
         //Numerics
-        case AMF0_TYPE_NULL:
+        case AMF_TYPE_NULL:
         switch( type ){
-            case AMF0_TYPE_OBJECT:
-            case AMF0_TYPE_TYPED_OBJECT:
+            case AMF_TYPE_OBJECT:
             return true;
             default: break;
         }
-        case AMF0_TYPE_NUMBER:
-        case AMF0_TYPE_DATE:
+        case AMF_TYPE_DOUBLE:
+        case AMF_TYPE_INTEGER:
+        case AMF_TYPE_DATE:
         switch( type ){
-            case AMF0_TYPE_NUMBER:
-            case AMF0_TYPE_DATE:
+            case AMF_TYPE_DOUBLE:
+            case AMF_TYPE_INTEGER:
+            case AMF_TYPE_DATE:
             return true;
             default: break;
         }
         break;
 
         //Strings
-        case AMF0_TYPE_STRING:
-        case AMF0_TYPE_LONG_STRING:
-        case AMF0_TYPE_XML_DOCUMENT:
+        case AMF_TYPE_STRING:
+        case AMF_TYPE_XML_DOCUMENT:
         switch( type ){
-            case AMF0_TYPE_STRING:
-            case AMF0_TYPE_LONG_STRING:
-            case AMF0_TYPE_XML_DOCUMENT:
+            case AMF_TYPE_STRING:
+            case AMF_TYPE_XML_DOCUMENT:
             return true;
             default: break;
         }
         break;
 
         //Objects
-        case AMF0_TYPE_OBJECT:
-        case AMF0_TYPE_TYPED_OBJECT:
+        case AMF_TYPE_OBJECT:
+        case AMF_TYPE_TYPED_OBJECT:
         switch( type ){
-            case AMF0_TYPE_OBJECT:
-            case AMF0_TYPE_TYPED_OBJECT:
+            case AMF_TYPE_OBJECT:
+            case AMF_TYPE_TYPED_OBJECT:
             return true;
             default: break;
         }
         break;
 
         //Arrays
-        case AMF0_TYPE_ECMA_ARRAY:
-        case AMF0_TYPE_STRICT_ARRAY:
+        case AMF_TYPE_ARRAY:
         switch( type ){
-            case AMF0_TYPE_ECMA_ARRAY:
-            case AMF0_TYPE_STRICT_ARRAY:
+            case AMF_TYPE_ARRAY:
             return true;
             default: break;
         }
@@ -760,218 +777,211 @@ bool amf_value_is_like( amf_value_t value, amf0_type_t type ){
     return false;
 }
 
-double amf_value_get_number( amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return v->number.number;
+double amf_value_get_double( amf_value_t target ){
+    if( target->type == AMF_TYPE_DOUBLE ){
+        return target->dbl.number;
+    }
+    return target->integer.number;
 }
 
+int32_t amf_value_get_integer( amf_value_t target ){
+    if( target->type == AMF_TYPE_INTEGER ){
+        return target->integer.number;
+    }
+    return target->dbl.number;
+}
+
+
 bool amf_value_get_bool( amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return v->boolean.boolean;
+    return target->boolean.boolean;
 }
 
 const char* amf_value_get_string( amf_value_t target, size_t *length ){
-    const amf_v_t *v = (const amf_v_t*) target;
     if( length ){
-        *length = v->string.length;
+        *length = target->string.length;
     }
-    return v->string.data;
+    return target->string.data;
 }
 
 size_t amf_value_get_ref( amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return v->reference.ref_num;
+    return target->reference.ref_num;
 }
 
 double amf_value_get_date( amf_value_t target, signed char *timezone ){
-    const amf_v_t *v = (const amf_v_t*) target;
     if( timezone ){
-        *timezone = v->date.timezone;
+        *timezone = target->date.timezone;
     }
-    return v->date.timestamp;
+    return target->date.timestamp;
 }
 
 const char* amf_value_get_xml( amf_value_t target, size_t *length ){
-    const amf_v_t *v = (const amf_v_t*) target;
     if( length ){
-        *length = v->string.length;
+        *length = target->string.length;
     }
-    return v->string.data;
+    return target->string.data;
 }
 
 
 amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    for( int i = 0; i < VEC_SIZE(v->object.members); ++i ){
-        if( memcmp( key, VEC_AT(v->object.members, i).name, VEC_AT(v->object.members, i).length ) == 0 ){
-            return &VEC_AT(v->object.members, i).value.value;
+    for( size_t i = 0; i < VEC_SIZE(target->object.members); ++i ){
+        if( memcmp( key, VEC_AT(target->object.members, i).name, VEC_AT(target->object.members, i).length ) == 0 ){
+            return &VEC_AT(target->object.members, i).value;
         }
     }
     return nullptr;
 }
 amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    if( v->type == AMF0_TYPE_REFERENCE ){
-        v = v->reference.ref;
+    if( target->type == AMF_TYPE_REFERENCE ){
+        target = target->reference.ref;
     }
-    if( idx >= VEC_SIZE(v->object.members) ){
+    if( idx >= VEC_SIZE(target->object.members) ){
         return nullptr;
     }
     if( key ){
-        *key = VEC_AT(v->object.members, idx).name;
+        *key = VEC_AT(target->object.members, idx).name;
     }
     if( key_len ){
-        *key_len = v->object.members[idx].length;
+        *key_len = target->object.members[idx].length;
     }
-    return &v->object.members[idx].value.value;
+    return &target->object.members[idx].value;
 }
 size_t amf_obj_get_count( const amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return VEC_SIZE(v->object.members);
+    return VEC_SIZE(target->object.members);
 }
 
 amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    for( int i = 0; i < VEC_SIZE(v->array.assoc); ++i ){
-        if( memcmp( key, VEC_AT(v->array.assoc, i).name, VEC_AT(v->array.assoc, i).length ) == 0 ){
-            return &VEC_AT(v->array.assoc, i).value.value;
+    for( size_t i = 0; i < VEC_SIZE(target->array.assoc); ++i ){
+        if( memcmp( key, VEC_AT(target->array.assoc, i).name, VEC_AT(target->array.assoc, i).length ) == 0 ){
+            return &VEC_AT(target->array.assoc, i).value;
         }
     }
     return nullptr;
 }
 amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    if( v->type == AMF0_TYPE_REFERENCE ){
-        v = v->reference.ref;
+    if( target->type == AMF_TYPE_REFERENCE ){
+        target = target->reference.ref;
     }
-    if( idx >= VEC_SIZE(v->array.assoc) ){
+    if( idx >= VEC_SIZE(target->array.assoc) ){
         return nullptr;
     }
     if( key ){
-        *key = VEC_AT(v->array.assoc, idx).name;
+        *key = VEC_AT(target->array.assoc, idx).name;
     }
     if( key_len ){
-        *key_len = v->array.assoc[idx].length;
+        *key_len = target->array.assoc[idx].length;
     }
-    return &v->array.assoc[idx].value.value;
+    return &target->array.assoc[idx].value;
 }
 size_t amf_arr_get_assoc_count( const amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return VEC_SIZE(v->array.assoc);
+    return VEC_SIZE(target->array.assoc);
 }
 
 amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    for( int i = 0; i < VEC_SIZE(v->array.ordinal); ++i ){
-        if( memcmp( key, VEC_AT(v->array.ordinal, i).name, VEC_AT(v->array.ordinal, i).length ) == 0 ){
-            return &VEC_AT(v->array.ordinal, i).value.value;
+    for( size_t i = 0; i < VEC_SIZE(target->array.ordinal); ++i ){
+        if( memcmp( key, VEC_AT(target->array.ordinal, i).name, VEC_AT(target->array.ordinal, i).length ) == 0 ){
+            return &VEC_AT(target->array.ordinal, i).value;
         }
     }
     return nullptr;
 }
 amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    if( v->type == AMF0_TYPE_REFERENCE ){
-        v = v->reference.ref;
+    if( target->type == AMF_TYPE_REFERENCE ){
+        target = target->reference.ref;
     }
-    if( idx >= VEC_SIZE(v->array.ordinal) ){
+    if( idx >= VEC_SIZE(target->array.ordinal) ){
         return nullptr;
     }
     if( key ){
-        *key = VEC_AT(v->array.ordinal, idx).name;
+        *key = VEC_AT(target->array.ordinal, idx).name;
     }
     if( key_len ){
-        *key_len = v->array.ordinal[idx].length;
+        *key_len = target->array.ordinal[idx].length;
     }
-    return &v->array.ordinal[idx].value.value;
+    return &target->array.ordinal[idx].value;
 }
 size_t amf_arr_get_ord_count( const amf_value_t target ){
-    const amf_v_t *v = (const amf_v_t*) target;
-    return VEC_SIZE(v->array.ordinal);
+    return VEC_SIZE(target->array.ordinal);
 }
 #include <stdio.h>
 
-void amf_print_value_internal( amf_v_t * val, int depth ){
+void amf_print_value_internal( amf_value_t val, size_t depth ){
 
     switch( val->type ){
-        case AMF0_TYPE_AVMPLUS:
+        case AMF_TYPE_AVMPLUS:
             break;
-        case AMF0_TYPE_BOOLEAN:
+        case AMF_TYPE_BOOLEAN:
             printf( "Boolean: %s", val->boolean.boolean ? "true" : "false" );
             break;
-        case AMF0_TYPE_DATE:
+        case AMF_TYPE_DATE:
             printf( "Date: %f +%d", val->date.timestamp, val->date.timezone );
             break;
-        case AMF0_TYPE_MOVIECLIP:
+        case AMF_TYPE_MOVIECLIP:
             printf( "Movie clip" );
             break;
-        case AMF0_TYPE_NULL:
+        case AMF_TYPE_NULL:
             printf("Null");
             break;
-        case AMF0_TYPE_NUMBER:
-            printf( "Number: %f", val->number.number );
+        case AMF_TYPE_DOUBLE:
+            printf( "Double: %f", val->dbl.number );
             break;
-        case AMF0_TYPE_RECORDSET:
+        case AMF_TYPE_INTEGER:
+            printf( "Integer: %d", val->integer.number );
+            break;
+        case AMF_TYPE_RECORDSET:
             printf( "Recordset");
             break;
-        case AMF0_TYPE_REFERENCE:
+        case AMF_TYPE_REFERENCE:
             printf( "Reference to %lu", val->reference.ref_num );
             break;
-        case AMF0_TYPE_UNDEFINED:
+        case AMF_TYPE_UNDEFINED:
             printf( "Undefined");
             break;
-        case AMF0_TYPE_UNSUPPORTED:
+        case AMF_TYPE_UNSUPPORTED:
             printf( "Unsupported");
             break;
 
-        case AMF0_TYPE_STRICT_ARRAY:
-            printf( "Strict array");
-            break;
-        case AMF0_TYPE_TYPED_OBJECT:
+        case AMF_TYPE_TYPED_OBJECT:
             printf( "Typed Object");
             break;
 
-        case AMF0_TYPE_STRING:
+        case AMF_TYPE_STRING:
             printf( "String: %s", val->string.data );
             break;
-        case AMF0_TYPE_LONG_STRING:
-            printf( "Long String: %s", val->string.data );
-            break;
-        case AMF0_TYPE_XML_DOCUMENT:
+        case AMF_TYPE_XML_DOCUMENT:
             printf( "XML document: %s", val->string.data );
             break;
 
-        case AMF0_TYPE_ECMA_ARRAY:
-            printf( "ECMA array: {\n");
-            for( int i = 0; i < VEC_SIZE(val->array.assoc); ++i ){
-                for( int i = 0; i <= depth; ++i ){
+        case AMF_TYPE_ARRAY:
+            printf( "Array: [\n");
+            for( size_t i = 0; i < VEC_SIZE(val->array.assoc); ++i ){
+                for( size_t i = 0; i <= depth; ++i ){
                     printf("    ");
                 }
                 printf( "%.*s: ", (int) val->array.assoc[i].length, val->array.assoc[i].name );
                 amf_print_value_internal( &val->array.assoc[i].value, depth+1 );
             }
-            for( int i = 0; i < VEC_SIZE(val->array.ordinal); ++i ){
-                for( int i = 0; i <= depth; ++i ){
+            for( size_t i = 0; i < VEC_SIZE(val->array.ordinal); ++i ){
+                for( size_t i = 0; i <= depth; ++i ){
                     printf("    ");
                 }
                 printf( "%.*s: ", (int) val->array.ordinal[i].length, val->array.ordinal[i].name );
                 amf_print_value_internal( &val->array.ordinal[i].value, depth+1 );
             }
-            for( int i = 0; i < depth; ++i ){
+            for( size_t i = 0; i < depth; ++i ){
                 printf("    ");
             }
-            printf( "}");
+            printf( "]");
             break;
-        case AMF0_TYPE_OBJECT:
+        case AMF_TYPE_OBJECT:
             printf( "Object: {\n");
-            for( int i = 0; i < VEC_SIZE(val->object.members); ++i ){
-                for( int i = 0; i <= depth; ++i ){
+            for( size_t i = 0; i < VEC_SIZE(val->object.members); ++i ){
+                for( size_t i = 0; i <= depth; ++i ){
                     printf("    ");
                 }
                 printf( "%.*s: ", (int) val->object.members[i].length, val->object.members[i].name );
                 amf_print_value_internal( &val->object.members[i].value, depth+1 );
             }
-            for( int i = 0; i < depth; ++i ){
+            for( size_t i = 0; i < depth; ++i ){
                 printf("    ");
             }
             printf( "}");
@@ -982,11 +992,11 @@ void amf_print_value_internal( amf_v_t * val, int depth ){
     printf("\n");
 }
 void amf_print_value( amf_value_t val ){
-    return amf_print_value_internal( (amf_v_t*) val, 0 );
+    amf_print_value_internal( val, 0 );
 }
 
 void amf_print( amf_t amf ){
-    for( int i = 0; i < amf_get_count( amf ); ++i ){
+    for( size_t i = 0; i < amf_get_count( amf ); ++i ){
         amf_print_value( amf_get_item( amf, i ) );
     }
 }
@@ -1039,7 +1049,15 @@ static amf_err_t amf_push_simple_list_dbl( amf_t amf, const char * restrict memb
         return ret;
     }
 
-    return amf_push_number( amf, member_value );
+    return amf_push_double( amf, member_value );
+}
+static amf_err_t amf_push_simple_list_int( amf_t amf, const char * restrict member_name, int32_t member_value ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_integer( amf, member_value );
 }
 static amf_err_t amf_push_simple_list_start_obj( amf_t amf, const char * restrict member_name ){
     amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
@@ -1069,11 +1087,11 @@ static amf_err_t amf_push_simple_list_end( amf_t amf, const char * restrict memb
 
 amf_err_t amf_push_simple_list( amf_t amf, va_list list ){
     amf_err_t ret;
-    amf0_type_t arg = AMF0_TYPE_NONE;
+    amf_type_t arg = AMF_TYPE_NONE;
     int depth = 0;
     while( true ){
-        arg = va_arg( list, amf0_type_t );
-        if( arg == AMF0_TYPE_NONE ){
+        arg = va_arg( list, amf_type_t );
+        if( arg == AMF_TYPE_NONE ){
             break;
         }
         const char * membname = nullptr;
@@ -1081,25 +1099,25 @@ amf_err_t amf_push_simple_list( amf_t amf, va_list list ){
                 membname = va_arg( list, const char* );
         }
         switch( arg ){
-            case AMF0_TYPE_BOOLEAN: ret = amf_push_simple_list_bool( amf, membname, va_arg( list, int ) ); break;
-            case AMF0_TYPE_STRING: ret = amf_push_simple_list_str( amf, membname, va_arg( list, const char* ) ); break;
-            case AMF0_TYPE_NUMBER: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, double ) ); break;
-            case AMF0_TYPE_NUMBER_INT: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, int ) ); break;
-            case AMF0_TYPE_NULL: ret = amf_push_null( amf ); break;
-            case AMF0_TYPE_UNDEFINED: ret = amf_push_undefined( amf ); break;
-            case AMF0_TYPE_UNSUPPORTED: ret = amf_push_unsupported( amf ); break;
-            case AMF0_TYPE_OBJECT:
+            case AMF_TYPE_BOOLEAN: ret = amf_push_simple_list_bool( amf, membname, va_arg( list, int ) ); break;
+            case AMF_TYPE_STRING: ret = amf_push_simple_list_str( amf, membname, va_arg( list, const char* ) ); break;
+            case AMF_TYPE_DOUBLE: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, double ) ); break;
+            case AMF_TYPE_INTEGER: ret = amf_push_simple_list_int( amf, membname, va_arg( list, int ) ); break;
+            case AMF_TYPE_NULL: ret = amf_push_null( amf ); break;
+            case AMF_TYPE_UNDEFINED: ret = amf_push_undefined( amf ); break;
+            case AMF_TYPE_UNSUPPORTED: ret = amf_push_unsupported( amf ); break;
+            case AMF_TYPE_OBJECT:
                 ++ depth;
                 ret = amf_push_simple_list_start_obj( amf, membname );
                 break;
-            case AMF0_TYPE_ECMA_ARRAY:
+            case AMF_TYPE_ARRAY:
                 ++ depth;
                 ret = amf_push_simple_list_start_arr( amf, membname );
                 break;
-            case AMF0_TYPE_ECMA_ARRAY_ASSOC_END:
+            case AMF_TYPE_ECMA_ARRAY_ASSOC_END:
                 ret = amf_push_assoc_end( amf );
                 break;
-            case AMF0_TYPE_OBJECT_END:
+            case AMF_TYPE_OBJECT_END:
                 -- depth;
                 ret = amf_push_simple_list_end( amf, membname );
                 break;

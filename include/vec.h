@@ -78,11 +78,11 @@ template<class T> struct remove_ref<T&&>  {typedef T type;};
 #define VEC_PRIV_MK_SPACE(base,len,reserve) VEC_PRIV_MK_SPACE_AT(base,len,reserve,-1,1)
 #define VEC_PRIV_RM_AT(base,len,reserve,idx,amt) \
 do{                                                                             \
-    if(idx!=-1&&idx+amt<len){                                                   \
+    if((size_t)idx!=(size_t)-1&&idx+amt<len){                                   \
         memmove(base+idx,base+idx+amt,                                          \
                 (len-idx-amt) * sizeof(*base));                                 \
     }                                                                           \
-    if(idx==-1||idx+amt<=len){                                                  \
+    if((size_t)idx==(size_t)-1||idx+amt<=len){                                  \
         len-=amt;                                                               \
     }                                                                           \
     else{                                                                       \

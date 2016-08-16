@@ -34,6 +34,9 @@
 
 rtmp_chunk_stream_cache_t rtmp_cache_create( void ){
     struct rtmp_chunk_stream_cache *ret = calloc( sizeof( struct rtmp_chunk_stream_cache ), 1 );
+    for( size_t i = 0; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
+        ret->static_cache[i].msg.chunk_stream_id = i;
+    }
     return ret;
 }
 
@@ -103,7 +106,48 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t
     }
 }
 
+static int rtmp_cache_match( rtmp_chunk_stream_message_internal_t * cached, size_t stream_id, size_t msg_size, byte msg_type, rtmp_time_t timestamp ){
+    int current_type = 0;
+    if( cached->initialized ) {
+        if( cached->msg.message_stream_id == stream_id ){
+            current_type = 1;
+            if( cached->msg.message_length == msg_size && cached->msg.message_type == msg_type ){
+                current_type = 2;
+                if( cached->time_delta == (rtmp_time_t)timestamp_get_delta( cached->msg.timestamp, timestamp ) ){
+                    current_type = 3;
+                }
+            }
+        }
+    }
+    return current_type;
+}
 
+rtmp_chunk_stream_message_internal_t * rtmp_cache_find( rtmp_chunk_stream_cache_t cache, size_t stream_id, size_t msg_size, byte msg_type, rtmp_time_t timestamp ){
+    rtmp_chunk_stream_message_internal_t * best = &cache->static_cache[3];
+    int best_type = 0;
+    int current_type = 0;
+    for( size_t i = 3; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
+        current_type = rtmp_cache_match( &cache->static_cache[i], stream_id, msg_size, msg_type, timestamp );
+        if( current_type > best_type ){
+            best = &cache->static_cache[i];
+            best_type = current_type;
+        }
+        if( best_type == 3 ){
+            return best;
+        }
+    }
+    for( size_t i = 0; i < cache->dynamic_cache_size; ++i ){
+        current_type = rtmp_cache_match( &cache->dynamic_cache[i], stream_id, msg_size, msg_type, timestamp );
+        if( current_type > best_type ){
+            best = &cache->dynamic_cache[i];
+            best_type = current_type;
+        }
+        if( best_type == 3 ){
+            return best;
+        }
+    }
+    return best;
+}
 
 rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t out ){
     byte version = RTMP_VERSION;
@@ -195,8 +239,15 @@ rtmp_err_t rtmp_chunk_read_shake_2( ringbuffer_t input, rtmp_time_t * restrict t
 rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t *message, rtmp_chunk_stream_cache_t cache ){
     byte fmt = 0;
     rtmp_time_t timestamp = message->timestamp;
+    rtmp_chunk_stream_message_internal_t *previous;
 
-    rtmp_chunk_stream_message_internal_t *previous = rtmp_cache_get(cache, message->chunk_stream_id);
+    if( message->chunk_stream_id == 0 ){
+        previous = rtmp_cache_find( cache, message->message_stream_id, message->message_length, message->message_type, message->timestamp );
+        message->chunk_stream_id = previous->msg.chunk_stream_id;
+    }
+    else{
+        previous = rtmp_cache_get(cache, message->chunk_stream_id);
+    }
     if( previous == nullptr ){
         return RTMP_ERR_INADEQUATE_CHUNK;
     }
@@ -213,7 +264,7 @@ rtmp_err_t rtmp_chunk_emit_hdr( ringbuffer_t output, rtmp_chunk_stream_message_t
             if( previous->msg.message_type == message->message_type &&
                 previous->msg.message_length == message->message_length ){
                 fmt = 2;
-                if( previous->time_delta == delta ){
+                if( previous->time_delta == (rtmp_time_t)delta ){
                     fmt = 3;
                 }
             }
@@ -317,7 +368,7 @@ rtmp_err_t rtmp_chunk_read_hdr( ringbuffer_t input, rtmp_chunk_stream_message_t 
 
 rtmp_err_t rtmp_chunk_emit_hdr_basic( ringbuffer_t output, byte format, size_t id ){
     byte buffer[3];
-    int len = 1;
+    size_t len = 1;
     //Fill the two least significant bits of buffer[0] with format
     buffer[0] = (format & 3) << 6;
     if( id < 2 ){

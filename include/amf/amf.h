@@ -58,7 +58,7 @@ amf_err_t amf0_get_string_length( const byte* data, size_t len, size_t *value );
 amf_err_t amf0_get_string( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation );
 amf_err_t amf0_get_object( const byte* data, size_t len );
 amf_err_t amf0_get_prop_length( const byte* data, size_t len, size_t *value );
-amf_err_t amf0_get_prop_name( const byte* data, size_t len, void *value, int value_len );
+amf_err_t amf0_get_prop_name( const byte* data, size_t len, void *value, size_t value_len );
 amf_err_t amf0_get_movieclip( const byte* data, size_t len );
 amf_err_t amf0_get_null( const byte* data, size_t len );
 amf_err_t amf0_get_undefined( const byte* data, size_t len );

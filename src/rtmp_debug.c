@@ -54,11 +54,11 @@ static void rtmp_print_u(unsigned int v){
 
 
 static rtmp_printer def = {
-    s : rtmp_print_s,
-    s2 : rtmp_print_s2,
-    d : rtmp_print_d,
-    f : rtmp_print_f,
-    u : rtmp_print_u
+    .s = rtmp_print_s,
+    .s2 = rtmp_print_s2,
+    .d = rtmp_print_d,
+    .f = rtmp_print_f,
+    .u = rtmp_print_u
 };
 
 rtmp_printer_t rtmp_default_printer = &def;

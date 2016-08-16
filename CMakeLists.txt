@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (libopenrtmp C)
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -g -Wall -fstrict-aliasing -pg" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -g -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2" )
 
 include_directories( "$(PROJECT_SOURCE_DIR)/include" )
 

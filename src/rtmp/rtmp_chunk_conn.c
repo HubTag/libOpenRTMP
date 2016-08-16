@@ -77,7 +77,7 @@ bool rtmp_chunk_conn_connected( rtmp_chunk_conn_t conn ){
 }
 
 
-rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
+static rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
     rtmp_err_t err = RTMP_ERR_NONE;
     if( conn->callback_event ){
         switch( conn->callback_event( conn, event, conn->userdata ) ){
@@ -94,7 +94,7 @@ rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t even
     return RTMP_GEN_ERROR(conn, err);
 }
 
-rtmp_err_t rtmp_chunk_conn_call_chunk( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
+static rtmp_err_t rtmp_chunk_conn_call_chunk( rtmp_chunk_conn_t conn, const void *input, size_t available, size_t remaining, rtmp_chunk_stream_message_t *msg ){
     rtmp_err_t err = RTMP_ERR_NONE;
     if( conn->callback_chunk ){
         switch( conn->callback_chunk( conn, input, available, remaining, msg, conn->userdata ) ){
@@ -480,10 +480,10 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_issue(
     size_t available ){
 
     rtmp_err_t ret = RTMP_ERR_NONE;
-
+    size_t remaining;
     //Remove what we're about to process from the pending amount
     previous->processed -= available;
-    size_t remaining = previous->processed;
+    remaining = previous->processed;
 
     if( msg->chunk_stream_id == RTMP_CONTROL_CHUNK_STREAM && msg->message_stream_id == RTMP_CONTROL_MSG_STREAM ){
         //This is a control message; use our internal handler

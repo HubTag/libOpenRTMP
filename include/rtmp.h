@@ -51,7 +51,7 @@ uint32_t rtmp_params_get_d( rtmp_params_t params, rtmp_param_name_t name );
 
 typedef rtmp_cb_status_t (*rtmp_connect_proc)(
     rtmp_server_t connection,
-    void *user;
+    void *user
 );
 
 
