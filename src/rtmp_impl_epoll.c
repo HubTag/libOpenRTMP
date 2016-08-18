@@ -44,9 +44,14 @@ rtmp_t rtmp_create( void ){
     return mgr;
 }
 
+static void destroy_server(rtmp_mgr_svr_t server){
+    rtmp_server_destroy( server->server );
+    free( server );
+}
+
 void rtmp_destroy( rtmp_t mgr ){
+    VEC_DESTROY_DTOR( mgr->servers, destroy_server );
     close( mgr->epoll_args.epollfd );
-    VEC_DESTROY_DTOR( mgr->servers, free );
     free( mgr );
 }
 
@@ -207,6 +212,14 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
     epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_DEL, stream->socket, &e );
     shutdown( stream->socket, SHUT_RDWR );
     close( stream->socket );
+    for( size_t i = 0; i < VEC_SIZE(mgr->servers); ++i ){
+        if( mgr->servers[i] == stream ){
+            VEC_ERASE( mgr->servers, i );
+            break;
+        }
+    }
+    rtmp_server_destroy( stream->server );
+    free( stream );
     return RTMP_ERR_CONNECTION_FAIL;
 }
 

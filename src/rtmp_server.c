@@ -407,19 +407,19 @@ rtmp_server_t rtmp_server_create( void ){
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "publish", rtmp_server_onpublish, server );
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "createStream", rtmp_server_oncreateStream, server );
     FILE* file = fopen("vid.flv", "wb");
-    struct fdata *f = calloc(1, sizeof( struct fdata ) );
-    f->file = file;
-    f->first_part = true;
-    f->first_part_a = true;
-    f->last_size = 0;
-    f->last_size_a = 0;
+    static struct fdata f;
+    f.file = file;
+    f.first_part = true;
+    f.first_part_a = true;
+    f.last_size = 0;
+    f.last_size_a = 0;
     flv_write_head( file, true, false );
     flv_write_backptr( file, 0 );
 
-    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, f );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, &f );
 
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, f );
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, f );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, &f );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, &f );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_SUCCESS, rtmp_server_shake_done, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_FAIL, rtmp_server_shake_fail, server );
 
@@ -427,6 +427,7 @@ rtmp_server_t rtmp_server_create( void ){
 }
 
 void rtmp_server_destroy( rtmp_server_t server ){
+    VEC_DESTROY( server->streams );
     rtmp_stream_destroy_at( &server->stream );
     free( server );
 }
