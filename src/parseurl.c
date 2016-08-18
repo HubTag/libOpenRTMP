@@ -214,6 +214,7 @@ static bool parseurl_handle_space( char ** buf, char ** end, int enforce ){
 //Otherwise, return the rest of the string.
 static char* parseurl_parse_authority( parseurl_t out, char *buf, int enforce, char **end ){//The scheme wasn't found or we have a // indicating that there is an authority section
     char *temp;
+    static char nullchar = '\0';
     if( parseurl_has_authority( buf ) ){
         //Skip slashes for authority
         buf += 2;
@@ -245,7 +246,7 @@ static char* parseurl_parse_authority( parseurl_t out, char *buf, int enforce, c
         buf = temp + 1;
         //If the separator is a null pointer, return an empty string.
         if( sep == 0 ){
-            return "";
+            return &nullchar;
         }
         if( sep == ':' ){
             //We have a port
@@ -263,7 +264,7 @@ static char* parseurl_parse_authority( parseurl_t out, char *buf, int enforce, c
             }
             else{
                 //If we're at the end of the string, return an empty string.
-                return "";
+                return &nullchar;
             }
         }
         //Move the rest of the string down a byte since we need to insert a null terminator

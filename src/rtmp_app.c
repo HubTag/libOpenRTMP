@@ -175,11 +175,11 @@ rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_val
 }
 
 size_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type, char * new_name, size_t len ){
-    return app->on_publish ? app->on_publish( stream, app, name, type, new_name, len, app->on_publish_data ) : RTMP_CB_CONTINUE;
+    return app->on_publish ? app->on_publish( stream, app, name, type, new_name, len, app->on_publish_data ) : 0;
 }
 
 size_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name, char * new_name, size_t len ){
-    return app->on_fcpublish ? app->on_fcpublish( stream, app, name, new_name, len, app->on_fcpublish_data ) : RTMP_CB_CONTINUE;
+    return app->on_fcpublish ? app->on_fcpublish( stream, app, name, new_name, len, app->on_fcpublish_data ) : 0;
 }
 
 rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_value_t value ){
