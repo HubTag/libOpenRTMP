@@ -62,7 +62,7 @@ void rtmp_set_app_list( rtmp_t mgr, rtmp_app_list_t list );
 
 rtmp_err_t rtmp_service( rtmp_t mgr, int timeout );
 
-rtmp_client_t rtmp_connect( rtmp_t mgr, const char * url, const char * playpath );
+rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client );
 
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user );
 

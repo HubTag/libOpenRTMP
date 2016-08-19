@@ -267,3 +267,25 @@ char * str_dup( const char * input ){
     return str_dupl_priv( input, strlen( input ) );
 }
 
+#ifndef RTMP_HAS_STRNCASECMP
+char to_lower( const char a ){
+    switch(a){
+        case 'A': case 'B': case 'C': case 'D':
+        case 'E': case 'F': case 'G': case 'H':
+        case 'I': case 'J': case 'K': case 'L':
+        case 'M': case 'N': case 'O': case 'P':
+        case 'Q': case 'R': case 'S': case 'T':
+        case 'U': case 'V': case 'W': case 'X':
+        case 'Y': case 'Z': return a + ('a' - 'A');
+        default: return a;
+    }
+}
+
+int strncasecmp( const char * a, const char * b, size_t len ){
+    while(  (*a==*b || to_lower(*(a++)) == to_lower(*(b++)) ) &&
+            *a && *b &&
+            len --> 1 ){}
+    return len ? to_lower(a[-1]) - to_lower(b[-1]) : 0;
+}
+
+#endif

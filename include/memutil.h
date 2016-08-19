@@ -27,6 +27,8 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 
+#define ezalloc(a) ((a*)calloc(1,sizeof(a)))
+#define ALIAS(a,b,c) b c = (b)a;
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len);
@@ -88,5 +90,9 @@ byte* safe_alloc(size_t amount);
 
 char * str_dupl( const char * input, size_t len );
 char * str_dup( const char * input );
+
+#ifndef RTMP_HAS_STRNCASECMP
+int strncasecmp( const char * a, const char * b, size_t len );
+#endif
 
 #endif

@@ -214,7 +214,7 @@ void rtmp_stream_log_proc(
 
 
 rtmp_stream_t rtmp_stream_create( bool client ){
-    rtmp_stream_t stream = malloc( sizeof( struct rtmp_stream ) );
+    rtmp_stream_t stream = ezalloc( struct rtmp_stream );
     rtmp_stream_create_at( stream, client );
     return stream;
 }
@@ -267,7 +267,7 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
 
     if( name != nullptr ){
         size_t len = strlen( name );
-        value->name = malloc( sizeof( char ) * len + 1 );
+        value->name = (char*) malloc( sizeof( char ) * len + 1 );
         if( !value->name ){
             //Since the length hasn't been incremented, we can safely abort without completing initialization.
             return RTMP_ERR_OOM;
@@ -390,7 +390,7 @@ static rtmp_err_t rtmp_stream_prepare_amf( rtmp_stream_t stream, amf_t amf ){
     if( !stream->scratch ){
         return RTMP_ERR_OOM;
     }
-    if( amf_write( amf, stream->scratch, len, &len ) < 0 ){
+    if( amf_write( amf, (byte*)stream->scratch, len, &len ) < 0 ){
         return RTMP_ERR_BAD_WRITE;
     }
     return RTMP_ERR_NONE;
@@ -409,7 +409,7 @@ static rtmp_err_t rtmp_stream_send_amf(
         ret = rtmp_stream_prepare_amf( stream, amf );
     }
     if( ret == RTMP_ERR_NONE ){
-        ret = rtmp_chunk_conn_send_message( stream->connection, msg, chunk_id, msg_id, timestamp, stream->scratch, stream->scratch_len, written );
+        ret = rtmp_chunk_conn_send_message( stream->connection, msg, chunk_id, msg_id, timestamp, (byte*)stream->scratch, stream->scratch_len, written );
     }
     return ret;
 }

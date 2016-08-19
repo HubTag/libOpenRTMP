@@ -87,7 +87,7 @@ rtmp_cb_status_t rtmp_server_onconnect(
     rtmp_cb_status_t status = RTMP_CB_CONTINUE;
     const char *str = nullptr;
 
-    rtmp_server_t self = user;
+    ALIAS( user, rtmp_server_t, self );
     if( amf_get_count( object ) < 3 ){
         return RTMP_CB_ABORT;
     }
@@ -173,7 +173,7 @@ rtmp_cb_status_t rtmp_server_onconnect(
 
 rtmp_cb_status_t rtmp_server_onreleaseStream( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_stream_t stream = args->stream;
-    rtmp_server_t self = user;
+    ALIAS( user, rtmp_server_t, self );
     if(!self->app){
         return RTMP_CB_ERROR;
     }
@@ -185,7 +185,7 @@ rtmp_cb_status_t rtmp_server_onreleaseStream( rtmp_stream_args_t args, amf_t obj
 
 rtmp_cb_status_t rtmp_server_onFCPublish( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_stream_t stream = args->stream;
-    rtmp_server_t self = user;
+    ALIAS( user, rtmp_server_t, self );
     if(!self->app){
         return RTMP_CB_ERROR;
     }
@@ -218,7 +218,7 @@ rtmp_cb_status_t rtmp_server_onFCPublish( rtmp_stream_args_t args, amf_t object,
 
 rtmp_cb_status_t rtmp_server_onpublish( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_stream_t stream = args->stream;
-    rtmp_server_t self = user;
+    ALIAS( user, rtmp_server_t, self );
     if(!self->app){
         return RTMP_CB_ERROR;
     }
@@ -259,7 +259,7 @@ rtmp_cb_status_t rtmp_server_onpublish( rtmp_stream_args_t args, amf_t object, v
 
 rtmp_cb_status_t rtmp_server_oncreateStream( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_stream_t stream = args->stream;
-    rtmp_server_t self = user;
+    ALIAS( user, rtmp_server_t, self);
     size_t stream_id = 0;
     rtmp_server_stream_t * s;
     if(!self->app){
@@ -339,13 +339,13 @@ void flv_write_tag( FILE * file, byte type, uint32_t size, uint32_t timestamp ){
 
 rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_time_t timestamp = args->timestamp;
-    struct fdata *output = user;
+    ALIAS( user, struct fdata *, output );
     size_t total = 0;
     for( size_t i = 1; i < amf_get_count(object); ++i ){
         total += amf_write_value( amf_get_item( object, i), nullptr, 0 );
     }
     flv_write_tag( output->file, 18, total, timestamp );
-    byte * out = malloc( total );
+    byte * out = (byte*) malloc( total );
     size_t offset = 0;
     for( size_t i = 1; i < amf_get_count(object) && offset < total; ++i ){
         size_t wrote = amf_write_value( amf_get_item( object, i), out + offset, total - offset );
@@ -363,7 +363,7 @@ rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_args_t args, amf_t obje
 
 rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
-    struct fdata *output = user;
+    ALIAS( user, struct fdata *, output );
     if( output->first_part ){
         output->first_part = false;
         output->last_size = length + remaining + 11;
@@ -379,7 +379,7 @@ rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data
 }
 rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
-    struct fdata *output = user;
+    ALIAS(user, struct fdata *, output);
     if( output->first_part_a ){
         output->first_part_a = false;
         output->last_size_a = length + remaining + 11;
@@ -396,7 +396,7 @@ rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data
 
 
 rtmp_server_t rtmp_server_create( void ){
-    rtmp_server_t server = calloc( 1, sizeof( struct rtmp_server ) );
+    rtmp_server_t server = ezalloc( struct rtmp_server );
     rtmp_stream_create_at( &server->stream, false );
     VEC_INIT( server->streams );
     server->next_stream = 1;

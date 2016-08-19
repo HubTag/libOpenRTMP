@@ -45,7 +45,8 @@
 
 typedef enum {
     RTMP_T_RTMP_T,
-    RTMP_T_STREAM_T
+    RTMP_T_SERVER_T,
+    RTMP_T_CLIENT_T
 } rtmp_t_t;
 
 struct rtmp_chunk_stream_message_internal{
@@ -161,7 +162,10 @@ struct rtmp_stream{
 typedef struct rtmp_mgr_svr{
     rtmp_t_t type;
     rtmp_sock_t socket;
-    rtmp_server_t server;
+    union{
+        rtmp_server_t server;
+        rtmp_client_t client;
+    };
     int flags;
     rtmp_t mgr;
     bool closing;

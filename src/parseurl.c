@@ -389,7 +389,7 @@ static bool parseurl_parse( parseurl_t out, const char *url, int enforce ){
     size_t len = strlen( url );
     //allocating an extra byte to make room for a null between authority and path,
     //and an extra null terminator.
-    out->allocated = malloc( 3 + len );
+    out->allocated = (char*) malloc( 3 + len );
     if( !out->allocated ){
         return false;
     }
@@ -421,7 +421,7 @@ static void parseurl_to_url( parseurl_t parser ){
         parser->url = nullptr;
         return;
     }
-    parser->url = malloc( length + 1 );
+    parser->url = (char*) malloc( length + 1 );
     char *buf = parser->url;
 
     if( parser->scheme ){
@@ -468,7 +468,7 @@ static void parseurl_to_url( parseurl_t parser ){
 
 
 parseurl_t parseurl_create( void ){
-    parseurl_t ret = calloc( 1, sizeof( struct parseurl ) );
+    parseurl_t ret = ezalloc( struct parseurl );
     return ret;
 }
 void parseurl_destroy( parseurl_t parser ){

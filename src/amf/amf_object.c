@@ -161,7 +161,7 @@ void amf_free_value( amf_value_t val){
 }
 
 amf_t amf_create( char type ){
-    amf_t ret = calloc( 1, sizeof( struct amf_object ) );
+    amf_t ret = ezalloc( struct amf_object );
     if( !ret ){
         return ret;
     }
@@ -498,14 +498,14 @@ static amf_err_t push_str( amf_t a, const void * str, amf_type_t t) {
         }
         memcpy( ptr, str, len + 1 );
         PUSH_PREP(a,target);
-        target->string.data = ptr;
+        target->string.data = (char*) ptr;
         target->string.length = len;
         target->string.type = t;
         return AMF_ERR_NONE;
     }
     else{
         PUSH_PREP(a,target);
-        target->string.data = a->allocation;
+        target->string.data = (char*) a->allocation;
         target->string.length = a->allocation_len;
         target->string.type = t;
         a->allocation = nullptr;
@@ -570,7 +570,7 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
     amf_v_member_t* mem = amf_v_push_member( amf );
     if( mem ){
         mem->length = amf->allocation_len;
-        mem->name = amf->allocation;
+        mem->name = (char*) amf->allocation;
         mem->value.type = AMF_TYPE_UNDEFINED;
         amf->allocation_len = 0;
         amf->allocation = nullptr;

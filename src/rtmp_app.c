@@ -62,7 +62,7 @@ struct rtmp_app_list{
 
 
 rtmp_app_list_t rtmp_app_list_create( void ){
-    rtmp_app_list_t applist = malloc( sizeof( struct rtmp_app_list ) );
+    rtmp_app_list_t applist = ezalloc( struct rtmp_app_list );
     VEC_INIT( applist->apps );
     return applist;
 }
@@ -82,7 +82,7 @@ rtmp_app_t rtmp_app_list_register( rtmp_app_list_t list, const char *appname ){
         return app;
     }
 
-    app = calloc( 1, sizeof( struct rtmp_app ) );
+    app = ezalloc( struct rtmp_app );
     if( !app ){
         return nullptr;
     }

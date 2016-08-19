@@ -33,7 +33,7 @@
 
 
 rtmp_chunk_stream_cache_t rtmp_cache_create( void ){
-    struct rtmp_chunk_stream_cache *ret = calloc( sizeof( struct rtmp_chunk_stream_cache ), 1 );
+    struct rtmp_chunk_stream_cache *ret = ezalloc( struct rtmp_chunk_stream_cache );
     for( size_t i = 0; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
         ret->static_cache[i].msg.chunk_stream_id = i;
     }
@@ -64,7 +64,7 @@ static rtmp_chunk_stream_message_internal_t * rtmp_cache_insert( rtmp_chunk_stre
         //Out of memory
         return ret;
     }
-    cache->dynamic_cache = newptr;
+    cache->dynamic_cache = (rtmp_chunk_stream_message_internal_t*)newptr;
     ret = cache->dynamic_cache + index;
     if( remainder > 0 ){
         //If there's data after our index, move it down by one element
@@ -443,6 +443,6 @@ void rtmp_print_message( rtmp_chunk_stream_message_t *msg ){
             msg->chunk_stream_id,
             msg->message_stream_id,
             msg->timestamp,
-            rtmp_get_message_type_name(msg->message_type),
+            rtmp_get_message_type_name((rtmp_message_type_t)msg->message_type),
             msg->message_length );
 }

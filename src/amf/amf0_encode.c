@@ -91,7 +91,7 @@ amf_err_t amf0_write_object_end( byte* data, size_t data_len ){
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_write_strict_array( byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to write Strict Array to AMF!");
-    return 0;
+    return AMF_SIZE(0);
 }
 
 //Returns a timezone offset as well as a double essentially representing a Unix timestamp
@@ -103,7 +103,7 @@ amf_err_t amf0_write_date( byte* data, size_t data_len, int timezone, double tim
 //Dummy
 amf_err_t amf0_write_unsupported( byte* data, size_t data_len ){
     emit_err("[Error] Trying to write an unsupported type to AMF!");
-    return 0;
+    return AMF_SIZE(0);
 }
 
 //Alias around amf0_write_string_internal
@@ -119,11 +119,11 @@ amf_err_t amf0_write_xmldocument( byte* data, size_t data_len, const void *value
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_write_recordset( byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to write Record Set to AMF!");
-    return 0;
+    return AMF_SIZE(0);
 }
 //Unimplemented. Will implement if necessary.
 amf_err_t amf0_write_typed_object( byte* data, size_t data_len ){
     emit_err("[Unimplemented] Trying to write Typed Object to AMF!");
-    return 0;
+    return AMF_SIZE(0);
 }
 
