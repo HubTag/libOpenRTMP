@@ -297,6 +297,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
 
     sock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
     if( sock <= 0 ){
+        perror("socket");
         rtmp_client_destroy( client );
         return RTMP_ERR_CONNECTION_FAIL;
     }
@@ -309,6 +310,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
     svr.sin.sin_family = AF_INET;
     svr.sin.sin_port = htons(port);
     if( connect( sock, &svr.s, sizeof( svr ) ) < 0 ){
+        perror("connect");
         rtmp_client_destroy( client );
         close( sock );
         return RTMP_ERR_CONNECTION_FAIL;
@@ -349,6 +351,7 @@ rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect
     svr.sin.sin_family = AF_INET;
     svr.sin.sin_port = htons(port);
     if( bind( sock, &svr.s, sizeof( svr ) ) < 0 ){
+        perror("bind");
         close( sock );
         return RTMP_ERR_CONNECTION_FAIL;
     }

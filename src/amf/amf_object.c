@@ -193,16 +193,16 @@ void amf_destroy( amf_t amf ){
 
 amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size );
 
-#define DO(a) do{               \
-    int wrote_internal = (a);   \
-    if( wrote_internal < 0 ){   \
-        return wrote_internal;  \
-    }                           \
-    wrote += wrote_internal;    \
-    if( dest ){                 \
-        dest += wrote_internal; \
-        size -= wrote_internal; \
-    }                           \
+#define DO(a) do{                       \
+    int wrote_internal = (a);           \
+    if( wrote_internal < 0 ){           \
+        return AMF_SIZE(wrote_internal);\
+    }                                   \
+    wrote += wrote_internal;            \
+    if( dest ){                         \
+        dest += wrote_internal;         \
+        size -= wrote_internal;         \
+    }                                   \
 }while(0)
 
 static amf_err_t amf_write_value_obj(amf_value_t val, byte *dest, size_t size){
@@ -214,7 +214,7 @@ static amf_err_t amf_write_value_obj(amf_value_t val, byte *dest, size_t size){
     }
     DO(amf0_write_prop_name( dest, size, "", 0 ));
     DO(amf0_write_object_end( dest, size ));
-    return wrote;
+    return AMF_SIZE(wrote);
 }
 
 static amf_err_t amf_write_value_ecma(amf_value_t val, byte *dest, size_t size){
@@ -230,7 +230,7 @@ static amf_err_t amf_write_value_ecma(amf_value_t val, byte *dest, size_t size){
     }
     DO(amf0_write_prop_name( dest, size, "", 0 ));
     DO(amf0_write_object_end( dest, size ));
-    return wrote;
+    return AMF_SIZE(wrote);
 }
 
 
@@ -313,7 +313,7 @@ amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written ){
     if( written ){
         *written = i;
     }
-    return total_len;
+    return AMF_SIZE(total_len);
 }
 
 amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
@@ -373,9 +373,9 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
         }
         offset += result;
         switch( type ){
-            case AMF0_TYPE_LONG_STRING:     result = amf0_get_long_string( src + offset, size - offset, buffer, temp_size, nullptr );   break;
-            case AMF0_TYPE_STRING:          result = amf0_get_string( src + offset, size - offset, buffer, temp_size, nullptr );        break;
-            case AMF0_TYPE_XML_DOCUMENT:    result = amf0_get_xmldocument( src + offset, size - offset, buffer, temp_size, nullptr );   break;
+            case AMF0_TYPE_LONG_STRING:     result = amf0_get_long_string( src + offset, size - offset, buffer, temp_size );            break;
+            case AMF0_TYPE_STRING:          result = amf0_get_string( src + offset, size - offset, buffer, temp_size );                 break;
+            case AMF0_TYPE_XML_DOCUMENT:    result = amf0_get_xmldocument( src + offset, size - offset, buffer, temp_size );            break;
             default:                        result = AMF_ERR_NONE;                                                                      break;
         }
         if( result < 0 ){
@@ -408,13 +408,13 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read ){
         }
         offset += result;
     }
-    return offset;
+    return AMF_SIZE(offset);
 
     aborted:
     if( read ){
         *read = offset;
     }
-    return result;
+    return AMF_SIZE(result);
 }
 
 static amf_value_t amf_v_get_object( amf_t amf ){
@@ -491,7 +491,7 @@ static amf_value_t amf_push_item( amf_t amf ){
 
 static amf_err_t push_str( amf_t a, const void * str, amf_type_t t) {
     if( str != a->allocation ){
-        size_t len = strlen( str );
+        size_t len = strlen( (const char *)str );
         void * ptr = malloc( len + 1 );
         if( !ptr ){
             return AMF_ERR_OOM;

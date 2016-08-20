@@ -29,9 +29,11 @@
 #include "ieee754_double.h"
 
 //Returns an IEEE 754 float from the data
-amf_err_t amf0_write_number( byte* data, size_t data_len, double value ){
+/*amf_err_t amf0_write_number( byte* data, size_t data_len, double value ){
     AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_NUMBER, AMF_TYPE_DOUBLE, value );
-}
+}*/
+
+AMF0_DESCRIBE(number, AMF0_TYPE_NUMBER, AMF_TYPE_DOUBLE);
 
 amf_err_t amf0_write_boolean( byte* data, size_t data_len, int value ){
     AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_BOOLEAN, AMF_TYPE_BOOLEAN, value&255 );

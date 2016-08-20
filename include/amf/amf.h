@@ -54,7 +54,7 @@ amf0_type_t amf0_next_type( const byte* data, size_t len );
 amf_err_t amf0_get_number( const byte* data, size_t len, double *value );
 amf_err_t amf0_get_boolean( const byte* data, size_t len, int *value );
 amf_err_t amf0_get_string_length( const byte* data, size_t len, size_t *value );
-amf_err_t amf0_get_string( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation );
+amf_err_t amf0_get_string( const byte* data, size_t len, void *value, size_t value_len );
 amf_err_t amf0_get_object( const byte* data, size_t len );
 amf_err_t amf0_get_prop_length( const byte* data, size_t len, size_t *value );
 amf_err_t amf0_get_prop_name( const byte* data, size_t len, void *value, size_t value_len );
@@ -68,12 +68,11 @@ amf_err_t amf0_get_strict_array( const byte* data, size_t len );
 amf_err_t amf0_get_date( const byte* data, size_t len, int* timezone, double* timestamp );
 amf_err_t amf0_get_unsupported( const byte* data, size_t len );
 amf_err_t amf0_get_long_string_length( const byte* data, size_t len, size_t *value);
-amf_err_t amf0_get_long_string( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation);
+amf_err_t amf0_get_long_string( const byte* data, size_t len, void *value, size_t value_len );
 amf_err_t amf0_get_xmldocument_length( const byte* data, size_t len, size_t *value);
-amf_err_t amf0_get_xmldocument( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation);
+amf_err_t amf0_get_xmldocument( const byte* data, size_t len, void *value, size_t value_len );
 amf_err_t amf0_get_recordset( const byte* data, size_t len );
 amf_err_t amf0_get_typed_object( const byte* data, size_t len );
-amf_err_t amf0_get_continue( const byte* data, size_t len, void *value, size_t value_len, size_t *continuation );
 
 void amf0_print( const byte* data, size_t len, rtmp_printer_t printer );
 

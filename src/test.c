@@ -77,7 +77,7 @@ static size_t app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * ta
 }
 
 void rtmp_perror( rtmp_err_t err ){
-    //printf("%s\n", rtmp_get_err_name( err ));
+    if( err ) printf("%s\n", rtmp_get_err_name( err ));
 }
 
 bool processing = true;
@@ -93,7 +93,6 @@ void sig_terminate(int foo){
 }
 
 #include "vec.h"
-
 
 int main(){
     signal(SIGINT, sig_terminate);
@@ -117,13 +116,13 @@ int main(){
 
 
     rtmp_perror(rtmp_listen( rtmp, RTMP_ADDR_ANY, RTMP_DEFAULT_PORT, connect_proc, nullptr ));
-    for( int i = 0; i < 5000; ++i ){
+    /*for( int i = 0; i < 20000; ++i ){
         rtmp_client_t client = rtmp_client_create( "rtmp://localhost/streamer", nullptr );
-        (rtmp_connect( rtmp, client ));
-        (rtmp_service( rtmp, RTMP_REFRESH_TIME ));
-    }
+        rtmp_perror(rtmp_connect( rtmp, client ));
+        rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    }*/
     while( processing ){
-        (rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+        rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
     }
     rtmp_destroy( rtmp );
     rtmp_app_list_destroy( list );
