@@ -58,7 +58,10 @@ amf_err_t amf0_get_string_length( const byte* data, size_t data_len, size_t *val
 
 //String functions are used for normal and long strings, as well as XML documents
 amf_err_t amf0_get_string( const byte* data, size_t data_len, void *value, size_t value_len ){
-    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_STRING, AMF_TYPE_STRING(value_len), value );
+    size_t length;
+    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_STRING,
+                         AMF_TYPE_INTEGER16, length,
+                         AMF_TYPE_STRING(length, value_len), value );
 }
 
 //Mostly a dummy; this is used to verify and skip an object start marker
@@ -73,7 +76,10 @@ amf_err_t amf0_get_prop_length( const byte* data, size_t data_len, size_t *value
 
 //If inside an object, use this to obtain a copy of the property name
 amf_err_t amf0_get_prop_name( const byte* data, size_t data_len, void *value, size_t value_len ){
-    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_NONE, AMF_TYPE_STRING(value_len), value );
+    size_t length;
+    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_NONE,
+                         AMF_TYPE_INTEGER16, length,
+                         AMF_TYPE_STRING(length, value_len), value );
 }
 
 //Dummy; do not use.
@@ -127,7 +133,10 @@ amf_err_t amf0_get_long_string_length( const byte* data, size_t data_len, size_t
 }
 
 amf_err_t amf0_get_long_string( const byte* data, size_t data_len, void *value, size_t value_len){
-    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_LONG_STRING, AMF_TYPE_LONG_STRING(value_len), value );
+    size_t length;
+    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_LONG_STRING,
+                         AMF_TYPE_INTEGER, length,
+                         AMF_TYPE_STRING(length, value_len), value );
 }
 
 amf_err_t amf0_get_xmldocument_length( const byte* data, size_t data_len, size_t *value){
@@ -135,7 +144,10 @@ amf_err_t amf0_get_xmldocument_length( const byte* data, size_t data_len, size_t
 }
 
 amf_err_t amf0_get_xmldocument( const byte* data, size_t data_len, void *value, size_t value_len){
-    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_XML_DOCUMENT, AMF_TYPE_LONG_STRING(value_len), value );
+    size_t length;
+    AMF0_DESCRIBE_DECODE( data, data_len, AMF0_TYPE_XML_DOCUMENT,
+                         AMF_TYPE_INTEGER, length,
+                         AMF_TYPE_STRING(length, value_len), value );
 }
 
 //Unimplemented. Will implement if necessary.

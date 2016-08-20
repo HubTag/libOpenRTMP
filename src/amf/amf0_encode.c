@@ -31,20 +31,26 @@
 
 //Returns an IEEE 754 float from the data
 amf_err_t amf0_write_number( byte* data, size_t data_len, double value ){
-    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_NUMBER, AMF_TYPE_DOUBLE, value );
+    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_NUMBER,
+                         AMF_TYPE_DOUBLE, value );
 }
 
 amf_err_t amf0_write_boolean( byte* data, size_t data_len, int value ){
-    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_BOOLEAN, AMF_TYPE_BOOLEAN, value&255 );
+    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_BOOLEAN,
+                         AMF_TYPE_BOOLEAN, value&255 );
 }
 
 //String functions are used for normal and long strings.
 amf_err_t amf0_write_string( byte* data, size_t data_len, const void *value, size_t value_len ){
     if( value_len > 0xFFFF ){
-        AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_LONG_STRING, AMF_TYPE_LONG_STRING(value_len), value );
+        AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_LONG_STRING,
+                             AMF_TYPE_INTEGER, value_len,
+                             AMF_TYPE_STRING(value_len, value_len), value );
     }
     else{
-        AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_STRING, AMF_TYPE_STRING(value_len), value );
+        AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_STRING,
+                             AMF_TYPE_INTEGER16, value_len,
+                             AMF_TYPE_STRING(value_len, value_len), value );
     }
 }
 
@@ -55,7 +61,9 @@ amf_err_t amf0_write_object( byte* data, size_t data_len ){
 
 //If inside an object, use this to obtain a copy of the property name
 amf_err_t amf0_write_prop_name( byte* data, size_t data_len, const void *value, size_t value_len ){
-    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_NONE, AMF_TYPE_STRING(value_len), value );
+    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_NONE,
+                         AMF_TYPE_INTEGER16, value_len,
+                         AMF_TYPE_STRING(value_len, value_len), value );
 }
 
 //Dummy; do not use.
@@ -109,12 +117,16 @@ amf_err_t amf0_write_unsupported( byte* data, size_t data_len ){
 
 //Alias around amf0_write_string_internal
 amf_err_t amf0_write_long_string( byte* data, size_t data_len, const void *value, size_t value_len){
-    return amf0_write_string( data, data_len, value, value_len );
+    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_LONG_STRING,
+                         AMF_TYPE_INTEGER, value_len,
+                         AMF_TYPE_STRING(value_len, value_len), value );
 }
 
 //Alias around amf0_write_string_internal
 amf_err_t amf0_write_xmldocument( byte* data, size_t data_len, const void *value, size_t value_len){
-    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_XML_DOCUMENT, AMF_TYPE_LONG_STRING(value_len), value );
+    AMF0_DESCRIBE_ENCODE( data, data_len, AMF0_TYPE_XML_DOCUMENT,
+                         AMF_TYPE_INTEGER, value_len,
+                         AMF_TYPE_STRING(value_len, value_len), value );
 }
 
 //Unimplemented. Will implement if necessary.
