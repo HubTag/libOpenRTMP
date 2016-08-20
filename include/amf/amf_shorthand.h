@@ -22,8 +22,13 @@
 */
 
 #ifndef RTMP_H_AMF_SHORTHAND_H
-#ifndef RTMP_H_AMF_SHORTHAND
-#endif // RTMP_H_AMF_OBJECT_H
+#define RTMP_H_AMF_SHORTHAND_H
+
+#include "rtmp/rtmp_types.h"
+
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 #define AMF_SIZE_AMF_TYPE_UNDEFINED 0
 #define AMF_SIZE_AMF_TYPE_NULL 0

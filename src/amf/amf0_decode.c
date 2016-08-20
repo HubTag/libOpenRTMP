@@ -25,6 +25,7 @@
 #include <string.h>
 #include "memutil.h"
 #include "amf/amf.h"
+#include "amf/amf_shorthand.h"
 #include "ieee754_double.h"
 
 
