@@ -24,7 +24,6 @@
 #ifndef RTMP_H_AMF_SHORTHAND_H
 #ifndef RTMP_H_AMF_SHORTHAND
 #endif // RTMP_H_AMF_OBJECT_H
-#define RTMP_H_AMF_OBJECT_H
 
 #define AMF_SIZE_AMF_TYPE_UNDEFINED 0
 #define AMF_SIZE_AMF_TYPE_NULL 0
@@ -284,101 +283,4 @@ do{                        \
 
 
 
-#define AMF_ARG_AMF_TYPE_UNDEFINED(name)
-#define AMF_ARG_AMF_TYPE_NULL(name)
-#define AMF_ARG_AMF_TYPE_BOOLEAN(name) , int name
-#define AMF_ARG_AMF_TYPE_INTEGER(name) , int name
-#define AMF_ARG_AMF_TYPE_INTEGER16(name) , short name
-#define AMF_ARG_AMF_TYPE_INTEGER24(name) , int name
-#define AMF_ARG_AMF_TYPE_DOUBLE(name) , double name
-#define AMF_ARG_AMF_TYPE_UNSUPPORTED(name)
-#define AMF_ARG_AMF_TYPE_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
-#define AMF_ARG_AMF_TYPE_LONG_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
-
-#define AMF_DUMMY_AMF_TYPE_UNDEFINED(name) int name = 0
-#define AMF_DUMMY_AMF_TYPE_NULL(name) int name = 0
-#define AMF_DUMMY_AMF_TYPE_BOOLEAN(name)
-#define AMF_DUMMY_AMF_TYPE_INTEGER(name)
-#define AMF_DUMMY_AMF_TYPE_INTEGER16(name)
-#define AMF_DUMMY_AMF_TYPE_INTEGER24(name)
-#define AMF_DUMMY_AMF_TYPE_DOUBLE(name)
-#define AMF_DUMMY_AMF_TYPE_UNSUPPORTED(name) int name = 0
-#define AMF_DUMMY_AMF_TYPE_STRING(name)
-#define AMF_DUMMY_AMF_TYPE_LONG_STRING(name)
-
-#define AMF_PASS_AMF_TYPE_UNDEFINED(name) AMF_TYPE_UNDEFINED, name
-#define AMF_PASS_AMF_TYPE_NULL(name) AMF_TYPE_NULL, name
-#define AMF_PASS_AMF_TYPE_BOOLEAN(name) AMF_TYPE_BOOLEAN, name
-#define AMF_PASS_AMF_TYPE_INTEGER(name) AMF_TYPE_INTEGER, name
-#define AMF_PASS_AMF_TYPE_INTEGER16(name) AMF_TYPE_INTEGER16, name
-#define AMF_PASS_AMF_TYPE_INTEGER24(name) AMF_TYPE_INTEGER24, name
-#define AMF_PASS_AMF_TYPE_DOUBLE(name) AMF_TYPE_DOUBLE, name
-#define AMF_PASS_AMF_TYPE_UNSUPPORTED(name) AMF_TYPE_UNSUPPORTED, name
-#define AMF_PASS_AMF_TYPE_STRING(name) AMF_TYPE_STRING(name_len), name
-#define AMF_PASS_AMF_TYPE_LONG_STRING(name) AMF_TYPE_LONG_STRING(name_len), name
-
-#define AMF_ARGP_AMF_TYPE_UNDEFINED(name)
-#define AMF_ARGP_AMF_TYPE_NULL(name)
-#define AMF_ARGP_AMF_TYPE_BOOLEAN(name) , int *name
-#define AMF_ARGP_AMF_TYPE_INTEGER(name) , int *name
-#define AMF_ARGP_AMF_TYPE_INTEGER16(name) , short *name
-#define AMF_ARGP_AMF_TYPE_INTEGER24(name) , int *name
-#define AMF_ARGP_AMF_TYPE_DOUBLE(name) , double *name
-#define AMF_ARGP_AMF_TYPE_UNSUPPORTED(name)
-#define AMF_ARGP_AMF_TYPE_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
-#define AMF_ARGP_AMF_TYPE_LONG_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
-
-#define AMF_PASSP_AMF_TYPE_UNDEFINED(name) AMF_TYPE_UNDEFINED, name
-#define AMF_PASSP_AMF_TYPE_NULL(name) AMF_TYPE_NULL, name
-#define AMF_PASSP_AMF_TYPE_BOOLEAN(name) AMF_TYPE_BOOLEAN, *name
-#define AMF_PASSP_AMF_TYPE_INTEGER(name) AMF_TYPE_INTEGER, *name
-#define AMF_PASSP_AMF_TYPE_INTEGER16(name) AMF_TYPE_INTEGER16, *name
-#define AMF_PASSP_AMF_TYPE_INTEGER24(name) AMF_TYPE_INTEGER24, name
-#define AMF_PASSP_AMF_TYPE_DOUBLE(name) AMF_TYPE_DOUBLE, name
-#define AMF_PASSP_AMF_TYPE_UNSUPPORTED(name) AMF_TYPE_UNSUPPORTED, name
-#define AMF_PASSP_AMF_TYPE_STRING(name) AMF_TYPE_STRING(name_len), name
-#define AMF_PASSP_AMF_TYPE_LONG_STRING(name) AMF_TYPE_LONG_STRING(name_len), name
-
-#define AMF_ARG_0( data, data_len, type ) ) { \
-    AMF0_DESCRIBE_ENCODE( data, data_len, type );\
-}
-
-#define AMF_ARG_1(data, data_len, type, A) \
-AMF_PASTE(AMF_ARG_, A)(argA) ) {\
-    AMF_PASTE(AMF_DUMMY_,A)(argA);    \
-    AMF0_DESCRIBE_ENCODE( data, data_len, type, \
-                            AMF_PASTE(AMF_PASS_,A)(argA));\
-}
-
-#define AMF_ARG_2(data, data_len, type, A,B) \
-AMF_PASTE(AMF_ARG_, A)(argA),    \
-AMF_PASTE(AMF_ARG_, B)(argB) ) {\
-    AMF_PASTE(AMF_DUMMY_,A)(argA);    \
-    AMF_PASTE(AMF_DUMMY_,B)(argB);    \
-    AMF0_DESCRIBE_ENCODE( data, data_len, type, \
-                            AMF_PASTE(AMF_PASS_,A)(argA),\
-                            AMF_PASTE(AMF_PASS_,B)(argB));\
-}
-
-#define AMF_ARG_3(data, data_len, type, A,B,C) \
-AMF_PASTE(AMF_ARG_, A)(argA),    \
-AMF_PASTE(AMF_ARG_, B)(argB),    \
-AMF_PASTE(AMF_ARG_, C)(argC) ) {\
-    AMF_PASTE(AMF_DUMMY_,A)(argA);    \
-    AMF_PASTE(AMF_DUMMY_,B)(argB);    \
-    AMF_PASTE(AMF_DUMMY_,C)(argC);    \
-    AMF0_DESCRIBE_ENCODE( data, data_len, type, \
-                            AMF_PASTE(AMF_PASS_,A)(argA),\
-                            AMF_PASTE(AMF_PASS_,B)(argB),\
-                            AMF_PASTE(AMF_PASS_,C)(argC));\
-}
-
-#define AMF_ARG_INTERNAL(A, B, C, FUNC, ...) FUNC
-
-#define AMF_ARG(data, data_len, type,...) AMF_ARG_INTERNAL(  __VA_ARGS__,              \
-                                            AMF_ARG_3( data, data_len, type, __VA_ARGS__ ),  \
-                                            AMF_ARG_2( data, data_len, type, __VA_ARGS__ ),  \
-                                            AMF_ARG_1( data, data_len, type, __VA_ARGS__ ),  \
-                                            AMF_ARG_0( data, data_len, type              ) )
-#define AMF0_DESCRIBE( name, type, ... )\
-amf_err_t AMF_PASTE( amf0_write_, name ) (byte * data, size_t data_len AMF_ARG(data, data_len, type, __VA_ARGS__)
+#endif

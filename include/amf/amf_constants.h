@@ -432,6 +432,28 @@ do{                        \
 #define AMF_PASS_AMF_TYPE_STRING(name) AMF_TYPE_STRING(name_len), name
 #define AMF_PASS_AMF_TYPE_LONG_STRING(name) AMF_TYPE_LONG_STRING(name_len), name
 
+#define AMF_ARGP_AMF_TYPE_UNDEFINED(name)
+#define AMF_ARGP_AMF_TYPE_NULL(name)
+#define AMF_ARGP_AMF_TYPE_BOOLEAN(name) , int *name
+#define AMF_ARGP_AMF_TYPE_INTEGER(name) , int *name
+#define AMF_ARGP_AMF_TYPE_INTEGER16(name) , short *name
+#define AMF_ARGP_AMF_TYPE_INTEGER24(name) , int *name
+#define AMF_ARGP_AMF_TYPE_DOUBLE(name) , double *name
+#define AMF_ARGP_AMF_TYPE_UNSUPPORTED(name)
+#define AMF_ARGP_AMF_TYPE_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
+#define AMF_ARGP_AMF_TYPE_LONG_STRING(name) , void* name, size_t AMF_PASTE(name, _len)
+
+#define AMF_PASSP_AMF_TYPE_UNDEFINED(name) AMF_TYPE_UNDEFINED, name
+#define AMF_PASSP_AMF_TYPE_NULL(name) AMF_TYPE_NULL, name
+#define AMF_PASSP_AMF_TYPE_BOOLEAN(name) AMF_TYPE_BOOLEAN, *name
+#define AMF_PASSP_AMF_TYPE_INTEGER(name) AMF_TYPE_INTEGER, *name
+#define AMF_PASSP_AMF_TYPE_INTEGER16(name) AMF_TYPE_INTEGER16, *name
+#define AMF_PASSP_AMF_TYPE_INTEGER24(name) AMF_TYPE_INTEGER24, name
+#define AMF_PASSP_AMF_TYPE_DOUBLE(name) AMF_TYPE_DOUBLE, name
+#define AMF_PASSP_AMF_TYPE_UNSUPPORTED(name) AMF_TYPE_UNSUPPORTED, name
+#define AMF_PASSP_AMF_TYPE_STRING(name) AMF_TYPE_STRING(name_len), name
+#define AMF_PASSP_AMF_TYPE_LONG_STRING(name) AMF_TYPE_LONG_STRING(name_len), name
+
 #define AMF_ARG_0( data, data_len, type ) ) { \
     AMF0_DESCRIBE_ENCODE( data, data_len, type );\
 }
@@ -476,199 +498,5 @@ AMF_PASTE(AMF_ARG_, C)(argC) ) {\
 #define AMF0_DESCRIBE( name, type, ... )\
 amf_err_t AMF_PASTE( amf0_write_, name ) (byte * data, size_t data_len AMF_ARG(data, data_len, type, __VA_ARGS__)
 
-/*
-//Returns an IEEE 754 float from the data
-amf_err_t amf0_get_number( const byte* data, size_t data_len, double *value ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 9);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_NUMBER, AMF_ERR_INVALID_DATA );
-    byte flipped[8];
-    ntoh_memcpy( flipped, buffer + 1, 8 );
-    *value = read_double_ieee( flipped );
-    return 9;
-}
-
-amf_err_t amf0_get_boolean( const byte* data, size_t data_len, int *value ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 2);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_BOOLEAN, AMF_ERR_INVALID_DATA );
-    *value = buffer[1];
-    return 2;
-}
-
-//String functions are used for normal and long strings, as well as XML documents
-//Used to verify how much storage to allocate for the upcoming string.
-amf_err_t amf0_get_string_length( const byte* data, size_t data_len, size_t *value ){
-    if( data_len < 3 ){
-        return AMF_ERR_INCOMPLETE;
-    }
-    if( *data == AMF0_TYPE_STRING ){
-        *value = ntoh_read_us(data + 1);
-        return 3;
-    }
-    if( data_len < 5 ){
-        return AMF_ERR_INCOMPLETE;
-    }
-    if( *data == AMF0_TYPE_LONG_STRING || *data == AMF0_TYPE_XML_DOCUMENT ){
-        *value = ntoh_read_ud(data + 1);
-        return 5;
-    }
-    return AMF_ERR_INVALID_DATA;
-}
-
-//String functions are used for normal and long strings, as well as XML documents
-amf_err_t amf0_get_string( const byte* data, size_t data_len, void *value, size_t value_len, size_t *continuation ){
-    size_t len;
-    int offset = amf0_get_string_length(data, data_len, &len);
-    if( offset < 0 ){
-        return offset;
-    }
-    if( (size_t)offset >= data_len ){
-        return 0;
-    }
-    value_len = len > value_len ? value_len : len;
-    value_len = data_len - offset > value_len ? value_len : data_len - offset;
-    memcpy( value, data + offset, value_len );
-    if( continuation ){
-        *continuation = value_len;
-    }
-    return offset + value_len;
-}
-
-//Mostly a dummy; this is used to verify and skip an object start marker
-amf_err_t amf0_get_object( const byte* data, size_t data_len ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 1);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_OBJECT, AMF_ERR_INVALID_DATA );
-    return 1;
-}
-
-//If inside an object, use this to obtain the length of a property name
-amf_err_t amf0_get_prop_length( const byte* data, size_t data_len, size_t *value ){
-    AMF0_PEEK_LENGTH(data, data_len, 2);
-    *value = ntoh_read_us(buffer);
-    return 0;
-}
-
-//If inside an object, use this to obtain a copy of the property name
-amf_err_t amf0_get_prop_name( const byte* data, size_t data_len, void *value, size_t value_len ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 2);
-    size_t len = ntoh_read_us(buffer);
-
-    value_len = len > value_len ? value_len : len;
-    value_len = data_len - 2 > value_len ? value_len : data_len - 2;
-
-    memcpy( value, data + 2, value_len );
-    return 2 + value_len;
-}
-
-//Dummy; do not use.
-amf_err_t amf0_get_movieclip( const byte* data, size_t data_len ){
-    emit_err("[Erroneous Data] Trying to read movieclip from AMF!");
-    return AMF_ERR_INVALID_DATA;
-}
-
-//Basically a dummy; used to verify that the next item is indeed a null value.
-amf_err_t amf0_get_null( const byte* data, size_t data_len ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 1);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_NULL, AMF_ERR_INVALID_DATA );
-    return 1;
-}
-
-
-//Basically a dummy; used to verify that the next item is indeed an undefined value.
-amf_err_t amf0_get_undefined( const byte* data, size_t data_len ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 1);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_UNDEFINED, AMF_ERR_INVALID_DATA );
-    return 1;
-}
-
-amf_err_t amf0_get_reference( const byte* data, size_t data_len, uint32_t *value){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 3);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_REFERENCE, AMF_ERR_INVALID_DATA );
-    *value = ntoh_read_us(buffer + 1);
-    return 3;
-}
-
-amf_err_t amf0_get_ecma_array( const byte* data, size_t data_len, uint32_t *num_memb ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 5);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_ECMA_ARRAY, AMF_ERR_INVALID_DATA );
-    *num_memb = ntoh_read_ud(buffer + 1);
-    return 5;
-}
-
-//Mostly a dummy; this is used to verify and skip an object end marker
-amf_err_t amf0_get_object_end( const byte* data, size_t data_len ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 1);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_OBJECT_END, AMF_ERR_INVALID_DATA );
-    return 1;
-}
-
-//Unimplemented. Will implement if necessary.
-amf_err_t amf0_get_strict_array( const byte* data, size_t data_len ){
-    emit_err("[Unimplemented] Trying to read Strict Array from AMF!");
-    return 1;
-}
-
-//Returns a timezone offset as well as a double essentially representing a Unix timestamp
-//(Resolution is 1:1 with seconds, epoch is 1970 Jan 1 00:00:00.000)
-amf_err_t amf0_get_date( const byte* data, size_t data_len, int* timezone, double* timestamp ){
-    size_t count = 0;
-    AMF0_HARVEST_LENGTH(data, data_len, count, 11);
-    AMF0_CHECK_TYPE( buffer, AMF0_TYPE_DATE, AMF_ERR_INVALID_DATA );
-    *timezone = ntoh_read_s(buffer+1);
-    byte temp[8];
-    ntoh_memcpy(temp, buffer + 3, 8);
-    *timestamp = read_double_ieee(temp);
-    return 11;
-}
-
-//Dummy
-amf_err_t amf0_get_unsupported( const byte* data, size_t data_len ){
-    emit_err("[Error] Trying to read an unsupported type from AMF!");
-    return 1;
-}
-
-//Alias around amf0_get_string_length
-amf_err_t amf0_get_long_string_length( const byte* data, size_t data_len, size_t *value){
-    return amf0_get_string_length(data, data_len, value);
-}
-//Alias around amf0_get_string
-amf_err_t amf0_get_long_string( const byte* data, size_t data_len, void *value, size_t value_len, size_t *continuation){
-    return amf0_get_string(data, data_len, value, value_len, continuation);
-}
-
-//Alias around amf0_get_string_length
-amf_err_t amf0_get_xmldocument_length( const byte* data, size_t data_len, size_t *value){
-    return amf0_get_string_length(data, data_len, value);
-}
-//Alias around amf0_get_string
-amf_err_t amf0_get_xmldocument( const byte* data, size_t data_len, void *value, size_t value_len, size_t *continuation){
-    return amf0_get_string(data, data_len, value, value_len, continuation);
-}
-
-//Unimplemented. Will implement if necessary.
-amf_err_t amf0_get_recordset( const byte* data, size_t data_len ){
-    emit_err("[Unimplemented] Trying to read Record Set from AMF!");
-    return 1;
-}
-//Unimplemented. Will implement if necessary.
-amf_err_t amf0_get_typed_object( const byte* data, size_t data_len ){
-    emit_err("[Unimplemented] Trying to read Typed Object from AMF!");
-    return 1;
-}
-amf_err_t amf0_get_continue( const byte* data, size_t data_len, void *value, size_t value_len, size_t *continuation ){
-    value_len = value_len <= data_len ? value_len : data_len;
-    value_len = value_len < *continuation ? value_len : *continuation;
-    memcpy( value, data, value_len );
-    *continuation -= value_len;
-    return value_len;
-}*/
 
 #endif
