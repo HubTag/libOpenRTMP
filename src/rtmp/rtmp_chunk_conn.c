@@ -763,6 +763,9 @@ rtmp_chunk_conn_send_message(
     size_t *written_out
 ){
     rtmp_err_t ret = RTMP_ERR_NONE;
+    if( !rtmp_chunk_conn_connected( conn ) ){
+        return RTMP_ERR_NOT_READY;
+    }
     rtmp_chunk_stream_message_t msg;
     msg.chunk_stream_id = chunk_stream;
     msg.message_stream_id = message_stream;

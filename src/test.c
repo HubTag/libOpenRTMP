@@ -117,10 +117,29 @@ int main(){
 
     rtmp_perror(rtmp_listen( rtmp, RTMP_ADDR_ANY, RTMP_DEFAULT_PORT, connect_proc, nullptr ));
     /*for( int i = 0; i < 20000; ++i ){
-        rtmp_client_t client = rtmp_client_create( "rtmp://localhost/streamer", nullptr );
-        rtmp_perror(rtmp_connect( rtmp, client ));
-        rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
     }*/
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    rtmp_client_t client = rtmp_client_create( "rtmp://localhost/streamer", nullptr );
+    rtmp_perror(rtmp_connect( rtmp, client ));
+    while( !rtmp_chunk_conn_connected( rtmp_stream_get_conn( rtmp_client_stream(client) ) ) ){
+        rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    }
+    rtmp_perror(rtmp_client_connect( client, "streamer", "rtmp://localhost/streamer", "rtmp://localhost/streamer", RTMP_SUPPORT_SND_AAC, RTMP_SUPPORT_VID_H264, nullptr, nullptr ) );
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    rtmp_perror(rtmp_client_releasestream( client, "ayylmao", nullptr, nullptr ) );
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    rtmp_perror(rtmp_client_fcpublish( client, "ayylmao", nullptr, nullptr ) );
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    rtmp_perror(rtmp_client_publish( client, 1, "ayylmao", "live", nullptr, nullptr ) );
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+    rtmp_perror(rtmp_client_setdataframe( client, 1, "onMetaData",
+                                            0, 0, 1920, 1080,
+                                            "avc1", 1000, 30,
+                                            "mp4a", 128, 48000, 16, 2,
+                                            "OpenRTMP") );
+    rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
+
+
     while( processing ){
         rtmp_perror(rtmp_service( rtmp, RTMP_REFRESH_TIME ));
     }

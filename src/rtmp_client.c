@@ -25,6 +25,7 @@
 #include "rtmp_client.h"
 #include "parseurl.h"
 #include "rtmp/rtmp_private.h"
+#include "rtmp/rtmp_stream.h"
 #include "memutil.h"
 
 typedef enum{
@@ -122,7 +123,139 @@ rtmp_err_t rtmp_client_get_conninfo( rtmp_client_t client, const char **host, ui
     return RTMP_ERR_NONE;
 }
 
+rtmp_err_t rtmp_client_connect(
+    rtmp_client_t client,
+    const char * restrict app,
+    const char * swfUrl,
+    const char * tcUrl,
+    size_t audioCodecs,
+    size_t videoCodecs,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+){
+    return rtmp_stream_call(
+        rtmp_client_stream( client ),
+        "connect", proc, userdata, AMF(
+            AMF_OBJ(
+                AMF_STR( "app", app ),
+                AMF_STR( "type", "nonprivate" ),
+                AMF_STR( "flashVer", RTMP_FLASHVER_STR ),
+                AMF_STR( "swfUrl", swfUrl ),
+                AMF_STR( "tcUrl", tcUrl ),
+                AMF_INT( "audioCodecs", audioCodecs ),
+                AMF_INT( "videoCodecs", videoCodecs )
+            )
+    ));
+}
 
+rtmp_err_t rtmp_client_releasestream(
+    rtmp_client_t client,
+    const char * path,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+){
+    return rtmp_stream_call(
+        rtmp_client_stream( client ),
+        "releaseStream", proc, userdata, AMF(
+            AMF_NULL(),
+            AMF_STR(path)
+    ));
+}
+
+rtmp_err_t rtmp_client_fcpublish(
+    rtmp_client_t client,
+    const char * path,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+){
+    return rtmp_stream_call(
+        rtmp_client_stream( client ),
+        "FCPublish", proc, userdata, AMF(
+            AMF_NULL(),
+            AMF_STR(path)
+    ));
+}
+
+rtmp_err_t rtmp_client_createstream(
+    rtmp_client_t client,
+    size_t streamid,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+){
+    return rtmp_stream_call2(
+        rtmp_client_stream( client ), 0, streamid,
+        "createStream", proc, userdata, AMF(
+            AMF_NULL()
+    ));
+}
+
+rtmp_err_t rtmp_client_publish(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * playpath,
+    const char * type,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+){
+    return rtmp_stream_call2(
+        rtmp_client_stream( client ), 0, streamid,
+        "publish", proc, userdata, AMF(
+            AMF_NULL(),
+            AMF_STR( playpath ),
+            AMF_STR( type )
+    ));
+}
+
+rtmp_err_t rtmp_client_setdataframe(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * frame_name,
+    double duration,
+    double size,
+    uint32_t width,
+    uint32_t height,
+    const char * vid_codecid,
+    double vid_data_rate,
+    double framerate,
+    const char * aud_codecid,
+    double aud_data_rate,
+    double aud_sample_rate,
+    double aud_sample_size,
+    uint32_t aud_channels,
+    const char * encoder
+){
+    amf_t amf = amf_create(0);
+    if( !amf ){
+        return RTMP_ERR_OOM;
+    }
+    amf_err_t err = amf_push_simple( amf, AMF(
+            AMF_STR( "@setDataFrame" ),
+            AMF_STR( frame_name ),
+            AMF_OBJ(
+                AMF_DBL("duration", duration ),
+                AMF_DBL("fileSize", size ),
+                AMF_INT("width", width ),
+                AMF_INT("height", height ),
+                AMF_STR("videocodecid", vid_codecid ),
+                AMF_DBL("videodatarate", vid_data_rate ),
+                AMF_DBL("framerate", framerate ),
+                AMF_STR("audiocodecid", aud_codecid ),
+                AMF_DBL("audiodatarate", aud_data_rate ),
+                AMF_DBL("audiosamplerate", aud_sample_rate ),
+                AMF_DBL("audiosamplesize", aud_sample_size ),
+                AMF_INT("audiochannels", aud_channels ),
+                AMF_BOOL("stereo", aud_channels == 2 ),
+                AMF_STR("encoder", encoder )
+            )
+    ));
+    amf_print( amf );
+
+    rtmp_err_t ret =    err ? rtmp_amferr( err ) :
+                        rtmp_stream_send_dat2( rtmp_client_stream( client ), 0, streamid, 0, amf, nullptr );
+
+    amf_destroy( amf );
+    return ret;
+}
 //See NetConnect documentation for usage
 
 

@@ -59,10 +59,36 @@ rtmp_cb_status_t rtmp_stream_call_amf(
     const char* name = nullptr;
     size_t len;
 
+
     if( amf_get_count( object ) > 0 ){
         amf_value_t item = amf_get_item( object, 0 );
         if( amf_value_is_like( item, AMF_TYPE_STRING ) ){
             name = amf_value_get_string( item, &len );
+        }
+    }
+
+    rtmp_time_t now = rtmp_get_time();
+    //Handle callbacks for call results
+    if( amf_get_count( object ) > 1 ){
+        amf_value_t item = amf_get_item( object, 1 );
+        if( amf_value_is_like( item, AMF_TYPE_INTEGER ) ){
+            uint32_t seq_num = amf_value_get_integer( item );
+            VEC_DECLARE(rtmp_call_cb_t) cbs = args->stream->call_callback;
+            bool erased = false;
+            for( size_t i = 0; i < VEC_SIZE(cbs); ++i ){
+                i -= erased ? 1 : 0;
+                erased = false;
+                if( cbs[i].seq_num == seq_num ){
+                    ret = cbs[i].callback( args, object, cbs[i].user );
+                    if( ret != RTMP_CB_CONTINUE ){
+                        return ret;
+                    }
+                    if( cbs[i].issued + RTMP_CALL_TIMEOUT > now ){
+                        VEC_ERASE(cbs, i);
+                        erased = true;
+                    }
+                }
+            }
         }
     }
 
@@ -221,6 +247,7 @@ rtmp_stream_t rtmp_stream_create( bool client ){
 
 void rtmp_stream_create_at( rtmp_stream_t location, bool client ){
     memset( location, 0, sizeof( struct rtmp_stream ) );
+    location->seq_num = 1;
     location->connection = rtmp_chunk_conn_create( client );
     location->assembler = rtmp_chunk_assembler_create( RTMP_MAX_CHUNK_CACHE, rtmp_stream_chunk_proc, rtmp_stream_event_proc, rtmp_stream_log_proc, location );
     rtmp_chunk_assembler_assign( location->assembler, location->connection );
@@ -229,6 +256,7 @@ void rtmp_stream_create_at( rtmp_stream_t location, bool client ){
     VEC_INIT( location->log_callback );
     VEC_INIT( location->msg_callback );
     VEC_INIT( location->usr_callback );
+    VEC_INIT( location->call_callback );
 }
 
 void rtmp_stream_destroy( rtmp_stream_t stream ){
@@ -247,6 +275,7 @@ void rtmp_stream_destroy_at( rtmp_stream_t stream ){
     VEC_DESTROY( stream->log_callback );
     VEC_DESTROY( stream->msg_callback );
     VEC_DESTROY( stream->usr_callback );
+    VEC_DESTROY( stream->call_callback );
     free( stream->scratch );
 }
 
@@ -574,40 +603,7 @@ rtmp_err_t rtmp_stream_send_ping_res( rtmp_stream_t stream, uint32_t ping_time )
 }
 
 
-
-rtmp_err_t rtmp_stream_call( rtmp_stream_t stream, const char *name, double id, ... ){
-    va_list list;
-    va_start( list, id );
-    rtmp_err_t ret = rtmp_stream_call2_va( stream, 0, 0, name, id, list );
-    va_end( list );
-    return ret;
-}
-
-rtmp_err_t rtmp_stream_respond( rtmp_stream_t stream, const char *name, double id, ... ){
-    va_list list;
-    va_start( list, id );
-    rtmp_err_t ret = rtmp_stream_call2_va( stream, 0, 0, name, id, list );
-    va_end( list );
-    return ret;
-}
-
-rtmp_err_t rtmp_stream_call2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... ){
-    va_list list;
-    va_start( list, id );
-    rtmp_err_t ret = rtmp_stream_call2_va( stream, chunk_id, msg_id, name, id, list );
-    va_end( list );
-    return ret;
-}
-
-rtmp_err_t rtmp_stream_respond2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... ){
-    va_list list;
-    va_start( list, id );
-    rtmp_err_t ret = rtmp_stream_call2_va( stream, chunk_id, msg_id, name, id, list );
-    va_end( list );
-    return ret;
-}
-
-rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list ){
+static rtmp_err_t rtmp_stream_issue_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list ){
     amf_t amf = amf_create(0);
     if( !amf ){
         return RTMP_ERR_OOM;
@@ -620,5 +616,54 @@ rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t m
     ret = ret ? ret : rtmp_stream_send_amf( stream, RTMP_MSG_AMF0_CMD, chunk_id, msg_id, 0, amf, nullptr );
     amf_print(amf);
     amf_destroy( amf );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_call( rtmp_stream_t stream, const char *name, rtmp_stream_amf_proc callback, void * userdata, ... ){
+    va_list list;
+    va_start( list, userdata );
+    rtmp_err_t ret = rtmp_stream_call2_va( stream, 0, 0, name, callback, userdata, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_respond( rtmp_stream_t stream, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_issue_va( stream, 0, 0, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_call2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, ... ){
+    va_list list;
+    va_start( list, userdata );
+    rtmp_err_t ret = rtmp_stream_call2_va( stream, chunk_id, msg_id, name, callback, userdata, list );
+    va_end( list );
+    return ret;
+}
+
+
+rtmp_err_t rtmp_stream_respond2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... ){
+    va_list list;
+    va_start( list, id );
+    rtmp_err_t ret = rtmp_stream_issue_va( stream, chunk_id, msg_id, name, id, list );
+    va_end( list );
+    return ret;
+}
+
+rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, va_list list ){
+    if( callback ){
+        rtmp_call_cb_t * space = VEC_PUSH( stream->call_callback );
+        if( !space ){
+            return RTMP_ERR_OOM;
+        }
+        space->callback = callback;
+        space->user = userdata;
+        space->seq_num = stream->seq_num;
+        space->issued = rtmp_get_time();
+    }
+
+    rtmp_err_t ret = rtmp_stream_issue_va( stream, chunk_id, msg_id, name, stream->seq_num ++, list );
     return ret;
 }

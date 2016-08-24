@@ -92,4 +92,6 @@
 
 #define RTMP_REFRESH_TIME 1000
 
+#define RTMP_CALL_TIMEOUT 10000
+
 #endif

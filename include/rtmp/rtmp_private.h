@@ -108,6 +108,13 @@ struct rtmp_params{
 void rtmp_params_free( struct rtmp_params * params );
 
 
+typedef struct rtmp_call_cb{
+    uint32_t seq_num;
+    rtmp_time_t issued;
+    rtmp_stream_amf_proc callback;
+    void *user;
+} rtmp_call_cb_t;
+
 typedef struct rtmp_amf_cb{
     char* name;
     rtmp_message_type_t type;
@@ -146,6 +153,7 @@ struct rtmp_stream{
     size_t chunk_id, message_id;
     void *scratch;
     size_t scratch_len;
+    uint32_t seq_num;
 
     VEC_DECLARE(rtmp_amf_cb_t) amf_callback;
 
@@ -156,6 +164,8 @@ struct rtmp_stream{
     VEC_DECLARE(rtmp_evt_cb_t) event_callback;
 
     VEC_DECLARE(rtmp_log_cb_t) log_callback;
+
+    VEC_DECLARE(rtmp_call_cb_t) call_callback;
 };
 
 

@@ -44,6 +44,66 @@ rtmp_err_t rtmp_client_get_conninfo( rtmp_client_t client, const char **host, ui
 //See NetConnect documentation for usage
 
 
+rtmp_err_t rtmp_client_connect(
+    rtmp_client_t client,
+    const char * restrict app,
+    const char * swfUrl,
+    const char * tcUrl,
+    size_t audioCodecs,
+    size_t videoCodecs,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_releasestream(
+    rtmp_client_t client,
+    const char * path,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_fcpublish(
+    rtmp_client_t client,
+    const char * path,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_createstream(
+    rtmp_client_t client,
+    size_t streamid,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_publish(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * playpath,
+    const char * type,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_setdataframe(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * frame_name,
+    double duration,
+    double size,
+    uint32_t width,
+    uint32_t height,
+    const char * vid_codecid,
+    double vid_data_rate,
+    double framerate,
+    const char * aud_codecid,
+    double aud_data_rate,
+    double aud_sample_rate,
+    double aud_sample_size,
+    uint32_t aud_channels,
+    const char * encoder
+);
+
 rtmp_err_t rtmp_client_play( rtmp_client_t client,
     const char *stream_name,
     double start DEFAULT(-1),
@@ -66,10 +126,6 @@ rtmp_err_t rtmp_client_recv_audio( rtmp_client_t client,
 
 rtmp_err_t rtmp_client_recv_video( rtmp_client_t client,
     bool want_video);
-
-rtmp_err_t rtmp_client_publish( rtmp_client_t client,
-    const char * restrict publish_name,
-    const char * restrict publish_type);
 
 rtmp_err_t rtmp_client_seek( rtmp_client_t client,
     rtmp_time_t seek_ms);

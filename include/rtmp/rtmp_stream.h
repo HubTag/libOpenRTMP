@@ -108,12 +108,12 @@ rtmp_err_t rtmp_stream_send_cmd2(           rtmp_stream_t stream, size_t chunk_i
 rtmp_err_t rtmp_stream_send_so2(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 rtmp_err_t rtmp_stream_send_dat2(           rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, amf_t amf, size_t *written  );
 
-rtmp_err_t rtmp_stream_call(                rtmp_stream_t stream, const char *name, double id, ... );
+rtmp_err_t rtmp_stream_call(                rtmp_stream_t stream, const char *name, rtmp_stream_amf_proc callback, void * userdata, ... );
 rtmp_err_t rtmp_stream_respond(             rtmp_stream_t stream, const char *name, double id, ... );
 
-rtmp_err_t rtmp_stream_call2(               rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... );
+rtmp_err_t rtmp_stream_call2(               rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, ... );
 rtmp_err_t rtmp_stream_respond2(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, ... );
 
-rtmp_err_t rtmp_stream_call2_va(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list );
+rtmp_err_t rtmp_stream_call2_va(            rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, va_list list );
 
 #endif

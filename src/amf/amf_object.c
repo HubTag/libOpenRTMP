@@ -181,6 +181,9 @@ amf_t amf_create( char type ){
 }
 
 void amf_destroy( amf_t amf ){
+    if( !amf ){
+        return;
+    }
     for( size_t i = 0; i < VEC_SIZE(amf->items); ++i ){
         amf_free_value( &amf->items[i] );
     }
