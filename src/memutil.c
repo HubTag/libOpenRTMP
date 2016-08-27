@@ -30,6 +30,7 @@
 #include <time.h>
 #include <ctype.h>
 #include "memutil.h"
+#include "rtmp.h"
 
 //memcpy that will reverse byte order if the machine is little endian
 void ntoh_memcpy(void * restrict dst, const void * restrict src, size_t len){
@@ -137,14 +138,14 @@ int32_t timestamp_get_delta( rtmp_time_t stamp1, rtmp_time_t stamp2 ){
 //nonce must either be a valid nonce or nullptr.
 rtmp_err_t rtmp_nonce_gen(void **nonce, size_t length){
     if( rtmp_nonce_alloc( nonce, length ) >= RTMP_ERR_ERROR ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     char* dst = *nonce;
     while( length --> 0 ){
         *dst = rand() % 256;
         ++dst;
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 //Delete a nonce.
@@ -153,7 +154,7 @@ rtmp_err_t rtmp_nonce_del(void **nonce){
         free(*nonce);
         *nonce = nullptr;
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 //Allocate memory for a nonce. Nonce must be either a valid nonce or nullptr.
@@ -161,9 +162,9 @@ rtmp_err_t rtmp_nonce_alloc(void **nonce, size_t length){
     rtmp_nonce_del(nonce);
     *nonce = malloc(length * sizeof(char));
     if( *nonce == nullptr ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 //Allocate memory provided the requested amount is under a predetermined amount.

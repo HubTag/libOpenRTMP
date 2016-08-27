@@ -72,8 +72,11 @@ rtmp_client_t rtmp_client_create( const char * url, const char * playpath ){
 
     if( playpath == nullptr ){
         const char * path = parseurl_get( client->url, PARSEURL_PATH, "/" );
+        const char * old_path = path;
         const char * amp = strchr( path, '&' );
         const char * colon = nullptr;
+        char * new_path = str_dup( path );
+
         if( amp ){
             path = amp;
             colon = strchr( path, ':' );
@@ -88,7 +91,15 @@ rtmp_client_t rtmp_client_create( const char * url, const char * playpath ){
                 path = "";
             }
         }
-        client->playpath = str_dup( path );
+        if( path ){
+            new_path[path - old_path] = 0;
+            parseurl_set( client->url, PARSEURL_PATH, new_path );
+        }
+        free( new_path );
+        client->playpath = str_dup( path + 1 );
+    }
+    else{
+        client->playpath = str_dup( playpath );
     }
 
     rtmp_stream_create_at( &client->stream, true );
@@ -112,15 +123,19 @@ rtmp_stream_t rtmp_client_stream( rtmp_client_t client ){
     return &client->stream;
 }
 
+const char * rtmp_client_get_playpath( rtmp_client_t client ){
+    return client->playpath;
+}
+
 rtmp_err_t rtmp_client_get_conninfo( rtmp_client_t client, const char **host, uint16_t * port ){
     if( client->url ){
         *host = parseurl_get( client->url, PARSEURL_HOST, nullptr );
         *port = atoi( parseurl_get( client->url, PARSEURL_PORT, STR(RTMP_DEFAULT_PORT) ) );
         if( !*host || !*port ){
-            return RTMP_ERR_ERROR;
+            return RTMP_GEN_ERROR(RTMP_ERR_ERROR);
         }
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_client_connect(
@@ -133,6 +148,13 @@ rtmp_err_t rtmp_client_connect(
     rtmp_stream_amf_proc proc,
     void *userdata
 ){
+    if( swfUrl == nullptr ){
+        swfUrl = parseurl_get( client->url, PARSEURL_URL, "" );
+    }
+    if( tcUrl == nullptr ){
+        tcUrl = parseurl_get( client->url, PARSEURL_URL, "" );
+    }
+
     return rtmp_stream_call(
         rtmp_client_stream( client ),
         "connect", proc, userdata, AMF(
@@ -154,6 +176,9 @@ rtmp_err_t rtmp_client_releasestream(
     rtmp_stream_amf_proc proc,
     void *userdata
 ){
+    if( path == nullptr ){
+        path = client->playpath;
+    }
     return rtmp_stream_call(
         rtmp_client_stream( client ),
         "releaseStream", proc, userdata, AMF(
@@ -168,6 +193,9 @@ rtmp_err_t rtmp_client_fcpublish(
     rtmp_stream_amf_proc proc,
     void *userdata
 ){
+    if( path == nullptr ){
+        path = client->playpath;
+    }
     return rtmp_stream_call(
         rtmp_client_stream( client ),
         "FCPublish", proc, userdata, AMF(
@@ -178,12 +206,11 @@ rtmp_err_t rtmp_client_fcpublish(
 
 rtmp_err_t rtmp_client_createstream(
     rtmp_client_t client,
-    size_t streamid,
     rtmp_stream_amf_proc proc,
     void *userdata
 ){
     return rtmp_stream_call2(
-        rtmp_client_stream( client ), 0, streamid,
+        rtmp_client_stream( client ), 0, 0,
         "createStream", proc, userdata, AMF(
             AMF_NULL()
     ));
@@ -197,6 +224,9 @@ rtmp_err_t rtmp_client_publish(
     rtmp_stream_amf_proc proc,
     void *userdata
 ){
+    if( playpath == nullptr ){
+        playpath = client->playpath;
+    }
     return rtmp_stream_call2(
         rtmp_client_stream( client ), 0, streamid,
         "publish", proc, userdata, AMF(
@@ -226,7 +256,7 @@ rtmp_err_t rtmp_client_setdataframe(
 ){
     amf_t amf = amf_create(0);
     if( !amf ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     amf_err_t err = amf_push_simple( amf, AMF(
             AMF_STR( "@setDataFrame" ),
@@ -256,6 +286,15 @@ rtmp_err_t rtmp_client_setdataframe(
     amf_destroy( amf );
     return ret;
 }
+rtmp_err_t rtmp_client_setdataframe_amf(
+    rtmp_client_t client,
+    size_t streamid,
+    amf_t object
+){
+    return rtmp_stream_send_dat2( rtmp_client_stream( client ), 0, streamid, 0, object, nullptr );
+}
+
+
 //See NetConnect documentation for usage
 
 

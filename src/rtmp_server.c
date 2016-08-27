@@ -119,7 +119,7 @@ rtmp_cb_status_t rtmp_server_onconnect(
         goto fail;
     }
 
-    status = rtmp_app_connect( stream, self->app, amf_args );
+    status = rtmp_app_connect( stream, self->app, object );
     if( status != RTMP_CB_CONTINUE ){
         goto fail;
     }
@@ -180,7 +180,7 @@ rtmp_cb_status_t rtmp_server_onreleaseStream( rtmp_stream_args_t args, amf_t obj
     if( amf_get_count( object ) < 4 || !amf_value_is( amf_get_item( object, 3 ), AMF_TYPE_STRING ) ){
         return RTMP_CB_ERROR;
     }
-    return rtmp_app_release( stream, self->app, amf_get_item( object, 2 ) );
+    return rtmp_app_release( stream, self->app, object );
 }
 
 rtmp_cb_status_t rtmp_server_onFCPublish( rtmp_stream_args_t args, amf_t object, void *user ){
@@ -305,6 +305,7 @@ rtmp_cb_status_t rtmp_server_oncreateStream( rtmp_stream_args_t args, amf_t obje
 
 
 struct fdata{
+    rtmp_server_t self;
     FILE *file;
     bool first_part;
     bool first_part_a;
@@ -358,7 +359,7 @@ rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_args_t args, amf_t obje
     fwrite( out, 1, total, output->file );
     flv_write_backptr(output->file, 11 + total);
     free(out);
-    return RTMP_CB_CONTINUE;
+    return rtmp_app_metadata( args->stream, output->self->app, object );
 }
 
 rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
@@ -375,7 +376,7 @@ rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data
         flv_write_backptr(output->file, output->last_size);
         output->last_size = 0;
     }
-    return RTMP_CB_CONTINUE;
+    return rtmp_app_video( args->stream, output->self->app, args->stream, args->timestamp, data, length );
 }
 rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
@@ -391,7 +392,7 @@ rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data
         flv_write_backptr(output->file, output->last_size_a);
         output->last_size_a = 0;
     }
-    return RTMP_CB_CONTINUE;
+    return rtmp_app_audio( args->stream, output->self->app, args->stream, args->timestamp, data, length );
 }
 
 
@@ -407,19 +408,20 @@ rtmp_server_t rtmp_server_create( void ){
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "publish", rtmp_server_onpublish, server );
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "createStream", rtmp_server_oncreateStream, server );
     FILE* file = fopen("vid.flv", "wb");
-    static struct fdata f;
-    f.file = file;
-    f.first_part = true;
-    f.first_part_a = true;
-    f.last_size = 0;
-    f.last_size_a = 0;
+    struct fdata * f = ezalloc(struct fdata);
+    f->self = server;
+    f->file = file;
+    f->first_part = true;
+    f->first_part_a = true;
+    f->last_size = 0;
+    f->last_size_a = 0;
     flv_write_head( file, true, false );
     flv_write_backptr( file, 0 );
 
-    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, &f );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, f );
 
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, &f );
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, &f );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, f );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, f );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_SUCCESS, rtmp_server_shake_done, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_FAIL, rtmp_server_shake_fail, server );
 

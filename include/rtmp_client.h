@@ -40,6 +40,7 @@ bool rtmp_client_connected( rtmp_client_t client );
 rtmp_stream_t rtmp_client_stream( rtmp_client_t client );
 
 rtmp_err_t rtmp_client_get_conninfo( rtmp_client_t client, const char **host, uint16_t * port );
+const char * rtmp_client_get_playpath( rtmp_client_t client );
 
 //See NetConnect documentation for usage
 
@@ -71,7 +72,6 @@ rtmp_err_t rtmp_client_fcpublish(
 
 rtmp_err_t rtmp_client_createstream(
     rtmp_client_t client,
-    size_t streamid,
     rtmp_stream_amf_proc proc,
     void *userdata
 );
@@ -103,6 +103,13 @@ rtmp_err_t rtmp_client_setdataframe(
     uint32_t aud_channels,
     const char * encoder
 );
+
+rtmp_err_t rtmp_client_setdataframe_amf(
+    rtmp_client_t client,
+    size_t streamid,
+    amf_t object
+);
+
 
 rtmp_err_t rtmp_client_play( rtmp_client_t client,
     const char *stream_name,

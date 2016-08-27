@@ -86,7 +86,7 @@ static rtmp_err_t create_stream( rtmp_t mgr, void * client_or_server, rtmp_sock_
     rtmp_mgr_svr_t *item_loc = VEC_PUSH(mgr->servers);
 
     if( !item_loc ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     rtmp_mgr_svr_t item = calloc( 1, sizeof( struct rtmp_mgr_svr ) );
     *item_loc = item;
@@ -126,13 +126,13 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
         shutdown( mgr->listen_socket, SHUT_RDWR );
         close( mgr->listen_socket );
         epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_DEL, mgr->listen_socket, nullptr );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
     if( (flags & EPOLLIN) ){
         rtmp_sock_t sock = accept( mgr->listen_socket, nullptr, 0 );
         if( sock <= 0 ){
             perror( "accept" );
-            return RTMP_ERR_POLL_FAIL;
+            return RTMP_GEN_ERROR(RTMP_ERR_POLL_FAIL);
         }
         rtmp_server_t server;
         rtmp_err_t ret = create_stream( mgr, &server, sock, RTMP_T_SERVER_T );
@@ -145,7 +145,7 @@ static rtmp_err_t handle_server( rtmp_t mgr, int flags ){
             return mgr->callback( server, mgr->callback_data ) == RTMP_CB_CONTINUE ? RTMP_ERR_NONE : RTMP_ERR_ABORT ;
         }
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 
@@ -155,6 +155,8 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
     e.events = stream->flags;
     rtmp_stream_t s;
     if( (flags & EPOLLERR) || (flags & EPOLLHUP) ){
+                    putchar('a');
+
         goto confail;
 
     }
@@ -168,6 +170,7 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
         if( conn && rtmp_chunk_conn_get_out_buff( conn, &buffer, &size ) == RTMP_ERR_NONE ){
             if( size == 0 ){
                 if( stream->closing ){
+                    putchar('a');
                     goto confail;
                 }
                 e.events &= ~EPOLLOUT;
@@ -177,10 +180,12 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             else{
                 size = send( stream->socket, buffer, size, MSG_NOSIGNAL );
                 if( size == (size_t)-1 || size == 0 ){
+                    putchar('a');
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_out_buff( conn, size );
                 if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
+                    putchar('a');
                     goto confail;
                 }
             }
@@ -205,6 +210,7 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             else{
                 size = recv( stream->socket, buffer, size, MSG_NOSIGNAL );
                 if( size == (size_t)-1 || size == 0 ){
+                    putchar('a');
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_in_buff( conn, size );
@@ -217,26 +223,27 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
             }
         }
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
     confail:
         printf("DEAD\n");
     epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_DEL, stream->socket, &e );
     shutdown( stream->socket, SHUT_RDWR );
     close( stream->socket );
-    for( size_t i = 0; i < VEC_SIZE(mgr->servers); ++i ){
-        if( mgr->servers[i] == stream ){
-            VEC_ERASE( mgr->servers, i );
-            break;
-        }
-    }
     if( stream->type == RTMP_T_SERVER_T ){
         rtmp_server_destroy( stream->server );
     }
     else if( stream->type == RTMP_T_CLIENT_T ){
         rtmp_client_destroy( stream->client );
     }
+    for( size_t i = 0; i < VEC_SIZE(mgr->servers); ++i ){
+        if( mgr->servers[i] == stream ){
+            //VEC_ERASE( mgr->servers, i );
+            mgr->servers[i] = nullptr;
+            break;
+        }
+    }
     free( stream );
-    return RTMP_ERR_CONNECTION_FAIL;
+    return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
 }
 
 
@@ -247,12 +254,20 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
     if( rtmp_get_time() > mgr->last_refresh + RTMP_REFRESH_TIME ){
         size_t s = VEC_SIZE(mgr->servers);
         for( size_t i = 0; i < s; ++i ){
-            rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ) );
+            if( !mgr->servers[i] ){
+                continue;
+            }
+            if( mgr->servers[i]->type == RTMP_T_SERVER_T ){
+                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ) );
+            }
+            else if( mgr->servers[i]->type == RTMP_T_CLIENT_T ){
+                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_client_stream( mgr->servers[i]->client ) ) );
+            }
         }
         mgr->last_refresh = rtmp_get_time();
     }
     if( fd_count < 0 ){
-        return RTMP_ERR_POLL_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_POLL_FAIL);
     }
     for( size_t i = 0; i < (size_t)fd_count; ++i ){
         rtmp_t_t * type = events[i].data.ptr;
@@ -269,10 +284,10 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
             break;
         }
         if( err != RTMP_ERR_NONE ){
-            return err;
+            return RTMP_GEN_ERROR(err);
         }
     }
-    return err;
+    return RTMP_GEN_ERROR(err);
 }
 
 rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
@@ -286,20 +301,20 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
     uint16_t port;
     if( rtmp_client_get_conninfo( client, &hostname, &port ) != RTMP_ERR_NONE){
         rtmp_client_destroy( client );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
 
     host = gethostbyname( hostname );
     if( !host || !host->h_addr_list || !host->h_addr_list[0] ){
         rtmp_client_destroy( client );
-        return RTMP_ERR_DNS_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_DNS_FAIL);
     }
 
     sock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
     if( sock <= 0 ){
         perror("socket");
         rtmp_client_destroy( client );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
     //Allow socket reuse
     static int one = 1;
@@ -313,7 +328,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
         perror("connect");
         rtmp_client_destroy( client );
         close( sock );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
 
     return create_stream( mgr, &client, sock, RTMP_T_CLIENT_T );
@@ -322,7 +337,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
     //mgr->callback_data = user;
     //mgr->listen_socket = sock;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user ){
@@ -335,12 +350,12 @@ rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect
 
     host = gethostbyname( iface );
     if( !host || !host->h_addr_list || !host->h_addr_list[0] ){
-        return RTMP_ERR_DNS_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_DNS_FAIL);
     }
 
     sock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
     if( sock <= 0 ){
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
     //Allow socket reuse
     static int one = 1;
@@ -353,12 +368,12 @@ rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect
     if( bind( sock, &svr.s, sizeof( svr ) ) < 0 ){
         perror("bind");
         close( sock );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
 
     if( listen( sock, RTMP_LISTEN_SIZE ) < 0 ){
         close( sock );
-        return RTMP_ERR_CONNECTION_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
     }
 
     struct epoll_event evt;
@@ -367,14 +382,14 @@ rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect
 
     if( epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_ADD, sock, &evt ) < 0 ){
         close( sock );
-        return RTMP_ERR_POLL_FAIL;
+        return RTMP_GEN_ERROR(RTMP_ERR_POLL_FAIL);
     }
 
     mgr->callback = cb;
     mgr->callback_data = user;
     mgr->listen_socket = sock;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 #endif

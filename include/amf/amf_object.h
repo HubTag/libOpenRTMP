@@ -32,6 +32,8 @@ typedef union amf_value * amf_value_t;
 typedef struct amf_object * amf_t;
 
 amf_t amf_create( char type );
+amf_t amf_reference( amf_t other );
+
 void amf_destroy( amf_t amf );
 
 amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written );

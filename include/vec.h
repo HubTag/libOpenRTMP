@@ -128,6 +128,7 @@ inline void * VEC_PRIV_REALLOC(void**ptr, size_t size){
 	void *ret = realloc(VEC_PRIV_PTR(*ptr), size);
 	if( ret ){
 		*ptr = VEC_PRIV_BASE(ret);
+        return ptr;
 	}
 	return ret;
 }

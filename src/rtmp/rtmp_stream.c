@@ -27,6 +27,7 @@
 #include "rtmp.h"
 #include "rtmp/rtmp_private.h"
 #include "memutil.h"
+#include <stdio.h>
 
 
 static rtmp_cb_status_t rtmp_stream_call_msg(
@@ -73,18 +74,22 @@ rtmp_cb_status_t rtmp_stream_call_amf(
         amf_value_t item = amf_get_item( object, 1 );
         if( amf_value_is_like( item, AMF_TYPE_INTEGER ) ){
             uint32_t seq_num = amf_value_get_integer( item );
-            VEC_DECLARE(rtmp_call_cb_t) cbs = args->stream->call_callback;
+            VEC_DECLARE(rtmp_call_cb_t)* cbs = &args->stream->call_callback;
+            printf("%d\n", VEC_SIZE(*cbs));
+            printf("%d\n", VEC_SIZE(args->stream->call_callback));
             bool erased = false;
-            for( size_t i = 0; i < VEC_SIZE(cbs); ++i ){
+            for( size_t i = 0; i < VEC_SIZE(*cbs); ++i ){
+                printf("%d\n", VEC_SIZE(*cbs));
+                printf("%d\n", VEC_SIZE(args->stream->call_callback));
                 i -= erased ? 1 : 0;
                 erased = false;
-                if( cbs[i].seq_num == seq_num ){
-                    ret = cbs[i].callback( args, object, cbs[i].user );
+                if( (*cbs)[i].seq_num == seq_num && (*cbs)[i].callback ){
+                    ret = (*cbs)[i].callback( args, object, (*cbs)[i].user );
                     if( ret != RTMP_CB_CONTINUE ){
                         return ret;
                     }
-                    if( cbs[i].issued + RTMP_CALL_TIMEOUT > now ){
-                        VEC_ERASE(cbs, i);
+                    if( (*cbs)[i].issued + RTMP_CALL_TIMEOUT > now ){
+                        VEC_ERASE((*cbs), i);
                         erased = true;
                     }
                 }
@@ -281,12 +286,12 @@ void rtmp_stream_destroy_at( rtmp_stream_t stream ){
 
 rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char *name, rtmp_stream_amf_proc proc, void *user ){
     if( !proc ){
-        return RTMP_ERR_INVALID;
+        return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
 
     rtmp_amf_cb_t *value = VEC_PUSH( stream->amf_callback );
     if(!value){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
 
     value->callback = proc;
@@ -299,78 +304,78 @@ rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, 
         value->name = (char*) malloc( sizeof( char ) * len + 1 );
         if( !value->name ){
             //Since the length hasn't been incremented, we can safely abort without completing initialization.
-            return RTMP_ERR_OOM;
+            return RTMP_GEN_ERROR(RTMP_ERR_OOM);
         }
         strcpy( value->name, name );
     }
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void *user ){
     if( !proc ){
-        return RTMP_ERR_INVALID;
+        return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
 
     rtmp_msg_cb_t *value = VEC_PUSH( stream->msg_callback );
     if(!value){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     value->callback = proc;
     value->type = type;
     value->user = user;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_stream_reg_usr( rtmp_stream_t stream, rtmp_usr_evt_t type, rtmp_stream_usr_proc proc, void *user ){
     if( !proc ){
-        return RTMP_ERR_INVALID;
+        return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
 
     rtmp_usr_cb_t *value = VEC_PUSH( stream->usr_callback );
     if(!value){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
 
     value->callback = proc;
     value->type = type;
     value->user = user;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_stream_reg_event( rtmp_stream_t stream, rtmp_event_t type, rtmp_stream_evt_proc proc, void *user ){
     if( !proc ){
-        return RTMP_ERR_INVALID;
+        return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
 
     rtmp_evt_cb_t *value = VEC_PUSH( stream->event_callback );
     if(!value){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
 
     value->callback = proc;
     value->type = type;
     value->user = user;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_err_t rtmp_stream_reg_log( rtmp_stream_t stream, rtmp_log_proc proc, void *user ){
     if( !proc ){
-        return RTMP_ERR_INVALID;
+        return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
 
     rtmp_log_cb_t *value = VEC_PUSH( stream->log_callback );
     if(!value){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
 
     value->callback = proc;
     value->user = user;
 
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 rtmp_chunk_conn_t rtmp_stream_get_conn( rtmp_stream_t stream ){
@@ -411,18 +416,18 @@ rtmp_err_t rtmp_stream_send_dat( rtmp_stream_t stream, rtmp_time_t timestamp, am
 static rtmp_err_t rtmp_stream_prepare_amf( rtmp_stream_t stream, amf_t amf ){
     size_t len = amf_write( amf, nullptr, 0, nullptr );
     if( len > SIZE_MAX / 2 ){
-        return RTMP_ERR_BAD_WRITE;
+        return RTMP_GEN_ERROR(RTMP_ERR_BAD_WRITE);
     }
     free( stream->scratch );
     stream->scratch = malloc( len * sizeof(byte) );
     stream->scratch_len = len;
     if( !stream->scratch ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     if( amf_write( amf, (byte*)stream->scratch, len, &len ) < 0 ){
-        return RTMP_ERR_BAD_WRITE;
+        return RTMP_GEN_ERROR(RTMP_ERR_BAD_WRITE);
     }
-    return RTMP_ERR_NONE;
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
 }
 
 static rtmp_err_t rtmp_stream_send_amf(
@@ -440,7 +445,7 @@ static rtmp_err_t rtmp_stream_send_amf(
     if( ret == RTMP_ERR_NONE ){
         ret = rtmp_chunk_conn_send_message( stream->connection, msg, chunk_id, msg_id, timestamp, (byte*)stream->scratch, stream->scratch_len, written );
     }
-    return ret;
+    return RTMP_GEN_ERROR(ret);
 }
 
 rtmp_err_t rtmp_stream_send_audio2( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, rtmp_time_t timestamp, const byte * restrict data, size_t len, size_t *written ){
@@ -606,7 +611,7 @@ rtmp_err_t rtmp_stream_send_ping_res( rtmp_stream_t stream, uint32_t ping_time )
 static rtmp_err_t rtmp_stream_issue_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, double id, va_list list ){
     amf_t amf = amf_create(0);
     if( !amf ){
-        return RTMP_ERR_OOM;
+        return RTMP_GEN_ERROR(RTMP_ERR_OOM);
     }
     amf_err_t err = AMF_ERR_NONE;
     err = err ? err : amf_push_string( amf, name );
@@ -654,10 +659,12 @@ rtmp_err_t rtmp_stream_respond2( rtmp_stream_t stream, size_t chunk_id, size_t m
 
 rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, va_list list ){
     if( callback ){
+        printf("a %d\n", VEC_SIZE(stream->call_callback));
         rtmp_call_cb_t * space = VEC_PUSH( stream->call_callback );
         if( !space ){
-            return RTMP_ERR_OOM;
+            return RTMP_GEN_ERROR(RTMP_ERR_OOM);
         }
+        printf("b %d\n", VEC_SIZE(stream->call_callback));
         space->callback = callback;
         space->user = userdata;
         space->seq_num = stream->seq_num;

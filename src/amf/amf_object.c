@@ -108,6 +108,7 @@ struct amf_v_member{
 
 struct amf_object{
     amf_type_t type;
+    size_t references;
     size_t depth;
     VEC_DECLARE(union amf_value) items;
 
@@ -180,17 +181,27 @@ amf_t amf_create( char type ){
     return ret;
 }
 
+amf_t amf_reference( amf_t other ){
+    other->references++;
+    return other;
+}
+
 void amf_destroy( amf_t amf ){
     if( !amf ){
         return;
     }
-    for( size_t i = 0; i < VEC_SIZE(amf->items); ++i ){
-        amf_free_value( &amf->items[i] );
+    if( amf->references == 0 ){
+        for( size_t i = 0; i < VEC_SIZE(amf->items); ++i ){
+            amf_free_value( &amf->items[i] );
+        }
+        VEC_DESTROY( amf->items );
+        VEC_DESTROY( amf->ref_table );
+        free( amf->allocation );
+        free( amf );
     }
-    VEC_DESTROY( amf->items );
-    VEC_DESTROY( amf->ref_table );
-    free( amf->allocation );
-    free( amf );
+    else{
+        amf->references --;
+    }
 }
 
 

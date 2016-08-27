@@ -24,6 +24,14 @@
 #ifndef RTMP_H_H
 #define RTMP_H_H
 
+#if RTMP_LOG_LEVEL > 0
+#define RTMP_GEN_ERROR(err) rtmp_gen_error(err,__LINE__,__FILE__,"")
+#define RTMP_GEN_ERROR_MSG(err,msg) rtmp_gen_error(err,__LINE__,__FILE__,msg)
+#else
+#define RTMP_GEN_ERROR(err) (err)
+#define RTMP_GEN_ERROR_MSG(err,msg) (err)
+#endif
+
 typedef struct rtmp_mgr * rtmp_t;
 typedef struct rtmp_params *rtmp_params_t;
 
@@ -67,5 +75,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client );
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user );
 
 rtmp_err_t rtmp_amferr( amf_err_t err );
+
+rtmp_err_t rtmp_gen_error(rtmp_err_t err, size_t line, const char *file, const char *msg);
 
 #endif

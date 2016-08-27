@@ -41,7 +41,7 @@
 
 //Size of the IO buffers used to feed data in and out of the RTMP object.
 //This must be at least 1600 bytes.
-#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x0000FFFF
+#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x000FFFFF
 
 //Size of static allocation for chunk header cache
 #define RTMP_STREAM_STATIC_CACHE_SIZE 10
@@ -63,7 +63,7 @@
 // 2 - Log most non-fatal errors (Suggested for debugging)
 // 3 - Log all errors
 // 4 - Log all status codes other than ERR_NONE
-#define RTMP_LOG_LEVEL 1
+#define RTMP_LOG_LEVEL 4
 
 //The max size of a 'safe alloc'
 #define RTMP_MAX_ALLOC 10000
