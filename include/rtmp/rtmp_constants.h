@@ -198,6 +198,7 @@ typedef enum {
 
 typedef enum {
     RTMP_ERR_NONE = 0,
+    RTMP_ERR_CONNECTION_CLOSED,
     RTMP_ERR_DIVERGENCE_METER_ERROR,
     RTMP_ERR_ERROR,
     RTMP_ERR_NOT_READY,

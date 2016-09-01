@@ -340,32 +340,14 @@ void flv_write_tag( FILE * file, byte type, uint32_t size, uint32_t timestamp ){
 
 rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_time_t timestamp = args->timestamp;
-    ALIAS( user, struct fdata *, output );
-    size_t total = 0;
-    for( size_t i = 1; i < amf_get_count(object); ++i ){
-        total += amf_write_value( amf_get_item( object, i), nullptr, 0 );
-    }
-    flv_write_tag( output->file, 18, total, timestamp );
-    byte * out = (byte*) malloc( total );
-    size_t offset = 0;
-    for( size_t i = 1; i < amf_get_count(object) && offset < total; ++i ){
-        size_t wrote = amf_write_value( amf_get_item( object, i), out + offset, total - offset );
-        if( wrote > SIZE_MAX / 2 ){
-            free(out);
-            return RTMP_CB_ABORT;
-        }
-        offset += wrote;
-    }
-    fwrite( out, 1, total, output->file );
-    flv_write_backptr(output->file, 11 + total);
-    free(out);
-    return rtmp_app_metadata( args->stream, output->self->app, object );
+    ALIAS( user, rtmp_server_t, self);
+    return rtmp_app_metadata( args->stream, self->app, object );
 }
 
 rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
-    ALIAS( user, struct fdata *, output );
-    if( output->first_part ){
+    ALIAS( user, rtmp_server_t, self);
+    /*if( output->first_part ){
         output->first_part = false;
         output->last_size = length + remaining + 11;
         flv_write_tag( output->file, 9, length + remaining, timestamp );
@@ -375,13 +357,13 @@ rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data
         output->first_part = true;
         flv_write_backptr(output->file, output->last_size);
         output->last_size = 0;
-    }
-    return rtmp_app_video( args->stream, output->self->app, args->stream, args->timestamp, data, length );
+    }*/
+    return rtmp_app_video( args->stream, self->app, args->stream, args->timestamp, data, length, remaining == 0 );
 }
 rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
-    ALIAS(user, struct fdata *, output);
-    if( output->first_part_a ){
+    ALIAS( user, rtmp_server_t, self);
+    /*if( output->first_part_a ){
         output->first_part_a = false;
         output->last_size_a = length + remaining + 11;
         flv_write_tag( output->file, 8, length + remaining, timestamp );
@@ -391,8 +373,8 @@ rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data
         output->first_part_a = true;
         flv_write_backptr(output->file, output->last_size_a);
         output->last_size_a = 0;
-    }
-    return rtmp_app_audio( args->stream, output->self->app, args->stream, args->timestamp, data, length );
+    }*/
+    return rtmp_app_audio( args->stream, self->app, args->stream, args->timestamp, data, length, remaining == 0 );
 }
 
 
@@ -407,21 +389,11 @@ rtmp_server_t rtmp_server_create( void ){
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "FCPublish", rtmp_server_onFCPublish, server );
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "publish", rtmp_server_onpublish, server );
     rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_CMD, "createStream", rtmp_server_oncreateStream, server );
-    FILE* file = fopen("vid.flv", "wb");
-    struct fdata * f = ezalloc(struct fdata);
-    f->self = server;
-    f->file = file;
-    f->first_part = true;
-    f->first_part_a = true;
-    f->last_size = 0;
-    f->last_size_a = 0;
-    flv_write_head( file, true, false );
-    flv_write_backptr( file, 0 );
 
-    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, f );
+    rtmp_stream_reg_amf( &server->stream, RTMP_MSG_AMF0_DAT, "@setDataFrame", rtmp_server_onsetDataFrame, server );
 
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, f );
-    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, f );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_VIDEO, rtmp_server_write_vid, server );
+    rtmp_stream_reg_msg( &server->stream, RTMP_MSG_AUDIO, rtmp_server_write_aud, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_SUCCESS, rtmp_server_shake_done, server );
     rtmp_stream_reg_event( &server->stream, RTMP_EVENT_CONNECT_FAIL, rtmp_server_shake_fail, server );
 

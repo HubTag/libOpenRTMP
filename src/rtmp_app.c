@@ -186,10 +186,10 @@ rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t 
     return app->on_metadata ? app->on_metadata( stream, app, value, app->on_metadata_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length ){
-    return app->on_video ? app->on_video( stream, app, streamid, timestamp, av_data, av_length, app->on_video_data ) : RTMP_CB_CONTINUE;
+rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part ){
+    return app->on_video ? app->on_video( stream, app, streamid, timestamp, av_data, av_length, final_part, app->on_video_data ) : RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length ){
-    return app->on_audio ? app->on_audio( stream, app, streamid, timestamp, av_data, av_length, app->on_audio_data ) : RTMP_CB_CONTINUE;
+rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part ){
+    return app->on_audio ? app->on_audio( stream, app, streamid, timestamp, av_data, av_length, final_part, app->on_audio_data ) : RTMP_CB_CONTINUE;
 }

@@ -43,14 +43,31 @@
 #endif
 
 typedef struct app_data{
-    rtmp_t rtmp;
+    ringbuffer_t a_buffer;
+    ringbuffer_t v_buffer;
     rtmp_client_t client;
     amf_t onMetadata;
     size_t streamid;
     bool ready;
+    bool a_ready;
+    bool v_ready;
 } appdata_t;
 
+void appdata_destroy(void * data){
+    ALIAS( data, appdata_t *, appdata );
+    rtmp_client_destroy( appdata->client );
+    amf_destroy( appdata->onMetadata );
+    ringbuffer_destroy( appdata->v_buffer );
+    ringbuffer_destroy( appdata->a_buffer );
+}
+
 rtmp_cb_status_t client_result_connect( rtmp_stream_args_t args, amf_t object, void * user );
+
+static rtmp_cb_status_t on_connect(rtmp_stream_t stream, rtmp_event_t event, void * user ){
+    ALIAS( user, appdata_t *, data );
+    rtmp_stream_set_data( stream, data, appdata_destroy );
+    return rtmp_client_connect( data->client, "hls", nullptr, nullptr, RTMP_SUPPORT_SND_AAC, RTMP_SUPPORT_VID_H264, client_result_connect, user ) >= RTMP_ERR_ERROR ? RTMP_CB_ERROR : RTMP_CB_CONTINUE;
+}
 
 static rtmp_cb_status_t connect_proc( rtmp_server_t server, void *user ){
     //printf("Got connection\n");
@@ -59,9 +76,11 @@ static rtmp_cb_status_t connect_proc( rtmp_server_t server, void *user ){
     fflush(stdout);
     return RTMP_CB_CONTINUE;
 }
-
+appdata_t * muh_data;
 static rtmp_cb_status_t app_connect( rtmp_stream_t stream, rtmp_app_t app, amf_t value, void *user ){
     printf("Create streamer connection\n");
+
+    rtmp_stream_set_data( stream, muh_data, appdata_destroy );
     return RTMP_CB_CONTINUE;
 }
 
@@ -78,47 +97,96 @@ static size_t app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * 
     return inlen;
 }
 
-static rtmp_cb_status_t on_connect(rtmp_stream_t stream, rtmp_event_t event, void * user ){
-    ALIAS( user, appdata_t *, data );
-    return rtmp_client_connect( data->client, "streamer", nullptr, nullptr, RTMP_SUPPORT_SND_AAC, RTMP_SUPPORT_VID_H264, client_result_connect, user ) >= RTMP_ERR_ERROR ? RTMP_CB_ERROR : RTMP_CB_CONTINUE;
-}
 
 static size_t app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * target, const char * type, char * newname, size_t len, void *user ){
     size_t inlen = strlen( target );
     size_t cplen = MIN(inlen+1, len);
     memcpy( newname, target, cplen );
     newname[cplen] = 0;
-    ALIAS( user, appdata_t *, data );
     if( strcmp(target, "TEST") == 0 ){
         return inlen;
     }
-    //data->client = rtmp_client_create( "rtmp://live-sea.twitch.tv/app", target );
-    data->client = rtmp_client_create( "rtmp://localhost/streamer2", "TEST" );
-    rtmp_stream_reg_event( rtmp_client_stream( data->client ), RTMP_EVENT_CONNECT_SUCCESS, on_connect, user );
 
     return inlen;
 }
 
 static rtmp_cb_status_t app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t value, void *user ){
-    ALIAS( user, appdata_t *, data );
+    ALIAS( user, rtmp_t, rtmp );
+    ALIAS( rtmp_stream_get_data(stream), appdata_t *, data );
+    if( !data ){
+        return RTMP_CB_CONTINUE;
+    }
     data->onMetadata = amf_reference( value );
-    rtmp_connect( data->rtmp, data->client );
     return RTMP_CB_CONTINUE;
 }
 
-static rtmp_cb_status_t app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, void *user ){
-    ALIAS( user, appdata_t *, data );
-    if( !data->ready ){
+static rtmp_cb_status_t app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part, void *user ){
+    ALIAS( user, rtmp_t, rtmp );
+    ALIAS( rtmp_stream_get_data(stream), appdata_t *, data );
+    printf( "%d\n", av_length );
+    if( !data || !data->ready ){
         return RTMP_CB_CONTINUE;
     }
-    return rtmp_stream_send_video2( rtmp_client_stream(data->client), 0, streamid, timestamp, av_data, av_length, nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+    rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
+    if( final_part ){
+        if( data->v_ready ){
+            if( ringbuffer_copy_write( data->v_buffer, av_data, av_length ) < av_length ){
+                return RTMP_CB_ERROR;
+            }
+            unsigned long len;
+            const void * buffer = ringbuffer_get_read_buf(data->v_buffer, &len);
+            ret = rtmp_stream_send_video2(
+                    rtmp_client_stream(data->client),
+                    0,
+                    data->streamid,
+                    timestamp,
+                    buffer,
+                    len,
+                    nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+            ringbuffer_clear(data->v_buffer);
+        }
+        data->v_ready = true;
+    }
+    else if( data->v_ready ){
+        if( ringbuffer_copy_write( data->v_buffer, av_data, av_length ) < av_length ){
+            return RTMP_CB_ERROR;
+        }
+    }
+    return ret;
 }
-static rtmp_cb_status_t app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, void *user ){
-    ALIAS( user, appdata_t *, data );
-    if( !data->ready ){
+static rtmp_cb_status_t app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part, void *user ){
+    ALIAS( user, rtmp_t, rtmp );
+    ALIAS( rtmp_stream_get_data(stream), appdata_t *, data );
+    printf( "%d\n", av_length );
+    if( !data || !data->ready ){
         return RTMP_CB_CONTINUE;
     }
-    return rtmp_stream_send_audio2( rtmp_client_stream(data->client), 0, streamid, timestamp, av_data, av_length, nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+    rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
+    if( final_part ){
+        if( data->a_ready ){
+            if( ringbuffer_copy_write( data->a_buffer, av_data, av_length ) < av_length ){
+                return RTMP_CB_ERROR;
+            }
+            unsigned long len;
+            const void * buffer = ringbuffer_get_read_buf(data->a_buffer, &len);
+            ret = rtmp_stream_send_audio2(
+                    rtmp_client_stream(data->client),
+                    0,
+                    data->streamid,
+                    timestamp,
+                    buffer,
+                    len,
+                    nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+            ringbuffer_clear(data->a_buffer);
+        }
+        data->a_ready = true;
+    }
+    else if( data->a_ready ){
+        if( ringbuffer_copy_write( data->a_buffer, av_data, av_length ) < av_length ){
+            return RTMP_CB_ERROR;
+        }
+    }
+    return ret;
 }
 
 void rtmp_perror( rtmp_err_t err ){
@@ -148,9 +216,9 @@ rtmp_cb_status_t client_result_publish( rtmp_stream_args_t args, amf_t object, v
             const char * str = amf_value_get_string( result, &len );
             if( strncasecmp( str, "onStatus", len ) == 0 ){
                 if( rtmp_client_setdataframe(   client, data->streamid, "onMetaData",
-                                                0, 0, 1920, 1080,
-                                                "avc1", 1000, 30,
-                                                "mp4a", 128, 48000, 16, 2,
+                                                0, 0, 1280, 720,
+                                                "avc1", 64, 30,
+                                                "mp4a", 128, 44100, 16, 2,
                                                 "OpenRTMP")
                     /*rtmp_client_setdataframe_amf( client, data->streamid, data->onMetadata )*/ > RTMP_ERR_NONE ){
                     return RTMP_CB_ERROR;
@@ -173,9 +241,11 @@ rtmp_cb_status_t client_result_createstream( rtmp_stream_args_t args, amf_t obje
             const char * str = amf_value_get_string( result, &len );
             if( strncasecmp( str, "_result", len ) == 0 ){
                 data->streamid = amf_value_get_integer( amf_get_item( object, 3 ) );
-                if( rtmp_client_publish( client, data->streamid, nullptr, "live", client_result_publish, user ) > RTMP_ERR_NONE ){
+                rtmp_stream_reg_amf( args->stream, RTMP_MSG_AMF0_CMD, "onStatus", client_result_publish, user );
+                if( rtmp_client_publish( client, data->streamid, nullptr, "live", nullptr, nullptr ) > RTMP_ERR_NONE ){
                     return RTMP_CB_ERROR;
                 }
+
                 return RTMP_CB_CONTINUE;
             }
         }
@@ -216,20 +286,24 @@ int main(){
     rtmp_app_list_t list = rtmp_app_list_create();
 
     //Create "streamer" app
-    appdata_t appdata;
-    appdata.client = nullptr;
-    appdata.onMetadata = nullptr;
-    appdata.rtmp = rtmp;
-    appdata.streamid = 0;
-    appdata.ready = false;
+    muh_data = ezalloc( appdata_t );
+    if( !muh_data ){
+        return 0;
+    }
+    //data->client = rtmp_client_create( "rtmp://live-sea.twitch.tv/app", target );
+    muh_data->v_buffer = ringbuffer_create(RTMP_DEFAULT_PROXY_V_BUFFER_SIZE);
+    muh_data->a_buffer = ringbuffer_create(RTMP_DEFAULT_PROXY_A_BUFFER_SIZE);
+    muh_data->client = rtmp_client_create( "rtmp://localhost:1936/hls", "ayyylmao" );
+    rtmp_stream_reg_event( rtmp_client_stream( muh_data->client ), RTMP_EVENT_CONNECT_SUCCESS, on_connect, muh_data );
+    rtmp_connect( rtmp, muh_data->client );
 
     rtmp_app_t app = rtmp_app_list_register( list, "streamer" );
-    rtmp_app_set_connect( app, app_connect, &appdata );
-    rtmp_app_set_fcpublish( app, app_fcpublish, &appdata );
-    rtmp_app_set_publish( app, app_publish, &appdata );
-    rtmp_app_set_video( app, app_video, &appdata );
-    rtmp_app_set_audio( app, app_audio, &appdata );
-    rtmp_app_set_metadata( app, app_metadata, &appdata );
+    rtmp_app_set_connect( app, app_connect, rtmp );
+    rtmp_app_set_fcpublish( app, app_fcpublish, rtmp );
+    rtmp_app_set_publish( app, app_publish, rtmp );
+    rtmp_app_set_video( app, app_video, rtmp );
+    rtmp_app_set_audio( app, app_audio, rtmp );
+    rtmp_app_set_metadata( app, app_metadata, rtmp );
 
     //Create "streamer2" app
     app = rtmp_app_list_register( list, "streamer2" );

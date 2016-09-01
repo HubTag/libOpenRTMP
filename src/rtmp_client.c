@@ -154,18 +154,19 @@ rtmp_err_t rtmp_client_connect(
     if( tcUrl == nullptr ){
         tcUrl = parseurl_get( client->url, PARSEURL_URL, "" );
     }
+    rtmp_err_t ret = rtmp_chunk_conn_set_chunk_size( rtmp_stream_get_conn( rtmp_client_stream( client ) ), RTMP_DESIRED_CHUNK_SIZE );
 
-    return rtmp_stream_call(
+    return ret >= RTMP_ERR_ERROR ? ret : rtmp_stream_call(
         rtmp_client_stream( client ),
         "connect", proc, userdata, AMF(
             AMF_OBJ(
                 AMF_STR( "app", app ),
                 AMF_STR( "type", "nonprivate" ),
-                AMF_STR( "flashVer", RTMP_FLASHVER_STR ),
-                AMF_STR( "swfUrl", swfUrl ),
-                AMF_STR( "tcUrl", tcUrl ),
-                AMF_INT( "audioCodecs", audioCodecs ),
-                AMF_INT( "videoCodecs", videoCodecs )
+                //AMF_STR( "flashVer", RTMP_FLASHVER_STR ),
+                //AMF_STR( "swfUrl", swfUrl ),
+                AMF_STR( "tcUrl", tcUrl )//,
+                //AMF_INT( "audioCodecs", audioCodecs ),
+                //AMF_INT( "videoCodecs", videoCodecs )
             )
     ));
 }
@@ -210,7 +211,7 @@ rtmp_err_t rtmp_client_createstream(
     void *userdata
 ){
     return rtmp_stream_call2(
-        rtmp_client_stream( client ), 0, 0,
+        rtmp_client_stream( client ), 3, 0,
         "createStream", proc, userdata, AMF(
             AMF_NULL()
     ));
@@ -228,7 +229,7 @@ rtmp_err_t rtmp_client_publish(
         playpath = client->playpath;
     }
     return rtmp_stream_call2(
-        rtmp_client_stream( client ), 0, streamid,
+        rtmp_client_stream( client ), 3, streamid,
         "publish", proc, userdata, AMF(
             AMF_NULL(),
             AMF_STR( playpath ),
@@ -281,7 +282,7 @@ rtmp_err_t rtmp_client_setdataframe(
     amf_print( amf );
 
     rtmp_err_t ret =    err ? rtmp_amferr( err ) :
-                        rtmp_stream_send_dat2( rtmp_client_stream( client ), 0, streamid, 0, amf, nullptr );
+                        rtmp_stream_send_dat2( rtmp_client_stream( client ), 3, streamid, 0, amf, nullptr );
 
     amf_destroy( amf );
     return ret;

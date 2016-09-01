@@ -123,12 +123,15 @@ static int rtmp_cache_match( rtmp_chunk_stream_message_internal_t * cached, size
 }
 
 rtmp_chunk_stream_message_internal_t * rtmp_cache_find( rtmp_chunk_stream_cache_t cache, size_t stream_id, size_t msg_size, byte msg_type, rtmp_time_t timestamp ){
-    rtmp_chunk_stream_message_internal_t * best = &cache->static_cache[3];
+    rtmp_chunk_stream_message_internal_t * best = &cache->static_cache[4];
+    memset( best, 0, sizeof (rtmp_chunk_stream_message_internal_t) );
+    best->msg.chunk_stream_id = 4;
+    return best;
     int best_type = 0;
     int current_type = 0;
-    for( size_t i = 3; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
+    for( size_t i = 4; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
         current_type = rtmp_cache_match( &cache->static_cache[i], stream_id, msg_size, msg_type, timestamp );
-        if( current_type > best_type ){
+        if( current_type > best_type && cache->static_cache[i].initialized ){
             best = &cache->static_cache[i];
             best_type = current_type;
         }
@@ -138,7 +141,7 @@ rtmp_chunk_stream_message_internal_t * rtmp_cache_find( rtmp_chunk_stream_cache_
     }
     for( size_t i = 0; i < cache->dynamic_cache_size; ++i ){
         current_type = rtmp_cache_match( &cache->dynamic_cache[i], stream_id, msg_size, msg_type, timestamp );
-        if( current_type > best_type ){
+        if( current_type > best_type && cache->dynamic_cache[i].initialized ){
             best = &cache->dynamic_cache[i];
             best_type = current_type;
         }

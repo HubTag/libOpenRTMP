@@ -230,10 +230,10 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
     shutdown( stream->socket, SHUT_RDWR );
     close( stream->socket );
     if( stream->type == RTMP_T_SERVER_T ){
-        rtmp_server_destroy( stream->server );
+        //rtmp_server_destroy( stream->server );
     }
     else if( stream->type == RTMP_T_CLIENT_T ){
-        rtmp_client_destroy( stream->client );
+        //rtmp_client_destroy( stream->client );
     }
     for( size_t i = 0; i < VEC_SIZE(mgr->servers); ++i ){
         if( mgr->servers[i] == stream ){
@@ -243,7 +243,7 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
         }
     }
     free( stream );
-    return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_FAIL);
+    return RTMP_GEN_ERROR(RTMP_ERR_CONNECTION_CLOSED);
 }
 
 

@@ -682,6 +682,7 @@ rtmp_err_t rtmp_chunk_conn_abort( rtmp_chunk_conn_t conn, uint32_t chunk_stream 
 }
 
 rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn ){
+    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
     byte buffer[4];
     ntoh_write_ud( buffer, conn->bytes_in );
 

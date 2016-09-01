@@ -155,6 +155,9 @@ struct rtmp_stream{
     size_t scratch_len;
     uint32_t seq_num;
 
+    rtmp_destroy_proc ondestroy;
+    void * userdata;
+
     VEC_DECLARE(rtmp_amf_cb_t) amf_callback;
 
     VEC_DECLARE(rtmp_msg_cb_t) msg_callback;

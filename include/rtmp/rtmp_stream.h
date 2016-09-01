@@ -66,11 +66,18 @@ typedef rtmp_cb_status_t (*rtmp_stream_evt_proc)(
     void * user
 );
 
+typedef void (*rtmp_destroy_proc)(
+    void * user
+);
+
 
 rtmp_stream_t rtmp_stream_create( bool client );
 void rtmp_stream_create_at( rtmp_stream_t location, bool client );
 void rtmp_stream_destroy( rtmp_stream_t stream );
 void rtmp_stream_destroy_at( rtmp_stream_t stream );
+void rtmp_stream_set_data( rtmp_stream_t stream, void * data, rtmp_destroy_proc );
+void * rtmp_stream_get_data( rtmp_stream_t stream );
+
 
 rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char * restrict name, rtmp_stream_amf_proc proc, void * restrict user );
 rtmp_err_t rtmp_stream_reg_msg( rtmp_stream_t stream, rtmp_message_type_t type, rtmp_stream_msg_proc proc, void * restrict user );

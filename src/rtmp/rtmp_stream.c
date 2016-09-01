@@ -275,6 +275,9 @@ void rtmp_stream_destroy_at( rtmp_stream_t stream ){
     for( size_t i = 0; i < VEC_SIZE(stream->amf_callback); ++i ){
         free( stream->amf_callback[i].name );
     }
+    if( stream->ondestroy ){
+        stream->ondestroy( stream->userdata );
+    }
     VEC_DESTROY( stream->event_callback );
     VEC_DESTROY( stream->amf_callback );
     VEC_DESTROY( stream->log_callback );
@@ -282,6 +285,15 @@ void rtmp_stream_destroy_at( rtmp_stream_t stream ){
     VEC_DESTROY( stream->usr_callback );
     VEC_DESTROY( stream->call_callback );
     free( stream->scratch );
+}
+
+void rtmp_stream_set_data( rtmp_stream_t stream, void * data, rtmp_destroy_proc proc ){
+    stream->ondestroy = proc;
+    stream->userdata = data;
+}
+
+void * rtmp_stream_get_data( rtmp_stream_t stream ){
+    return stream->userdata;
 }
 
 rtmp_err_t rtmp_stream_reg_amf( rtmp_stream_t stream, rtmp_message_type_t type, const char *name, rtmp_stream_amf_proc proc, void *user ){
@@ -452,7 +464,7 @@ rtmp_err_t rtmp_stream_send_audio2( rtmp_stream_t stream, size_t chunk_id, size_
     return rtmp_chunk_conn_send_message(
             stream->connection,
             RTMP_MSG_AUDIO,
-            chunk_id,
+            5,
             msg_id,
             timestamp,
             data,
@@ -463,7 +475,7 @@ rtmp_err_t rtmp_stream_send_video2( rtmp_stream_t stream, size_t chunk_id, size_
     return rtmp_chunk_conn_send_message(
             stream->connection,
             RTMP_MSG_VIDEO,
-            chunk_id,
+            4,
             msg_id,
             timestamp,
             data,
@@ -627,7 +639,7 @@ static rtmp_err_t rtmp_stream_issue_va( rtmp_stream_t stream, size_t chunk_id, s
 rtmp_err_t rtmp_stream_call( rtmp_stream_t stream, const char *name, rtmp_stream_amf_proc callback, void * userdata, ... ){
     va_list list;
     va_start( list, userdata );
-    rtmp_err_t ret = rtmp_stream_call2_va( stream, 0, 0, name, callback, userdata, list );
+    rtmp_err_t ret = rtmp_stream_call2_va( stream, 3, 0, name, callback, userdata, list );
     va_end( list );
     return ret;
 }
@@ -635,7 +647,7 @@ rtmp_err_t rtmp_stream_call( rtmp_stream_t stream, const char *name, rtmp_stream
 rtmp_err_t rtmp_stream_respond( rtmp_stream_t stream, const char *name, double id, ... ){
     va_list list;
     va_start( list, id );
-    rtmp_err_t ret = rtmp_stream_issue_va( stream, 0, 0, name, id, list );
+    rtmp_err_t ret = rtmp_stream_issue_va( stream, 3, 0, name, id, list );
     va_end( list );
     return ret;
 }

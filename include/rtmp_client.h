@@ -44,7 +44,6 @@ const char * rtmp_client_get_playpath( rtmp_client_t client );
 
 //See NetConnect documentation for usage
 
-
 rtmp_err_t rtmp_client_connect(
     rtmp_client_t client,
     const char * restrict app,
