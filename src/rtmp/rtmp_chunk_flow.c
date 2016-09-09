@@ -33,7 +33,7 @@
 
 
 rtmp_chunk_stream_cache_t rtmp_cache_create( void ){
-    struct rtmp_chunk_stream_cache *ret = ezalloc( struct rtmp_chunk_stream_cache );
+    struct rtmp_chunk_stream_cache *ret = ezalloc( ret );
     for( size_t i = 0; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
         ret->static_cache[i].msg.chunk_stream_id = i;
     }

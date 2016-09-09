@@ -162,7 +162,7 @@ void amf_free_value( amf_value_t val){
 }
 
 amf_t amf_create( char type ){
-    amf_t ret = ezalloc( struct amf_object );
+    amf_t ret = ezalloc( ret );
     if( !ret ){
         return ret;
     }

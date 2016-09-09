@@ -82,6 +82,7 @@ typedef enum {
 typedef enum {
     RTMP_CB_CONTINUE = 0,
     RTMP_CB_ERROR,
+    RTMP_CB_DEFER_PAUSE,
     RTMP_CB_ABORT
 } rtmp_cb_status_t;
 
@@ -205,6 +206,7 @@ typedef enum {
     RTMP_ERR_INVALID,
     RTMP_ERR_BAD_WRITE,
     RTMP_ERR_BAD_READ,
+    RTMP_ERR_PAUSE,
     RTMP_ERR_AGAIN,
     RTMP_ERR_DNS_FAIL,
     RTMP_ERR_POLL_FAIL,

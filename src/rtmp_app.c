@@ -62,7 +62,7 @@ struct rtmp_app_list{
 
 
 rtmp_app_list_t rtmp_app_list_create( void ){
-    rtmp_app_list_t applist = ezalloc( struct rtmp_app_list );
+    rtmp_app_list_t applist = ezalloc( applist );
     VEC_INIT( applist->apps );
     return applist;
 }
@@ -82,7 +82,7 @@ rtmp_app_t rtmp_app_list_register( rtmp_app_list_t list, const char *appname ){
         return app;
     }
 
-    app = ezalloc( struct rtmp_app );
+    app = ezalloc( app );
     if( !app ){
         return nullptr;
     }

@@ -56,7 +56,7 @@ static rtmp_fmt_t mem_to_fmt( const char * start, const char * end ){
 }
 
 rtmp_client_t rtmp_client_create( const char * url, const char * playpath ){
-    rtmp_client_t client = ezalloc( struct rtmp_client );
+    rtmp_client_t client = ezalloc( client );
 
     client->url = parseurl_create();
     parseurl_set( client->url, PARSEURL_SCHEME, "rtmp" );
@@ -229,7 +229,7 @@ rtmp_err_t rtmp_client_publish(
         playpath = client->playpath;
     }
     return rtmp_stream_call2(
-        rtmp_client_stream( client ), 3, streamid,
+        rtmp_client_stream( client ), 0, streamid,
         "publish", proc, userdata, AMF(
             AMF_NULL(),
             AMF_STR( playpath ),

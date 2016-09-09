@@ -77,6 +77,9 @@ static rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event
         switch( conn->callback_event( conn, event, conn->userdata ) ){
             case RTMP_CB_CONTINUE:
                 break;
+            case RTMP_CB_DEFER_PAUSE:
+                err = RTMP_ERR_PAUSE;
+                break;
             case RTMP_CB_ERROR:
                 err = RTMP_ERR_ERROR;
                 break;
@@ -93,6 +96,9 @@ static rtmp_err_t rtmp_chunk_conn_call_chunk( rtmp_chunk_conn_t conn, const void
     if( conn->callback_chunk ){
         switch( conn->callback_chunk( conn, input, available, remaining, msg, conn->userdata ) ){
             case RTMP_CB_CONTINUE:
+                break;
+            case RTMP_CB_DEFER_PAUSE:
+                err = RTMP_ERR_PAUSE;
                 break;
             case RTMP_CB_ERROR:
                 err = RTMP_ERR_ERROR;
@@ -564,7 +570,9 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
 }
 
 rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
-
+    if( conn->paused ){
+        return RTMP_ERR_PAUSE;
+    }
     size_t committed = 0;
     rtmp_err_t ret = RTMP_ERR_NONE;
     rtmp_io_t io_status = 0;
@@ -600,7 +608,6 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
 
         bool commit = true;
         if( ret >= RTMP_ERR_ERROR ){
-        printf("lol\n");
             commit = false;
         }
 
@@ -618,6 +625,9 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
             if( commit && committed > 0 ){
                 ret = rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
             }
+        }
+        if( ret == RTMP_ERR_PAUSE ){
+            conn->paused = true;
         }
 
         //Repeat if we didn't error and we've committed something
@@ -638,7 +648,7 @@ rtmp_err_t rtmp_chunk_conn_register_callbacks( rtmp_chunk_conn_t conn, rtmp_chun
 }
 
 rtmp_err_t rtmp_chunk_conn_set_chunk_size( rtmp_chunk_conn_t conn, uint32_t size ){
-    size &= ~(1 << 31);
+    size &= ~(1u << 31);
     if( size < RTMP_MIN_CHUNK_SIZE ){
         size = RTMP_MIN_CHUNK_SIZE;
     }
@@ -745,6 +755,10 @@ rtmp_err_t rtmp_chunk_conn_set_peer_bwidth( rtmp_chunk_conn_t conn, uint32_t siz
         nullptr );
 }
 
+rtmp_err_t rtmp_chunk_conn_pause( rtmp_chunk_conn_t conn, bool status ){
+    conn->paused = status;
+    return RTMP_ERR_NONE;
+}
 
 rtmp_err_t
 rtmp_chunk_conn_send_message(

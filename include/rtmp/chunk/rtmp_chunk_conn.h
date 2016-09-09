@@ -100,6 +100,8 @@ rtmp_err_t rtmp_chunk_conn_commit_in_buff( rtmp_chunk_conn_t conn, size_t size )
 //Inform the connection about how many bytes were read from the buffer.
 rtmp_err_t rtmp_chunk_conn_commit_out_buff( rtmp_chunk_conn_t conn, size_t size );
 
+rtmp_err_t rtmp_chunk_conn_pause( rtmp_chunk_conn_t conn, bool status );
+
 //Send an arbitrary message via the chunk stream.
 rtmp_err_t
 rtmp_chunk_conn_send_message(

@@ -245,7 +245,7 @@ void rtmp_stream_log_proc(
 
 
 rtmp_stream_t rtmp_stream_create( bool client ){
-    rtmp_stream_t stream = ezalloc( struct rtmp_stream );
+    rtmp_stream_t stream = ezalloc( stream );
     rtmp_stream_create_at( stream, client );
     return stream;
 }

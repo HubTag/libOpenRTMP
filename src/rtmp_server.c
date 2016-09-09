@@ -379,7 +379,7 @@ rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data
 
 
 rtmp_server_t rtmp_server_create( void ){
-    rtmp_server_t server = ezalloc( struct rtmp_server );
+    rtmp_server_t server = ezalloc( server );
     rtmp_stream_create_at( &server->stream, false );
     VEC_INIT( server->streams );
     server->next_stream = 1;

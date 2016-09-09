@@ -468,7 +468,7 @@ static void parseurl_to_url( parseurl_t parser ){
 
 
 parseurl_t parseurl_create( void ){
-    parseurl_t ret = ezalloc( struct parseurl );
+    parseurl_t ret = ezalloc( ret );
     return ret;
 }
 void parseurl_destroy( parseurl_t parser ){

@@ -27,7 +27,12 @@
 #include "rtmp/rtmp_types.h"
 #include "rtmp/rtmp_constants.h"
 
-#define ezalloc(a) ((a*)calloc(1,sizeof(a)))
+#ifdef __cplusplus
+#include <type_traits>
+#define ezalloc(a) ((decltype(a))calloc(1,sizeof(std::remove_pointer<decltype(a)>::type)))
+#else
+#define ezalloc(a) (calloc(1,sizeof (a)))
+#endif
 #define ALIAS(a,b,c) b c = (b)a;
 
 //memcpy that will reverse byte order if the machine is little endian

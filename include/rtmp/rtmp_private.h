@@ -71,6 +71,8 @@ struct rtmp_chunk_conn {
     size_t partial_chunk;
     size_t partial_msg;
 
+    bool paused;
+
     void *nonce_c, *nonce_s;
     rtmp_time_t self_time, peer_time, peer_shake_recv_time, self_shake_recv_time;
 
