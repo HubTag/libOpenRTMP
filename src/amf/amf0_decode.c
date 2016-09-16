@@ -23,10 +23,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "memutil.h"
-#include "amf/amf.h"
-#include "amf/amf_shorthand.h"
-#include "ieee754_double.h"
+#include <openrtmp/util/memutil.h>
+#include <openrtmp/amf/amf.h>
+#include <openrtmp/amf/amf_shorthand.h>
+#include <openrtmp/util/ieee754_double.h>
 
 
 

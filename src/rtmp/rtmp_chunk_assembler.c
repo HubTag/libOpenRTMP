@@ -21,8 +21,8 @@
 
 */
 
-#include "rtmp/chunk/rtmp_chunk_assembler.h"
-#include "vec.h"
+#include <openrtmp/rtmp/rtmp_chunk_assembler.h>
+#include <openrtmp/util/vec.h>
 #include <stdlib.h>
 
 typedef struct rtmp_asm_buf{

@@ -4,7 +4,7 @@
  * Must Compile : True
  */
 
-#include "../src/ieee754_double.c"
+#include "../src/util/ieee754_double.c"
 
 int main(){
     if(double_is_ieee754()){

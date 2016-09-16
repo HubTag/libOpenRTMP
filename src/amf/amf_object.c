@@ -21,10 +21,10 @@
 
 */
 
-#include "amf/amf_object.h"
-#include "amf/amf.h"
-#include "memutil.h"
-#include "vec.h"
+#include <openrtmp/amf/amf_object.h>
+#include <openrtmp/amf/amf.h>
+#include <openrtmp/util/memutil.h>
+#include <openrtmp/util/vec.h>
 #include <stdlib.h>
 #include <string.h>
 

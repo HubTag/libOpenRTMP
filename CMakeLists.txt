@@ -1,8 +1,24 @@
 cmake_minimum_required (VERSION 2.6)
 project (libopenrtmp C)
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -g -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 " )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -O2 -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -I$(PROJECT_SOURCE_DIR)/include" )
+set( OPENRTMP_VERSION "0.0" ) #Set this automatically with git?
+set( OPENRTMP_URL "http://hubtag.net" )
+
+set( INSTALL_DIR_LIB_DEF "" )
+set( INSTALL_DIR_INCLUDE_DEF "" )
+
+if( UNIX )
+    set( INSTALL_DIR_LIB_DEF "/usr/local/lib" )
+    set( INSTALL_DIR_INCLUDE_DEF "/usr/local/include" )
+endif()
+
+set( INSTALL_DIR_LIB "${INSTALL_DIR_LIB_DEF}" CACHE STRING "Library installation location" )
+set( INSTALL_DIR_INCLUDE "${INSTALL_DIR_INCLUDE_DEF}" CACHE STRING "Include file installation location" )
+
+
 
 include_directories( "$(PROJECT_SOURCE_DIR)/include" )
+
 
 
 function( issue_error code_file line col err )
@@ -93,9 +109,33 @@ file(GLOB_RECURSE src_files "src/*.*")
 file(GLOB_RECURSE inc_files "include/*.*")
 
 
-add_executable( amf_test
-	${src_files}
+add_library( openrtmp
 	${inc_files}
+	${src_files}
 )
 
-target_link_libraries( amf_test m )
+target_link_libraries( openrtmp m )
+
+configure_file( libopenrtmp.pc.in "${CMAKE_BINARY_DIR}/libopenrtmp.pc" )
+
+install(    TARGETS openrtmp
+            DESTINATION "${INSTALL_DIR_LIB}"
+            PERMISSIONS     OWNER_READ OWNER_WRITE
+                            GROUP_READ
+                            WORLD_READ )
+
+install(    DIRECTORY "include/openrtmp"
+            DESTINATION "${INSTALL_DIR_INCLUDE}"
+            PATTERN "*private*" EXCLUDE
+            PATTERN "*.h"
+            PERMISSIONS     OWNER_READ OWNER_WRITE
+                            GROUP_READ
+                            WORLD_READ )
+
+if( UNIX )
+    install(    FILES "${CMAKE_BINARY_DIR}/libopenrtmp.pc"
+                DESTINATION "${INSTALL_DIR_LIB}/pkgconfig"
+                PERMISSIONS     OWNER_READ OWNER_WRITE
+                                GROUP_READ
+                                WORLD_READ )
+endif()

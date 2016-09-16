@@ -1,0 +1,7 @@
+Name: libOpenRTMP
+Description: Open source low-level implementation of RTMP for video streaming.
+Version: ${OPENRTMP_VERSION}
+URL: http://hubtag.net
+Libs: -L${INSTALL_DIR_LIB} -lopenrtmp
+Libs.private: -lm
+Cflags: -I${INSTALL_DIR_INCLUDE}

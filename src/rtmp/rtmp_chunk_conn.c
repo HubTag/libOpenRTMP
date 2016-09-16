@@ -20,10 +20,10 @@
     along with libOpenRTMP. If not, see <http://www.gnu.org/licenses/>.
 
 */
-#include "rtmp/rtmp_private.h"
-#include "rtmp/chunk/rtmp_chunk_conn.h"
-#include "rtmp_debug.h"
-#include "memutil.h"
+#include <openrtmp/rtmp/rtmp_private.h>
+#include <openrtmp/rtmp/rtmp_chunk_conn.h>
+#include <openrtmp/rtmp/rtmp_debug.h>
+#include <openrtmp/util/memutil.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

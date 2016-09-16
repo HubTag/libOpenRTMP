@@ -23,10 +23,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "rtmp/rtmp_stream.h"
-#include "rtmp.h"
-#include "rtmp/rtmp_private.h"
-#include "memutil.h"
+#include <openrtmp/rtmp/rtmp_stream.h>
+#include <openrtmp/rtmp.h>
+#include <openrtmp/rtmp/rtmp_private.h>
+#include <openrtmp/util/memutil.h>
 #include <stdio.h>
 
 
@@ -196,6 +196,9 @@ rtmp_cb_status_t rtmp_stream_chunk_proc(
             }
             if( available >= 2 ){
                 usr_evt = ntoh_read_s( contents );
+            }
+            else{
+                return RTMP_CB_ABORT;
             }
             if( available >= 6 ){
                 param1 = ntoh_read_ud( contents + 2 );

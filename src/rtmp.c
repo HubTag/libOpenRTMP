@@ -21,9 +21,9 @@
 
 */
 
-#include "rtmp_config.h"
-#include "rtmp.h"
-#include "rtmp/rtmp_private.h"
+#include <openrtmp/rtmp/rtmp_config.h>
+#include <openrtmp/rtmp.h>
+#include <openrtmp/rtmp/rtmp_private.h>
 #include<stdlib.h>
 
 void rtmp_params_free( struct rtmp_params * params ){
