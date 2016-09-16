@@ -1,10 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
-project (libopenrtmp CXX C)
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -fpermissive" )
+project (libopenrtmp C)
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -g -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 " )
 
 include_directories( "$(PROJECT_SOURCE_DIR)/include" )
 
-SET_SOURCE_FILES_PROPERTIES( "${PROJECT_SOURCE_DIR}/compile_tests/ieee.c" PROPERTIES LANGUAGE CXX )
 
 function( issue_error code_file line col err )
     message( SEND_ERROR " \r${code_file}:${line}:${col}: error: ${err}" )
@@ -70,7 +69,7 @@ function( run_check code_file )
                     LINK_LIBRARIES m  )
         if( RUN_CHECK_SUPPORT AND RUN_CHECK_SUPPORT_BUILT )
             message( STATUS "Platform supports ${RUN_CHECK_SUPPORT_NAME} " )
-            set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${RUN_CHECK_SUPPORT_DEF}" PARENT_SCOPE )
+            set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${RUN_CHECK_SUPPORT_DEF}" PARENT_SCOPE )
 
         else()
             message( STATUS "Platform DOES NOT support ${RUN_CHECK_SUPPORT_NAME} " )
@@ -92,7 +91,6 @@ run_check( "strncasecmp.c" )
 
 file(GLOB_RECURSE src_files "src/*.*")
 file(GLOB_RECURSE inc_files "include/*.*")
-SET_SOURCE_FILES_PROPERTIES( ${src_files} PROPERTIES LANGUAGE CXX )
 
 
 add_executable( amf_test

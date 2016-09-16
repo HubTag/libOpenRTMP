@@ -31,7 +31,7 @@
 #include <type_traits>
 #define ezalloc(a) ((decltype(a))calloc(1,sizeof(std::remove_pointer<decltype(a)>::type)))
 #else
-#define ezalloc(a) (calloc(1,sizeof (a)))
+#define ezalloc(a) (calloc(1,sizeof (*a)))
 #endif
 #define ALIAS(a,b,c) b c = (b)a;
 

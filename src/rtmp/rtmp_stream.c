@@ -75,12 +75,12 @@ rtmp_cb_status_t rtmp_stream_call_amf(
         if( amf_value_is_like( item, AMF_TYPE_INTEGER ) ){
             uint32_t seq_num = amf_value_get_integer( item );
             VEC_DECLARE(rtmp_call_cb_t)* cbs = &args->stream->call_callback;
-            printf("%d\n", VEC_SIZE(*cbs));
-            printf("%d\n", VEC_SIZE(args->stream->call_callback));
+            printf("%zd\n", VEC_SIZE(*cbs));
+            printf("%zd\n", VEC_SIZE(args->stream->call_callback));
             bool erased = false;
             for( size_t i = 0; i < VEC_SIZE(*cbs); ++i ){
-                printf("%d\n", VEC_SIZE(*cbs));
-                printf("%d\n", VEC_SIZE(args->stream->call_callback));
+                printf("%zd\n", VEC_SIZE(*cbs));
+                printf("%zd\n", VEC_SIZE(args->stream->call_callback));
                 i -= erased ? 1 : 0;
                 erased = false;
                 if( (*cbs)[i].seq_num == seq_num && (*cbs)[i].callback ){
@@ -671,12 +671,12 @@ rtmp_err_t rtmp_stream_respond2( rtmp_stream_t stream, size_t chunk_id, size_t m
 
 rtmp_err_t rtmp_stream_call2_va( rtmp_stream_t stream, size_t chunk_id, size_t msg_id, const char *name, rtmp_stream_amf_proc callback, void * userdata, va_list list ){
     if( callback ){
-        printf("a %d\n", VEC_SIZE(stream->call_callback));
+        printf("a %zd\n", VEC_SIZE(stream->call_callback));
         rtmp_call_cb_t * space = VEC_PUSH( stream->call_callback );
         if( !space ){
             return RTMP_GEN_ERROR(RTMP_ERR_OOM);
         }
-        printf("b %d\n", VEC_SIZE(stream->call_callback));
+        printf("b %zd\n", VEC_SIZE(stream->call_callback));
         space->callback = callback;
         space->user = userdata;
         space->seq_num = stream->seq_num;

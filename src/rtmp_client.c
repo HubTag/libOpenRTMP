@@ -322,9 +322,14 @@ rtmp_err_t rtmp_client_recv_audio( rtmp_client_t client,
 rtmp_err_t rtmp_client_recv_video( rtmp_client_t client,
     bool want_video);
 
-rtmp_err_t rtmp_client_publish( rtmp_client_t client,
-    const char * restrict publish_name,
-    const char * restrict publish_type);
+rtmp_err_t rtmp_client_publish(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * playpath,
+    const char * type,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
 
 rtmp_err_t rtmp_client_seek( rtmp_client_t client,
     rtmp_time_t seek_ms);

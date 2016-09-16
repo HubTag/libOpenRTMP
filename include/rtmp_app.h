@@ -64,7 +64,7 @@ typedef rtmp_cb_status_t (*rtmp_app_on_av_proc)(
     rtmp_app_t app,
     size_t streamid,
     rtmp_time_t timestamp,
-    void * av_data,
+    const void * av_data,
     size_t av_length,
     bool final_part,
     void *user
@@ -92,7 +92,7 @@ rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_t p
 size_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name, char * new_name, size_t len );
 size_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type, char * new_name, size_t len );
 rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t params  );
-rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part );
-rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part );
+rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part );
+rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part );
 
 #endif

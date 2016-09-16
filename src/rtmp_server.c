@@ -341,12 +341,14 @@ void flv_write_tag( FILE * file, byte type, uint32_t size, uint32_t timestamp ){
 rtmp_cb_status_t rtmp_server_onsetDataFrame( rtmp_stream_args_t args, amf_t object, void *user ){
     const rtmp_time_t timestamp = args->timestamp;
     ALIAS( user, rtmp_server_t, self);
+    (void)timestamp;
     return rtmp_app_metadata( args->stream, self->app, object );
 }
 
 rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
     ALIAS( user, rtmp_server_t, self);
+    (void)timestamp;
     /*if( output->first_part ){
         output->first_part = false;
         output->last_size = length + remaining + 11;
@@ -358,11 +360,12 @@ rtmp_cb_status_t rtmp_server_write_vid(rtmp_stream_args_t args, const byte *data
         flv_write_backptr(output->file, output->last_size);
         output->last_size = 0;
     }*/
-    return rtmp_app_video( args->stream, self->app, args->stream, args->timestamp, data, length, remaining == 0 );
+    return rtmp_app_video( args->stream, self->app, args->message_stream, args->timestamp, data, length, remaining == 0 );
 }
 rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data, size_t length, size_t remaining, void * user){
     const rtmp_time_t timestamp = args->timestamp;
     ALIAS( user, rtmp_server_t, self);
+    (void)timestamp;
     /*if( output->first_part_a ){
         output->first_part_a = false;
         output->last_size_a = length + remaining + 11;
@@ -374,7 +377,7 @@ rtmp_cb_status_t rtmp_server_write_aud(rtmp_stream_args_t args, const byte *data
         flv_write_backptr(output->file, output->last_size_a);
         output->last_size_a = 0;
     }*/
-    return rtmp_app_audio( args->stream, self->app, args->stream, args->timestamp, data, length, remaining == 0 );
+    return rtmp_app_audio( args->stream, self->app, args->message_stream, args->timestamp, data, length, remaining == 0 );
 }
 
 

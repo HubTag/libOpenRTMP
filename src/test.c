@@ -45,7 +45,7 @@
 typedef struct app_data{
     ringbuffer_t a_buffer;
     ringbuffer_t v_buffer;
-    const char * playpath;
+    char * playpath;
     rtmp_client_t client;
     amf_t onMetadata;
     rtmp_stream_t stream;
@@ -53,10 +53,14 @@ typedef struct app_data{
     bool ready;
     bool a_ready;
     bool v_ready;
+    size_t skip_head;
+    size_t uid;
+    FILE * f;
 } appdata_t;
 
 void appdata_destroy(void * data){
     ALIAS( data, appdata_t *, appdata );
+    fclose( appdata->f );
     rtmp_client_destroy( appdata->client );
     amf_destroy( appdata->onMetadata );
     ringbuffer_destroy( appdata->v_buffer );
@@ -86,6 +90,9 @@ static rtmp_cb_status_t app_connect( rtmp_stream_t stream, rtmp_app_t app, amf_t
     data->v_buffer = ringbuffer_create(RTMP_DEFAULT_PROXY_V_BUFFER_SIZE);
     data->a_buffer = ringbuffer_create(RTMP_DEFAULT_PROXY_A_BUFFER_SIZE);
     rtmp_stream_set_data( stream, data, appdata_destroy );
+    data->skip_head = 2;
+    static int uids = 0;
+    data->uid = uids++;
     return RTMP_CB_CONTINUE;
 }
 
@@ -113,6 +120,9 @@ static size_t app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * ta
         return inlen;
     }
     data->playpath = str_dup( target );
+    char buf[1000];
+    snprintf( buf, 1000, "%s.h264", target );
+    data->f = fopen(buf, "wb");
 
     return inlen;
 }
@@ -131,27 +141,46 @@ static rtmp_cb_status_t app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_
     return RTMP_CB_CONTINUE;
 }
 
-static rtmp_cb_status_t app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part, void *user ){
+rtmp_client_t global_client = nullptr;
+size_t global_uid = 0;
+static byte padding[100000];
+
+static rtmp_cb_status_t app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part, void *user ){
     ALIAS( user, rtmp_t, rtmp );
     ALIAS( rtmp_stream_get_data(stream), appdata_t *, data );
+    (void)rtmp;
     if( !data || !data->ready ){
         return RTMP_CB_DEFER_PAUSE;
     }
+    if( global_client == nullptr ){
+        global_client = data->client;
+    }
+    if( global_uid > data->uid ){
+        return RTMP_CB_CONTINUE;
+    }
+    else{
+        global_uid = data->uid;
+    }
+
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
     if( final_part ){
         if( ringbuffer_copy_write( data->v_buffer, av_data, av_length ) < av_length ){
             return RTMP_CB_ERROR;
         }
+        ringbuffer_copy_write( data->v_buffer, padding, 1000 );
         unsigned long len;
-        const void * buffer = ringbuffer_get_read_buf(data->v_buffer, &len);
-        ret = rtmp_stream_send_video2(
-                rtmp_client_stream(data->client),
-                0,
-                data->streamid,
-                timestamp,
-                buffer,
-                len,
-                nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+        const byte * buffer = ringbuffer_get_read_buf(data->v_buffer, &len);
+        if( global_uid == data->uid || (buffer[0] & 0xF0 >> 4) == 1 /*keyframe*/ ){
+            global_uid = data->uid;
+            ret = rtmp_stream_send_video2(
+                    rtmp_client_stream(global_client),
+                    0,
+                    data->streamid,
+                    timestamp,
+                    buffer,
+                    len,
+                    nullptr ) == RTMP_ERR_NONE ? RTMP_CB_CONTINUE : RTMP_CB_ERROR;
+        }
         ringbuffer_clear(data->v_buffer);
     }
     else {
@@ -161,11 +190,21 @@ static rtmp_cb_status_t app_video( rtmp_stream_t stream, rtmp_app_t app, size_t 
     }
     return ret;
 }
-static rtmp_cb_status_t app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, void * av_data, size_t av_length, bool final_part, void *user ){
+static rtmp_cb_status_t app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part, void *user ){
     ALIAS( user, rtmp_t, rtmp );
     ALIAS( rtmp_stream_get_data(stream), appdata_t *, data );
+    (void)rtmp;
     if( !data || !data->ready ){
         return RTMP_CB_DEFER_PAUSE;
+    }
+    if( global_client == nullptr ){
+        global_client = data->client;
+    }
+    if( global_uid > data->uid ){
+        return RTMP_CB_CONTINUE;
+    }
+    else{
+        global_uid = data->uid;
     }
     rtmp_cb_status_t ret = RTMP_CB_CONTINUE;
     if( final_part ){
@@ -175,7 +214,7 @@ static rtmp_cb_status_t app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t 
         unsigned long len;
         const void * buffer = ringbuffer_get_read_buf(data->a_buffer, &len);
         ret = rtmp_stream_send_audio2(
-                rtmp_client_stream(data->client),
+                rtmp_client_stream(global_client),
                 0,
                 data->streamid,
                 timestamp,
@@ -283,6 +322,9 @@ rtmp_cb_status_t client_result_connect( rtmp_stream_args_t args, amf_t object, v
 }
 
 int main(){
+    for( size_t i = 0; i < sizeof(padding)/sizeof(padding[0]); ++i ){
+        padding[i] = 0xFF;
+    }
     signal(SIGINT, sig_terminate);
 	signal(SIGTERM, sig_terminate);
 

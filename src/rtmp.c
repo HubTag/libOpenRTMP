@@ -73,26 +73,26 @@ void rtmp_set_app_list( rtmp_t mgr, rtmp_app_list_t list ){
 rtmp_err_t rtmp_gen_error(rtmp_err_t err, size_t line, const char *file, const char *msg){
     #if RTMP_LOG_LEVEL >= 1
     if( err >= RTMP_ERR_FATAL ){
-            printf( "%s:%d Fatal error %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
+        printf( "%s:%zd Fatal error %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
     }
     #if RTMP_LOG_LEVEL >= 2
     else if( err >= RTMP_ERR_ERROR && err != RTMP_ERR_AGAIN ){
-        printf( "%s:%d Error %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
+        printf( "%s:%zd Error %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
     }
     #endif
     #if RTMP_LOG_LEVEL >= 3
     else if (err != RTMP_ERR_NONE && err != RTMP_ERR_NOT_READY ){
-        printf( "%s:%d Warning %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
+        printf( "%s:%zd Warning %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
     }
     #endif
     #if RTMP_LOG_LEVEL >= 4
     else if (err != RTMP_ERR_NONE ){
-        printf( "%s:%d Notice %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
+        printf( "%s:%zd Notice %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
     }
     #endif
     #if RTMP_LOG_LEVEL >= 10
     else {
-        printf( "%s:%d Notice %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
+        printf( "%s:%zd Notice %s (%s)\n", file, line, rtmp_get_err_name(err), msg );
     }
     #endif
     #endif
