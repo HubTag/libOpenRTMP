@@ -377,10 +377,9 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_ack(rtmp_chunk_conn_t conn ){
             //Realistically this should never happen.
             //This implies that the peer has received more bytes than we have sent.
             //This shouldn't cause any issues though, so emit only a soft error.
-            conn->bytes_out = 0;
-            return RTMP_GEN_ERROR(RTMP_ERR_DIVERGENCE_METER_ERROR);
+            //return RTMP_GEN_ERROR(RTMP_ERR_DIVERGENCE_METER_ERROR);
         }
-        conn->bytes_out -= amount;
+        conn->last_ack_out = amount;
         return RTMP_GEN_ERROR(RTMP_ERR_NONE);
     }
     return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
@@ -452,24 +451,27 @@ static rtmp_err_t rtmp_chunk_conn_service_recv_cmd( rtmp_chunk_conn_t conn, cons
     memcpy( conn->control_message_buffer + conn->control_message_len, input, available );
     conn->control_message_len += available;
 
+    rtmp_err_t ret = RTMP_ERR_NONE;
+
     if( remaining == 0 ){
         switch( msg->message_type ){
             case RTMP_MSG_SET_CHUNK_SIZE:
-                return rtmp_chunk_conn_service_recv_set_chunk_size( conn );
+                ret = rtmp_chunk_conn_service_recv_set_chunk_size( conn ); break;
             case RTMP_MSG_ABORT:
-                return rtmp_chunk_conn_service_recv_abort( conn );
+                ret =  rtmp_chunk_conn_service_recv_abort( conn ); break;
             case RTMP_MSG_SET_PEER_BWIDTH:
-                return rtmp_chunk_conn_service_recv_set_peer_bwidth( conn );
+                ret =  rtmp_chunk_conn_service_recv_set_peer_bwidth( conn ); break;
             case RTMP_MSG_ACK:
-                return rtmp_chunk_conn_service_recv_ack( conn );
+                ret =  rtmp_chunk_conn_service_recv_ack( conn ); break;
             case RTMP_MSG_WIN_ACK_SIZE:
-                return rtmp_chunk_conn_service_recv_win_ack_size( conn );
+                ret =  rtmp_chunk_conn_service_recv_win_ack_size( conn ); break;
         }
+        conn->control_message_len = 0;
     }
     else if( available == 0 ){
         return RTMP_GEN_ERROR(RTMP_ERR_INVALID);
     }
-    return RTMP_GEN_ERROR(RTMP_ERR_NONE);
+    return RTMP_GEN_ERROR(ret);
 }
 
 static rtmp_err_t rtmp_chunk_conn_service_recv_issue(
@@ -564,6 +566,9 @@ static rtmp_err_t rtmp_chunk_conn_service_recv( rtmp_chunk_conn_t conn, rtmp_io_
         available = length;
         //Store the message ID
         conn->partial_msg = msg->chunk_stream_id;
+    }
+    if( conn->bytes_in - conn->last_ack_in > conn->peer_window_size / 2 ){
+        rtmp_chunk_conn_acknowledge( conn );
     }
 
     return rtmp_chunk_conn_service_recv_issue( conn, input, previous, msg, available );
@@ -705,10 +710,7 @@ rtmp_err_t rtmp_chunk_conn_acknowledge( rtmp_chunk_conn_t conn ){
         buffer,
         sizeof( buffer ),
         nullptr );
-
-    if( ret < RTMP_ERR_ERROR ){
-        conn->bytes_in = 0;
-    }
+    conn->last_ack_in = conn->bytes_in;
     return RTMP_GEN_ERROR(ret);
 }
 

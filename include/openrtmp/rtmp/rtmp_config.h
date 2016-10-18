@@ -27,24 +27,24 @@
 #define RTMP_DEFAULT_PORT                   1935
 
 //Protocol defaults. These may all be negotiated at runtime.
-#define RTMP_DEFAULT_WINDOW_SIZE            0x0000FFFF
+#define RTMP_DEFAULT_WINDOW_SIZE            0x00FFFFFF
 #define RTMP_DEFAULT_PEER_WINDOW_SIZE       0x0
 #define RTMP_DEFAULT_BANDWIDTH_TYPE         RTMP_LIMIT_HARD
 
 
 //The max chunk size this implementation will allow to be used.
 //The peer may still use a larger chunk size than this.
-#define RTMP_MAX_CHUNK_SIZE                 0x0000FFFF
+#define RTMP_MAX_CHUNK_SIZE                 0x0004FFFF
 
 //Desired chunk size
-#define RTMP_DESIRED_CHUNK_SIZE             0x00000FFF
+#define RTMP_DESIRED_CHUNK_SIZE             0x005FFFFF
 
 //Size of the IO buffers used to feed data in and out of the RTMP object.
 //This must be at least 1600 bytes.
-#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x000FFFFF
+#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x05FFFFFF
 
-#define RTMP_DEFAULT_PROXY_V_BUFFER_SIZE    0x000FFFFF
-#define RTMP_DEFAULT_PROXY_A_BUFFER_SIZE    0x000FFFFF
+#define RTMP_DEFAULT_PROXY_V_BUFFER_SIZE    0x05FFFFFF
+#define RTMP_DEFAULT_PROXY_A_BUFFER_SIZE    0x05FFFFFF
 
 //Size of static allocation for chunk header cache
 #define RTMP_STREAM_STATIC_CACHE_SIZE 10

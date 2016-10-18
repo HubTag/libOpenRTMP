@@ -80,11 +80,26 @@ rtmp_err_t rtmp_client_createstream(
     void *userdata
 );
 
+rtmp_err_t rtmp_client_deletestream(
+    rtmp_client_t client,
+    size_t stream_id,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
 rtmp_err_t rtmp_client_publish(
     rtmp_client_t client,
     size_t streamid,
     const char * playpath,
     const char * type,
+    rtmp_stream_amf_proc proc,
+    void *userdata
+);
+
+rtmp_err_t rtmp_client_unpublish(
+    rtmp_client_t client,
+    size_t streamid,
+    const char * playpath,
     rtmp_stream_amf_proc proc,
     void *userdata
 );
@@ -128,9 +143,6 @@ rtmp_err_t rtmp_client_play2( rtmp_client_t client,
     double offset,
     double len,
     const char *restrict transition );
-
-rtmp_err_t rtmp_client_deletestream( rtmp_client_t client,
-    double stream_id);
 
 rtmp_err_t rtmp_client_recv_audio( rtmp_client_t client,
     bool want_audio);

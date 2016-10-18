@@ -256,6 +256,8 @@ const char* rtmp_get_err_name( rtmp_err_t err ){
         case RTMP_ERR_POLL_FAIL: return "Polling system failed";
         case RTMP_ERR_ABORT: return "Connection aborted";
         case RTMP_ERR_FATAL: return "Fatal error";
+        case RTMP_ERR_CONNECTION_CLOSED: return "Connection closed";
+        case RTMP_ERR_PAUSE: return "Paused";
         default:
             snprintf( scratch_buffer, 511, "Unknown error code %d", err );
             return scratch_buffer;

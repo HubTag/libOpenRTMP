@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (libopenrtmp C)
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -O2 -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -I$(PROJECT_SOURCE_DIR)/include" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -g -Wall -fstrict-aliasing -Wextra -Wno-unused-parameter -Wstrict-aliasing=2 -I$(PROJECT_SOURCE_DIR)/include" )
 set( OPENRTMP_VERSION "0.0" ) #Set this automatically with git?
 set( OPENRTMP_URL "http://hubtag.net" )
 

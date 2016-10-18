@@ -76,6 +76,10 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout );
 
 rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client );
 
+rtmp_err_t rtmp_disconnect( rtmp_t mgr, rtmp_client_t client );
+
+rtmp_err_t rtmp_close_stream( rtmp_t mgr, rtmp_stream_t stream );
+
 rtmp_err_t rtmp_listen( rtmp_t mgr, const char * iface, short port, rtmp_connect_proc cb, void *user );
 
 rtmp_err_t rtmp_amferr( amf_err_t err );

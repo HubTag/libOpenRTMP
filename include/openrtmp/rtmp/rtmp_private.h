@@ -73,6 +73,7 @@ struct rtmp_chunk_conn {
     rtmp_chunk_stream_cache_t stream_cache_in;
 
     size_t bytes_out, bytes_in;
+    size_t last_ack_out, last_ack_in;
     size_t partial_chunk;
     size_t partial_msg;
 
