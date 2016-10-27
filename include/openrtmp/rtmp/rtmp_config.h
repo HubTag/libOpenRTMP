@@ -41,7 +41,7 @@
 
 //Size of the IO buffers used to feed data in and out of the RTMP object.
 //This must be at least 1600 bytes.
-#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x05FFFFFF
+#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x00FFFFFF
 
 #define RTMP_DEFAULT_PROXY_V_BUFFER_SIZE    0x05FFFFFF
 #define RTMP_DEFAULT_PROXY_A_BUFFER_SIZE    0x05FFFFFF

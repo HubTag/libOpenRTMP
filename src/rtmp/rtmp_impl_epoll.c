@@ -214,10 +214,10 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_out_buff( conn, size );
-                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
-                    putchar('f');
-                    goto confail;
-                }
+            }
+            if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
+                putchar('f');
+                goto confail;
             }
         }
     }
@@ -244,12 +244,12 @@ static rtmp_err_t handle_stream( rtmp_t mgr, rtmp_mgr_svr_t stream, int flags ){
                     goto confail;
                 }
                 rtmp_chunk_conn_commit_in_buff( conn, newsize );
-                if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
-                    stream->closing = true;
-                    stream->flags = EPOLLOUT;
-                    e.events = EPOLLOUT;
-                    epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
-                }
+            }
+            if( rtmp_chunk_conn_service( conn ) >= RTMP_ERR_FATAL ){
+                stream->closing = true;
+                stream->flags = EPOLLOUT;
+                e.events = EPOLLOUT;
+                epoll_ctl( mgr->epoll_args.epollfd, EPOLL_CTL_MOD, stream->socket, &e );
             }
         }
     }
@@ -281,24 +281,6 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
     struct epoll_event events[RTMP_EPOLL_MAX];
     rtmp_err_t err = RTMP_ERR_NONE;
     int fd_count = epoll_wait( mgr->epoll_args.epollfd, events, RTMP_EPOLL_MAX, timeout );
-    if( rtmp_get_time() > mgr->last_refresh + RTMP_REFRESH_TIME ){
-        size_t s = VEC_SIZE(mgr->servers);
-        for( size_t i = 0; i < s; ++i ){
-            if( !mgr->servers[i] ){
-                continue;
-            }
-            if( mgr->servers[i]->type == RTMP_T_SERVER_T ){
-                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ) );
-            }
-            else if( mgr->servers[i]->type == RTMP_T_CLIENT_T ){
-                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_client_stream( mgr->servers[i]->client ) ) );
-            }
-        }
-        mgr->last_refresh = rtmp_get_time();
-    }
-    if( fd_count < 0 ){
-        return RTMP_GEN_ERROR(RTMP_ERR_POLL_FAIL);
-    }
     for( size_t i = 0; i < (size_t)fd_count; ++i ){
         rtmp_t_t * type = events[i].data.ptr;
         switch( *type ){
@@ -316,6 +298,26 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
         if( err != RTMP_ERR_NONE ){
             return RTMP_GEN_ERROR(err);
         }
+    }
+    if( rtmp_get_time() > mgr->last_refresh + RTMP_REFRESH_TIME ){
+        size_t s = VEC_SIZE(mgr->servers);
+        for( size_t i = 0; i < s; ++i ){
+            if( !mgr->servers[i] ){
+                continue;
+            }
+            if( mgr->servers[i]->type == RTMP_T_SERVER_T ){
+                rtmp_chunk_conn_call_event( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ), RTMP_EVENT_REFRESH );
+                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_server_stream( mgr->servers[i]->server ) ) );
+            }
+            else if( mgr->servers[i]->type == RTMP_T_CLIENT_T ){
+                rtmp_chunk_conn_call_event( rtmp_stream_get_conn( rtmp_client_stream( mgr->servers[i]->client ) ), RTMP_EVENT_REFRESH );
+                rtmp_chunk_conn_service( rtmp_stream_get_conn( rtmp_client_stream( mgr->servers[i]->client ) ) );
+            }
+        }
+        mgr->last_refresh = rtmp_get_time();
+    }
+    if( fd_count < 0 ){
+        return RTMP_GEN_ERROR(RTMP_ERR_POLL_FAIL);
     }
     return RTMP_GEN_ERROR(err);
 }

@@ -75,7 +75,8 @@ typedef enum {
     RTMP_EVENT_INTERRUPTED,
     RTMP_EVENT_FAILED,
     RTMP_EVENT_FILLED,
-    RTMP_EVENT_EMPTIED
+    RTMP_EVENT_EMPTIED,
+    RTMP_EVENT_REFRESH,
 } rtmp_event_t;
 
 typedef enum {

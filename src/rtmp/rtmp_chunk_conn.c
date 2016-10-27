@@ -71,7 +71,7 @@ bool rtmp_chunk_conn_connected( rtmp_chunk_conn_t conn ){
 }
 
 
-static rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
+rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event ){
     rtmp_err_t err = RTMP_ERR_NONE;
     if( conn->callback_event ){
         switch( conn->callback_event( conn, event, conn->userdata ) ){

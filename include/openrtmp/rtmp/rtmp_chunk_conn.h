@@ -107,6 +107,9 @@ rtmp_err_t rtmp_chunk_conn_commit_out_buff( rtmp_chunk_conn_t conn, size_t size 
 
 rtmp_err_t rtmp_chunk_conn_pause( rtmp_chunk_conn_t conn, bool status );
 
+
+rtmp_err_t rtmp_chunk_conn_call_event( rtmp_chunk_conn_t conn, rtmp_event_t event );
+
 //Send an arbitrary message via the chunk stream.
 rtmp_err_t
 rtmp_chunk_conn_send_message(
