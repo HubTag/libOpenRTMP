@@ -1,6 +1,3 @@
-Structure of Usage
-============
-
 libOpenRTMP was designed to be used with an asyncronous programming model. As such, pretty much everything is driven by event callbacks. The structure of a consuming server is roughly:
 
  * Create a manager.
