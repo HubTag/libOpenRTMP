@@ -7,6 +7,8 @@ Specifies the various shared object events which may occur.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_SO_EVT_USE = 1,
     RTMP_SO_EVT_RELEASE,

@@ -23,7 +23,7 @@ This document assumes that the reader has foundational knowledge of basic intern
 
 |Term|Definition|
 |:--|:--|
-|AMF Object | An instance of the `amf_object` abstraction which provides an interface to read and write AMF|like data, along with serialization and deserialization routines.|
+|AMF Object | An instance of the `amf_object` abstraction which provides an interface to read and write AMF-like data, along with serialization and deserialization routines.|
 |App | A collection of callbacks associated with a URL path sent when connecting to a server. in `rtmp://localhost/foo`, the app is `foo`.|
 |App List | A collection of apps associated with different URL paths when connecting to a server.|
 |Chunk Conn | An instance of the `rtmp_chunk_conn` abstraction which provides the lowest level set of operations for RTMP connections.|

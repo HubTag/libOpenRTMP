@@ -7,6 +7,8 @@ Contains names for status codes which may be returned by callbacks to control th
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_CB_CONTINUE = 0,
     RTMP_CB_ERROR,

@@ -7,6 +7,8 @@ A bitflag indicating whether a client supports various functions.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_SUPPORT_VID_CLIENT_SEEK = 0x0001
 } rtmp_support_func_vid_t;
@@ -17,4 +19,4 @@ typedef enum {
 #### RTMP_SUPPORT_VID_CLIENT_SEEK ####
 > Indicates that the player can perform frame-accurate seeks.
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32

@@ -6,6 +6,8 @@ Provides names to indicate how the strategy a peer should use to change their wi
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_LIMIT_HARD = 0,
     RTMP_LIMIT_SOFT,
@@ -18,14 +20,14 @@ typedef enum {
 #### RTMP_LIMIT_HARD ####
 > The peer should limit output bandwidth to the accompanying value.
 > 
-> Defined in ง5.4.5 on page 21
+> Defined in ยง5.4.5 on page 21
 
 #### RTMP_LIMIT_SOFT ####
 > The peer should limit output bandwidth to the accomanying value, unless the existing limit is smaller.
 > 
-> Defined in ง5.4.5 on page 21
+> Defined in ยง5.4.5 on page 21
 
 #### RTMP_LIMIT_DYNAMIC ####
 > If the previous limit was hard, treat this message as also being hard. Otherwise, ignore this message.
 > 
-> Defined in ง5.4.5 on page 21
+> Defined in ยง5.4.5 on page 21

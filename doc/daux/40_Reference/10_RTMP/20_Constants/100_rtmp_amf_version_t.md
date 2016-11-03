@@ -7,6 +7,8 @@ Provides some symbols to specify AMF version.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_AMF0 = 0,
     RTMP_AMF3 = 3

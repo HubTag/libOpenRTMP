@@ -7,6 +7,8 @@ A set of bitflags which are used to indicate to the peer what sort of audio code
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_SUPPORT_SND_NONE       = 0x0001,
     RTMP_SUPPORT_SND_ADPCM      = 0x0002,
@@ -29,64 +31,64 @@ typedef enum {
 #### RTMP_SUPPORT_SND_NONE ####
 > Indicates support for Raw sound
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_ADPCM ####
 > Indicates support for ADPCM audio compression
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_MP3 ####
 > Indicates support for MP3 audio compression
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_INTEL ####
 > Not used
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_UNUSED ####
 > Not used
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_NELLY8 ####
 > Indicates support for NellyMoser audio compression at 8kHz
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_NELLY ####
 > Indicates support for NellyMoser audio compression at 5, 11, 22, and 44kHz
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_G711A ####
 > Indicates support for G711A audio compression
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_G711U ####
 > Indicates support for G711U audio compression
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_NELLY16 ####
 > Indicates support for NellyMoser audio compression at 16kHz
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_AAC ####
 > Indicates support for Advanced Audio Coding
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_SPEEX ####
 > Indicates support for Speex audio compression
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31
 
 #### RTMP_SUPPORT_SND_ALL ####
 > Indicates support for all compatible audio compression codecs
 > 
-> Defined in ง7.2.1.1 on page 31
+> Defined in ยง7.2.1.1 on page 31

@@ -7,6 +7,8 @@ Specifies the various user events that may occur.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_USR_EVT_STREAM_BEGIN = 0,
     RTMP_USR_EVT_STREAM_EOF,

@@ -7,6 +7,8 @@ A set of bitflags which are used to indicate to the peer what sort of video code
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_SUPPORT_VID_UNUSED     = 0x0001,
     RTMP_SUPPORT_VID_JPEG       = 0x0002,
@@ -25,44 +27,44 @@ typedef enum {
 #### RTMP_SUPPORT_VID_UNUSED ####
 > Not used
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_JPEG ####
 > Not used
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_SORENSON ####
 > Indicates support for Sorenson flash video compression
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_HOMEBREW ####
 > Indicates support for V1 screen sharing
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_VP6 ####
 > Indicates support for On2 video compression
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_VP6ALPHA ####
 > Indicates support for On2 video with alpha compression
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_HOMEBREWV ####
 > Indicates support for V2 screen sharing
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_H264 ####
 > Indicates support for Advanced Video Coding
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32
 
 #### RTMP_SUPPORT_VID_ALL ####
 > Indicates support for all compatible codecs
 > 
-> Defined in ง7.2.1.1 on page 32
+> Defined in ยง7.2.1.1 on page 32

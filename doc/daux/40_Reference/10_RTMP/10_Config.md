@@ -19,15 +19,15 @@ The RTMP config header contains many definitions that drive a few factors which 
 |`RTMP_STREAM_STATIC_CACHE_SIZE`|`10`|The size of the static stream cache allocation. If a chunk stream ID exceeds this number, dense dynamic allocation will be used.|
 |`RTMP_STREAM_CACHE_MAX`|`100`|The max number of stream cache entries.|
 |`RTMP_CONTROL_BUFFER_SIZE`|`12`|The size of the control message buffer. If a control message can't fit in this number of bytes, the message is ignored. As of writing, the biggest documented control message is 12 bytes.|
-|`RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES`||If defined, connections with handshakes whose timestamps aren't correct are dropped.|
-|`RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES`||If defined, connections with handshakes whose nonces are incorrect are dropped.|
+|`RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES`| |If defined, connections with handshakes whose timestamps aren't correct are dropped.|
+|`RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES`| |If defined, connections with handshakes whose nonces are incorrect are dropped.|
 |`RTMP_LOG_LEVEL`|`2`|The logging level. The lower the number, the less info is logged. More information is available in the header.|
 |`RTMP_MAX_ALLOC`|`10000`|The maximum amount of memory allowed to be allocated by a stream. Currently unimplemented.|
 |`RTMP_MAX_CHUNK_CACHE`|`0xFFFF`|The chunk assembler will allocate this much room for assembly. Chunks larger than this will still be fragmented. Usually, chunks larger than a few hundred bytes are media frames, which are much easier to deal with as fragments.|
 |`RTMP_MAX_STREAMS`|`10`|The maximum number of message streams on one connection.|
 |`RTMP_MAX_ASM_HARD_BUFFER`|`20`|The maximum number of assembler buffers. The stream will be aborted if there are more streams than this.|
 |`RTMP_MAX_ASM_SOFT_BUFFER`|`5`|The maximum number of pre-allocated assembler buffers. If more buffers are needed than this, they will be allocated as needed, and destroyed once the relevant message has been assembled.|
-|`RTMP_POLLTECH_EPOLL`||If defined, the networking implementation used will be epoll based.|
+|`RTMP_POLLTECH_EPOLL`| |If defined, the networking implementation used will be epoll based.|
 |`RTMP_EPOLL_MAX`|`100`|The maximum number of file descriptors returned by epoll.|
 |`RTMP_LISTEN_SIZE`|`100`|The maximum number of connections waiting to be accepted.|
 |`RTMP_REFRESH_TIME`|`1000`|The interval, in milliseconds, at which the refresh event is fired.|

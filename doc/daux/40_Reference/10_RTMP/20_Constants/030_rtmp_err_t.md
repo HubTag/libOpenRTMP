@@ -7,6 +7,8 @@ Contains names for error codes which are returned by more libOpenRTMP calls.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_ERR_NONE = 0,
     RTMP_ERR_CONNECTION_CLOSED,

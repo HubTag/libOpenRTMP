@@ -6,6 +6,8 @@ Contains names for events which are fired by libOpenRTMP in event callbacks.
 ## Syntax ##
 
 ```c
+#include<openrtmp/rtmp/rtmp_constants.h>
+
 typedef enum {
     RTMP_EVENT_CONNECT_SUCCESS,
     RTMP_EVENT_CONNECT_FAIL,
