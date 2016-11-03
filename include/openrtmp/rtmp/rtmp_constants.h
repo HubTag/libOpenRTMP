@@ -49,10 +49,6 @@ extern "C" {
 #define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
 #define RTMP_ANY                            0xFFFFFF
 
-#define RTMP_FMSVER                         "0,0,0,0"
-#define RTMP_FMSVER_STR                     "LibOpenRTMP/" RTMP_FMSVER
-#define RTMP_FLASHVER_VERSION               "0.0"
-#define RTMP_FLASHVER_STR                   "LibOpenRTMP/" RTMP_FLASHVER_VERSION " (compatible; FMSc/1.0)"
 #define RTMP_CAPABILITIES                   0x1F
 #define RTMP_MODE                           1
 

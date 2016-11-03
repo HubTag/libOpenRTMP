@@ -24,9 +24,6 @@
 #ifndef RTMP_H_VEC_H
 #define RTMP_H_VEC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #include <string.h>
@@ -128,6 +125,11 @@ do{\
 #define VEC_SIZE(name) (VEC_PRIV_ACCESS(name)[0])
 #define VEC_DESTROY(name) ((name?(free(VEC_PRIV_PTR(name)),0):0),name=(VEC_PRIV_T(name))0)
 #define VEC_DESTROY_DTOR(name,dtor) do{size_t i; for(i=0;i<VEC_SIZE(name);++i){dtor(name[i]);}VEC_DESTROY(name);}while(0)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 inline void * VEC_PRIV_REALLOC(void**ptr, size_t size){
 	void *ret = realloc(VEC_PRIV_PTR(*ptr), size);
