@@ -1,0 +1,18 @@
+Replace enums with def stubs:
+*\([^ ,]*\).*
+#### \1 ####\n> \n> \n
+ 
+ Replace 2 column tables with defs:
+\|`\([^`]*\)`\|\([^|]*\)\|.*
+#### \1 ####\n> \2\n> \n
+
+Replace three column tables...
+\|`\([^`]*\)`\|\([^|]*\)\|\([^|]*\)\|.*
+With def + defined in location
+#### \1 ####\n> \2\n> \n> Defined in \3\n
+With def and severity
+#### \1 ####\n> \3\n> \n> Severity: \2\n
+
+Replace enums with enum + inline links
+^\( *\)\([^ ,]*\)\(.*\)$
+\1[\2](#\2)\3
