@@ -31,26 +31,7 @@ extern "C" {
 
 #include <openrtmp/rtmp/rtmp_types.h>
 #include <openrtmp/util/ringbuffer.h>
-
-//A chunk message header
-typedef struct rtmp_chunk_stream_message{
-    uint32_t chunk_stream_id;       //ID of the chunk stream
-    rtmp_time_t timestamp;          //Absolute timestamp of the message
-    size_t message_length;          //Length of the message in bytes
-    uint32_t message_stream_id;     //ID of the message stream
-    byte message_type;              //Message type
-} rtmp_chunk_stream_message_t;
-
-typedef struct rtmp_chunk_stream_message_internal rtmp_chunk_stream_message_internal_t;
-typedef struct rtmp_chunk_stream_cache *rtmp_chunk_stream_cache_t;
-
-//Create a stream cache, used for decoding partial chunk headers.
-rtmp_chunk_stream_cache_t rtmp_cache_create( void );
-
-void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache );
-
-//Get a cached message header by chunk stream ID
-rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id );
+#include <openrtmp/rtmp/rtmp_chunk_cache.h>
 
 //Used to emit the various handshakes. Used for both the client and server; the only difference is ordering.
 rtmp_err_t rtmp_chunk_emit_shake_0( ringbuffer_t output );

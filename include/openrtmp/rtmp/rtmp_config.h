@@ -26,6 +26,11 @@
 
 #define RTMP_DEFAULT_PORT                   1935
 
+#define RTMP_FMSVER                         "0,0,0,0"
+#define RTMP_FMSVER_STR                     "LibOpenRTMP/" RTMP_FMSVER
+#define RTMP_FLASHVER_VERSION               "0.0"
+#define RTMP_FLASHVER_STR                   "LibOpenRTMP/" RTMP_FLASHVER_VERSION " (compatible; FMSc/1.0)"
+
 //Protocol defaults. These may all be negotiated at runtime.
 #define RTMP_DEFAULT_WINDOW_SIZE            0x00FFFFFF
 #define RTMP_DEFAULT_PEER_WINDOW_SIZE       0x0

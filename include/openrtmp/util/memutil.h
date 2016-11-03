@@ -93,6 +93,26 @@ rtmp_err_t rtmp_nonce_del(void **nonce);
 
 rtmp_time_t rtmp_get_time();
 
+typedef enum {
+    si_yotta = 24,
+    si_zetta = 21,
+    si_exa = 18,
+    si_peta = 15,
+    si_tera = 12,
+    si_giga = 9,
+    si_mega = 6,
+    si_kilo = 3,
+    si_none = 0, //Or NULL
+    si_milli = -3,
+    si_micro = -6,
+    si_nano = -9,
+    si_pico = -12,
+    si_femto = -15,
+    si_atto = -18,
+    si_zepto = -21,
+    si_yocto = -24
+} si_prefix;
+
 unsigned long long si_convert_ull(unsigned long long number, const si_prefix from, const si_prefix to);
 
 byte* safe_alloc(size_t amount);

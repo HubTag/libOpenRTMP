@@ -54,7 +54,6 @@ const char* rtmp_get_vid_func_flag_list( rtmp_support_func_vid_t mtype );
 const char* rtmp_get_so_evt_type_name( rtmp_so_evt_t mtype );
 const char* rtmp_get_usr_evt_type_name( rtmp_usr_evt_t mtype );
 const char* rtmp_get_event_name( rtmp_event_t mtype );
-
 const char* rtmp_get_err_name( rtmp_err_t err );
 
 #ifdef __cplusplus
