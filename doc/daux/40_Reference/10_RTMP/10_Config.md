@@ -18,22 +18,22 @@ The RTMP config header, found in `openrtmp/rtmp/rtmp_config.h`, contains many de
 #define RTMP_MAX_CHUNK_SIZE                 0x0004FFFF
 #define RTMP_DESIRED_CHUNK_SIZE             0x005FFFFF
 #define RTMP_DEFAULT_IO_BUFFER_SIZE         0x00FFFFFF
-#define RTMP_STREAM_STATIC_CACHE_SIZE 10
-#define RTMP_STREAM_CACHE_MAX 100
-#define RTMP_CONTROL_BUFFER_SIZE 16
-#define RTMP_LOG_LEVEL 4
-#define RTMP_MAX_ALLOC 10000
-#define RTMP_MAX_CHUNK_CACHE 0xFFFF
-#define RTMP_MAX_STREAMS 10
-#define RTMP_MAX_ASM_HARD_BUFFER 20
-#define RTMP_MAX_ASM_SOFT_BUFFER 5
+#define RTMP_STREAM_STATIC_CACHE_SIZE       10
+#define RTMP_STREAM_CACHE_MAX               100
+#define RTMP_CONTROL_BUFFER_SIZE            16
+#define RTMP_LOG_LEVEL                      4
+#define RTMP_MAX_ALLOC                      10000
+#define RTMP_MAX_CHUNK_CACHE                0xFFFF
+#define RTMP_MAX_STREAMS                    10
+#define RTMP_MAX_ASM_HARD_BUFFER            20
+#define RTMP_MAX_ASM_SOFT_BUFFER            5
+
+#define RTMP_EPOLL_MAX                      100
+#define RTMP_LISTEN_SIZE                    1000
+#define RTMP_REFRESH_TIME                   1000
+#define RTMP_CALL_TIMEOUT                   10000
 
 #define RTMP_POLLTECH_EPOLL
-
-#define RTMP_EPOLL_MAX 100
-#define RTMP_LISTEN_SIZE 1000
-#define RTMP_REFRESH_TIME 1000
-#define RTMP_CALL_TIMEOUT 10000
 
 #define RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES
 #define RTMP_SPEC_ENFORCE_HANDSHAKE_NONCES
@@ -125,11 +125,6 @@ The RTMP config header, found in `openrtmp/rtmp/rtmp_config.h`, contains many de
 > The maximum number of pre-allocated assembler buffers. If more buffers are needed than this, they will be allocated as needed, and destroyed once the relevant message has been assembled.
 > 
 
-#### RTMP_POLLTECH_EPOLL ####
-> If defined, the networking implementation used will be epoll based.
-> 
-> As of writing this, epoll is the only available networking implementation.
-
 #### RTMP_EPOLL_MAX ####
 > The maximum number of file descriptors returned by epoll.
 > 
@@ -145,6 +140,11 @@ The RTMP config header, found in `openrtmp/rtmp/rtmp_config.h`, contains many de
 #### RTMP_CALL_TIMEOUT ####
 > How long, in milliseconds, the library will wait for a pending RPC to finish.
 > 
+
+#### RTMP_POLLTECH_EPOLL ####
+> If defined, the networking implementation used will be epoll based.
+> 
+> As of writing this, epoll is the only available networking implementation.
 
 #### RTMP_SPEC_ENFORCE_HANDSHAKE_TIMES ####
 > If defined, connections with handshakes whose timestamps aren't correct are dropped.

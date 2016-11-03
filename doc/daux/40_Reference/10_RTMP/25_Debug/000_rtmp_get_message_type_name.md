@@ -14,7 +14,7 @@ const char* rtmp_get_message_type_name(
 ```
 
 ## Parameters ##
-#### rtmp_message_type_t mtype  ####
+#### code  ####
 > The message type code.
 
 ## Return Value ##

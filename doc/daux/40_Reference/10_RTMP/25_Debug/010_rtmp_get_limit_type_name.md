@@ -15,7 +15,7 @@ const char* rtmp_get_limit_type_name(
 ```
 
 ## Parameters ##
-#### bitset ####
+#### code ####
 > A bandwidth limit strategy code.
 
 ## Return Value ##

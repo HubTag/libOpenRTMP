@@ -16,7 +16,7 @@ const char* rtmp_get_err_name(
 
 ## Parameters ##
 #### err ####
-> An RTMP error code.
+> A libOpenRTMP error code.
 
 ## Return Value ##
 A human readable string which corresponds to `code`.

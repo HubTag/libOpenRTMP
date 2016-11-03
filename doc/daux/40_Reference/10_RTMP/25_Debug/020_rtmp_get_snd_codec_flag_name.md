@@ -15,7 +15,7 @@ const char* rtmp_get_snd_codec_flag_name(
 ```
 
 ## Parameters ##
-#### bitset ####
+#### flag ####
 > A sound codec flag.
 
 ## Return Value ##

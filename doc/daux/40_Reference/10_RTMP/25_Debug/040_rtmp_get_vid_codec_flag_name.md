@@ -15,7 +15,7 @@ const char* rtmp_get_vid_codec_flag_name(
 ```
 
 ## Parameters ##
-#### bitset ####
+#### flag ####
 > A video codec flag.
 
 ## Return Value ##

@@ -29,7 +29,7 @@ typedef size_t  rtmp_time_t;
 #endif
 ```
 
-## Values ##
+## Types ##
 #### bool ####
 > Brought in from `stdbool.h` in C, along with `true` and `false`.
 > Just a standard boolean value.
