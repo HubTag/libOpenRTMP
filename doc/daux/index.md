@@ -1,6 +1,3 @@
-libOpenRTMP
-========
-
 RTMP is a multiplexed binary protocol primarily intended to transmit audiovisual data, such as pre-recorded video or live streams. As it is an Adobe property, RTMP makes use of other Adobe specifications. While it could be another library in its own right, AMF reading and writing functionality is also included in this library.
 
 This library provides access to the protocol on multiple levels, all the way from the basic building blocks, up to an interface that will handle most of the negotiations and networking for the user.

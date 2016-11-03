@@ -5,18 +5,7 @@ This file provides numerous constant values and enumerations, both for the RTMP 
 
 ### General Library Definitions ###
 
-|Name|Purpose|
-|:-:|:--|
-|`RTMP_NONCE_SIZE`|The size of handshake nonces.|
-|`RTMP_VERSION`|The RTMP version.|
-|`RTMP_MESSAGE_HEADER_SIZE`|The size of a message header.|
-|`RTMP_ANY`|When specifying a stream event, this will indicate that the callback should fire for any event of the given class.|
-|`RTMP_CAPABILITIES`|The indicated capabilities of the server. (I have no idea what this means; reverse engineered.)|
-|`RTMP_MODE`|The indicated mode of the server (I have no idea what this means; reverse engineered.)|
-|`RTMP_ADDR_ANY`|A bind address indicating any network device.|
-|`RTMP_DEFAULT_CHUNK_SIZE`|The default size of a chunk.|
-|`RTMP_CONTROL_MSG_STREAM`|The message stream ID of the control stream.|
-|`RTMP_CONTROL_CHUNK_STREAM`|The chunk stream ID of the control stream.|
+
 
 ### Library Event Types ###
 
