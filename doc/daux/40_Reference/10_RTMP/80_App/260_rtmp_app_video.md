@@ -41,7 +41,7 @@ rtmp_cb_status_t rtmp_app_video(
 #### final_part ####
 > Indicates that this is the final part of a message.
 >
-> Messages are sometimes fragmented and returned over multiple calls to rtmp_app_on_av_proc. `final_part` is only set to true once the final fragment has been delivered to the relevant callback.
+> Messages are sometimes fragmented and returned over multiple calls to `rtmp_app_on_av_proc`. `final_part` is only set to true once the final fragment has been delivered to the relevant callback.
 > 
 > If a message is small enough to not be fragmented, `final_part` is true on the first call of this callback for the message.
 
