@@ -16,3 +16,7 @@ With def and severity
 Replace enums with enum + inline links
 ^\( *\)\([^ ,]*\)\(.*\)$
 \1[\2](#\2)\3
+
+Linkify basic function prototypes
+^\([^ ]*\) \([^(]*\)\(.*\)$
+#### [\2](\2.html) ####\n> \n

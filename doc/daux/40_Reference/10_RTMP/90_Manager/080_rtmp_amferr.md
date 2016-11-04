@@ -9,7 +9,7 @@ Returns a libOpenRTMP error code derived from a libOpenRTMP AMF error code.
 #include<openrtmp/rtmp.h>
 
 rtmp_err_t rtmp_amferr( 
-    amf_err_t   err 
+	amf_err_t   err 
 );
 ```
 

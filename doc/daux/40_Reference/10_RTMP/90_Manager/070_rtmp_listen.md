@@ -9,11 +9,11 @@ Starts a listen loop on the RTMP manager to initiate connections with clients.
 #include<openrtmp/rtmp.h>
 
 rtmp_err_t rtmp_listen( 
-    rtmp_t              mgr, 
-    const char        * iface, 
-    short               port, 
-    rtmp_connect_proc   cb, 
-    void              * user 
+	rtmp_t              mgr, 
+	const char        * iface, 
+	short               port, 
+	rtmp_connect_proc   cb, 
+	void              * user 
 );
 ```
 

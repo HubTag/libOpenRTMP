@@ -9,8 +9,8 @@ Sets the app list to use for connections made to this manager.
 #include<openrtmp/rtmp.h>
 
 void rtmp_set_app_list( 
-    rtmp_t            mgr, 
-    rtmp_app_list_t   list 
+	rtmp_t            mgr, 
+	rtmp_app_list_t   list 
 );
 ```
 

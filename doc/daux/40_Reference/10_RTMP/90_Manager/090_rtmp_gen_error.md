@@ -9,14 +9,14 @@ Performs logging on a libOpenRTMP error code.
 #include<openrtmp/rtmp.h>
 
 rtmp_err_t rtmp_gen_error(
-    rtmp_err_t   err, 
-    size_t       line, 
-    const char * file, 
-    const char * msg
+	rtmp_err_t   err, 
+	size_t       line, 
+	const char * file, 
+	const char * msg
 );
 
-#define RTMP_GEN_ERROR(err)
-#define RTMP_GEN_ERROR_MSG(err, msg)
+#define RTMP_GEN_ERROR(err) ...
+#define RTMP_GEN_ERROR_MSG(err, msg) ...
 ```
 
 ## Parameters ##

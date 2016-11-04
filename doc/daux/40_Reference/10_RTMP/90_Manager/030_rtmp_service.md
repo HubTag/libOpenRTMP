@@ -9,8 +9,8 @@ Performs a service iteration over all connected streams.
 #include<openrtmp/rtmp.h>
 
 rtmp_err_t rtmp_service(
-    rtmp_t   mgr, 
-    int      timeout 
+	rtmp_t   mgr, 
+	int      timeout 
 );
 ```
 

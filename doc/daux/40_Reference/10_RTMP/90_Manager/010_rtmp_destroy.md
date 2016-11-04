@@ -9,7 +9,7 @@ Destroys an RTMP manager object.
 #include<openrtmp/rtmp.h>
 
 void rtmp_destroy( 
-    rtmp_t   mgr
+	rtmp_t   mgr
 );
 ```
 

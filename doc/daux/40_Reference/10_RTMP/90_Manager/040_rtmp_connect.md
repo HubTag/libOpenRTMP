@@ -9,8 +9,8 @@ Attempts to connect an RTMP client object to an RTMP manager object.
 #include<openrtmp/rtmp.h>
 
 rtmp_err_t rtmp_connect( 
-    rtmp_t          mgr, 
-    rtmp_client_t   client 
+	rtmp_t          mgr, 
+	rtmp_client_t   client 
 );
 ```
 
@@ -25,4 +25,4 @@ rtmp_err_t rtmp_connect(
 This function returns a libOpenRTMP error code.
 
 ## Remarks ##
-
+After calling this connection, `client` will immediately attempt to connect to the pre-specified destination.
