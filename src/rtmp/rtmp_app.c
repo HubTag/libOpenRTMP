@@ -113,52 +113,44 @@ rtmp_app_t rtmp_app_list_get( rtmp_app_list_t list, const char *appname ){
     return nullptr;
 }
 
-rtmp_cb_status_t rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
+void rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_connect = proc;
     app->on_connect_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
+void rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_disconnect = proc;
     app->on_disconnect_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
+void rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_release = proc;
     app->on_release_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user ){
+void rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user ){
     app->on_publish = proc;
     app->on_publish_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *user ){
+void rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *user ){
     app->on_fcpublish = proc;
     app->on_fcpublish_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
+void rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user ){
     app->on_metadata = proc;
     app->on_metadata_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_video( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user ){
+void rtmp_app_set_video( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user ){
     app->on_video = proc;
     app->on_video_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
-rtmp_cb_status_t rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user ){
+void rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user ){
     app->on_audio = proc;
     app->on_audio_data = user;
-    return RTMP_CB_CONTINUE;
 }
 
 
@@ -174,12 +166,12 @@ rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_t v
     return app->on_release ? app->on_release( stream, app, value, app->on_release_data ) : RTMP_CB_CONTINUE;
 }
 
-size_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type, char * new_name, size_t len ){
-    return app->on_publish ? app->on_publish( stream, app, name, type, new_name, len, app->on_publish_data ) : 0;
+rtmp_cb_status_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type ){
+    return app->on_publish ? app->on_publish( stream, app, name, type, app->on_publish_data ) : RTMP_CB_CONTINUE;
 }
 
-size_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name, char * new_name, size_t len ){
-    return app->on_fcpublish ? app->on_fcpublish( stream, app, name, new_name, len, app->on_fcpublish_data ) : 0;
+rtmp_cb_status_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name ){
+    return app->on_fcpublish ? app->on_fcpublish( stream, app, name, app->on_fcpublish_data ) : RTMP_CB_CONTINUE;
 }
 
 rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t value ){

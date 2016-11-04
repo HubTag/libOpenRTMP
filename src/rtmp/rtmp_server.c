@@ -196,11 +196,13 @@ rtmp_cb_status_t rtmp_server_onFCPublish( rtmp_stream_args_t args, amf_t object,
     }
 
     char buffer[RTMP_TEMP_BUFF_SIZE+22] = "FCPublish to stream ";
+    size_t offset = strlen(buffer);
     const char * target = amf_value_get_string( amf_get_item( object, 3 ), nullptr );
+    snprintf( buffer + offset, RTMP_TEMP_BUFF_SIZE, "%s", target );
 
-    size_t len = rtmp_app_fcpublish( stream, self->app, target, buffer + strlen(buffer), RTMP_TEMP_BUFF_SIZE );
-    if( len >= RTMP_TEMP_BUFF_SIZE || len <= 0 ){
-        return RTMP_CB_ERROR;
+    rtmp_cb_status_t status = rtmp_app_fcpublish( stream, self->app, target );
+    if( status != RTMP_CB_CONTINUE ){
+        return status;
     }
     rtmp_err_t err = RTMP_ERR_NONE;
     err = err ? err : rtmp_stream_respond( stream, "onFCPublish", amf_value_get_integer(amf_get_item( object, 1 )),
@@ -233,14 +235,12 @@ rtmp_cb_status_t rtmp_server_onpublish( rtmp_stream_args_t args, amf_t object, v
     size_t offset = strlen(buffer);
     const char * target = amf_value_get_string( amf_get_item( object, 3 ), nullptr );
     const char * type = amf_value_get_string( amf_get_item( object, 4 ), nullptr );
+    snprintf( buffer + offset, RTMP_TEMP_BUFF_SIZE, "%s", target );
 
-    size_t len = rtmp_app_publish( stream, self->app, target, type, buffer + offset, RTMP_TEMP_BUFF_SIZE );
-    if( len >= RTMP_TEMP_BUFF_SIZE || len <= 0 ){
-        return RTMP_CB_ERROR;
+    rtmp_cb_status_t status = rtmp_app_publish( stream, self->app, target, type );
+    if( status != RTMP_CB_CONTINUE ){
+        return status;
     }
-    offset += len;
-    buffer[offset++] = '.';
-    buffer[offset++] = 0;
 
     rtmp_err_t err = RTMP_ERR_NONE;
     err = err ? err : rtmp_stream_respond2( stream, 3, 1, "onStatus", amf_value_get_integer(amf_get_item( object, 1 )),
