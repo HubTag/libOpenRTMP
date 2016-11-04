@@ -1,13 +1,12 @@
-title: Types 
-------------------------------------------
-
 ## Syntax ##
 ```c
-#include <stdint.h>
-#include <stddef.h>
+#include<openrtmp/rtmp/rtmp_types.h>
 
 typedef uint8_t byte;
 typedef size_t  rtmp_time_t;
+
+#include <stdint.h>
+#include <stddef.h>
 
 #ifndef __cplusplus
     #include <stdbool.h>

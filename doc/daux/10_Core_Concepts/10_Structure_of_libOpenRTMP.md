@@ -7,7 +7,7 @@ LibOpenRTMP is structured in multiple layers, which build on top of each other. 
 
 |RTMP|Description|
 |:-:|:--|
-|`rtmp_chunk_flow`|Provides functions for reading and writing bits to and from binary streams directly.|
+|`rtmp_chunk_flow` `rtmp_chunk_cache`|Provides functions for reading and writing bits to and from binary streams directly.|
 |`rtmp_chunk_conn`|Provides facilities for establishing a connection and managing the protocol settings, as well as sending and receiving chunks/messages.|
 |`rtmp_chunk_assembler`|Provides an intermediate layer for fully assembling chunks into messages prior to processing.|
 |`rtmp_stream`|Provides higher level constructs for event driven callbacks, and RPC command and response flow.|
