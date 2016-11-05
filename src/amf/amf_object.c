@@ -502,7 +502,7 @@ static amf_value_t amf_push_item( amf_t amf ){
             return &VEC_BACK(obj->object.members).value;
         }
         else if( obj && amf_value_is( obj, AMF_TYPE_ARRAY ) ){
-            if( obj->array.assoc_len >= VEC_SIZE( obj->array.assoc ) ){
+            if( obj->array.assoc_len > VEC_SIZE( obj->array.assoc ) ){
                 return &VEC_BACK( obj->array.assoc ).value;
             }
             return &VEC_BACK( obj->array.ordinal ).value;
@@ -993,6 +993,10 @@ void amf_print_value_internal( amf_value_t val, size_t depth ){
                 printf( "%.*s: ", (int) val->array.assoc[i].length, val->array.assoc[i].name );
                 amf_print_value_internal( &val->array.assoc[i].value, depth+1 );
             }
+            for( size_t i = 0; i <= depth; ++i ){
+                printf("    ");
+            }
+            printf( "End Assoc.\n" );
             for( size_t i = 0; i < VEC_SIZE(val->array.ordinal); ++i ){
                 for( size_t i = 0; i <= depth; ++i ){
                     printf("    ");
@@ -1092,6 +1096,14 @@ static amf_err_t amf_push_simple_list_int( amf_t amf, const char * restrict memb
 
     return amf_push_integer( amf, member_value );
 }
+static amf_err_t amf_push_simple_list_null( amf_t amf, const char * restrict member_name ){
+    amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
+    if( ret != AMF_ERR_NONE ){
+        return ret;
+    }
+
+    return amf_push_null( amf );
+}
 static amf_err_t amf_push_simple_list_start_obj( amf_t amf, const char * restrict member_name ){
     amf_err_t ret = amf_push_simple_list_memb( amf, member_name );
     if( ret != AMF_ERR_NONE ){
@@ -1127,16 +1139,19 @@ amf_err_t amf_push_simple_list( amf_t amf, va_list list ){
         if( arg == AMF_TYPE_NONE ){
             break;
         }
-        const char * membname = nullptr;
-        if( depth > 0 ){
+        const char * membname;
+        if( depth > 0 || arg == AMF_TYPE_NULL ){
                 membname = va_arg( list, const char* );
+        }
+        if( depth == 0 ){
+            membname = nullptr;
         }
         switch( arg ){
             case AMF_TYPE_BOOLEAN: ret = amf_push_simple_list_bool( amf, membname, va_arg( list, int ) ); break;
             case AMF_TYPE_STRING: ret = amf_push_simple_list_str( amf, membname, va_arg( list, const char* ) ); break;
             case AMF_TYPE_DOUBLE: ret = amf_push_simple_list_dbl( amf, membname, va_arg( list, double ) ); break;
             case AMF_TYPE_INTEGER: ret = amf_push_simple_list_int( amf, membname, va_arg( list, int ) ); break;
-            case AMF_TYPE_NULL: ret = amf_push_null( amf ); break;
+            case AMF_TYPE_NULL: ret = amf_push_simple_list_null( amf, membname ); break;
             case AMF_TYPE_UNDEFINED: ret = amf_push_undefined( amf ); break;
             case AMF_TYPE_UNSUPPORTED: ret = amf_push_unsupported( amf ); break;
             case AMF_TYPE_OBJECT:

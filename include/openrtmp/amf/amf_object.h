@@ -152,7 +152,8 @@ void amf_print( amf_t val );
 #define AMF_PRIV_NULL_1(A) AMF_TYPE_NULL, A
 #define AMF_PRIV_NULL_I(x,A,FUNC, ...)  FUNC
 #define AMF_PRIV_NULL(...)  AMF_PRIV_NULL_I(__VA_ARGS__, AMF_PRIV_NULL_1(__VA_ARGS__),AMF_PRIV_NULL_0(__VA_ARGS__) )
-#define AMF_NULL(...) AMF_PRIV_NULL(__VA_ARGS__)
+//#define AMF_NULL(...)  AMF_PRIV_NULL(0, __VA_ARGS__)
+#define AMF_NULL(...) AMF_TYPE_NULL, "" __VA_ARGS__
 
 #define AMF_ARR_ORD(...) AMF_TYPE_ECMA_ARRAY_ASSOC_END, "", __VA_ARGS__
 #define AMF_ARR(...) AMF_TYPE_ARRAY, __VA_ARGS__, AMF0_TYPE_OBJECT_END, ""
