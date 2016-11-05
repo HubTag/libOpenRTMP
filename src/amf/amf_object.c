@@ -74,15 +74,22 @@ typedef struct amf_v_date{
 
 typedef struct amf_v_member amf_v_member_t;
 
+typedef struct amf_v_assoc {
+    amf_type_t type;
+    VEC_DECLARE(amf_v_member_t) members;
+} amf_v_assoc_t;
+
 typedef struct amf_v_object{
+    // Must match amf_v_assoc_t
     amf_type_t type;
     VEC_DECLARE(amf_v_member_t) members;
 } amf_v_object_t;
 
 typedef struct amf_v_array{
+    // Must match amf_v_assoc_t
     amf_type_t type;
-    uint32_t assoc_len;
     VEC_DECLARE(amf_v_member_t) assoc;
+    uint32_t assoc_len;
     VEC_DECLARE(amf_v_member_t) ordinal;
 } amf_v_array_t;
 
@@ -97,6 +104,7 @@ union amf_value{
     amf_v_reference_t reference;
     amf_v_date_t date;
     amf_v_array_t array;
+    amf_v_assoc_t associative;
     amf_type_t type;
 };
 
@@ -159,6 +167,16 @@ void amf_free_value( amf_value_t val){
         default:
             break;
     }
+}
+
+static inline amf_value_t amf_dereference(amf_value_t target) {
+    while( target->type == AMF_TYPE_REFERENCE ){
+        target = target->reference.ref;
+        if( !target ){
+            break;
+        }
+    }
+    return target;
 }
 
 amf_t amf_create( char type ){
@@ -721,6 +739,16 @@ bool amf_value_is( amf_value_t value, amf_type_t type ){
                 break;
         }
     }
+    if( type == AMF_TYPE_ASSOCIATIVE ){
+        switch( value->type ){
+            case AMF_TYPE_OBJECT:
+            case AMF_TYPE_ARRAY:
+            case AMF_TYPE_TYPED_OBJECT:
+                return true;
+            default:
+                break;
+        }
+    }
     if( value->type == AMF_TYPE_REFERENCE ){
         if( value->reference.ref->type != AMF_TYPE_REFERENCE ){
             return amf_value_is( value->reference.ref, type );
@@ -773,6 +801,7 @@ bool amf_value_is_like( amf_value_t value, amf_type_t type ){
         switch( type ){
             case AMF_TYPE_OBJECT:
             case AMF_TYPE_TYPED_OBJECT:
+            case AMF_TYPE_ASSOCIATIVE:
             return true;
             default: break;
         }
@@ -782,6 +811,7 @@ bool amf_value_is_like( amf_value_t value, amf_type_t type ){
         case AMF_TYPE_ARRAY:
         switch( type ){
             case AMF_TYPE_ARRAY:
+            case AMF_TYPE_ASSOCIATIVE:
             return true;
             default: break;
         }
@@ -836,86 +866,75 @@ const char* amf_value_get_xml( amf_value_t target, size_t *length ){
 }
 
 
-amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
-    for( size_t i = 0; i < VEC_SIZE(target->object.members); ++i ){
-        if( memcmp( key, VEC_AT(target->object.members, i).name, VEC_AT(target->object.members, i).length ) == 0 ){
-            return &VEC_AT(target->object.members, i).value;
+static amf_value_t amf_assoc_get_value_arr( VEC_DECLARE(amf_v_member_t) arr, const char *key ){
+    for( size_t i = 0; i < VEC_SIZE(arr); ++i ){
+        if( memcmp( key, VEC_AT(arr, i).name, VEC_AT(arr, i).length ) == 0 ){
+            return &VEC_AT(arr, i).value;
         }
     }
     return nullptr;
 }
-amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    if( target->type == AMF_TYPE_REFERENCE ){
-        target = target->reference.ref;
-    }
-    if( idx >= VEC_SIZE(target->object.members) ){
+
+static amf_value_t amf_assoc_get_value_idx_arr( VEC_DECLARE(amf_v_member_t) arr, size_t idx, char **key, size_t *key_len ){
+    if( idx >= VEC_SIZE(arr) ){
         return nullptr;
     }
     if( key ){
-        *key = VEC_AT(target->object.members, idx).name;
+        *key = VEC_AT(arr, idx).name;
     }
     if( key_len ){
-        *key_len = target->object.members[idx].length;
+        *key_len = arr[idx].length;
     }
-    return &target->object.members[idx].value;
+    return &arr[idx].value;
+}
+
+static size_t amf_assoc_get_count_arr( VEC_DECLARE(amf_v_member_t) arr ){
+    return VEC_SIZE(arr);
+}
+
+amf_value_t amf_assoc_get_value( amf_value_t target, const char *key ){
+    return amf_assoc_get_value_arr( target->associative.members, key );
+}
+
+amf_value_t amf_assoc_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
+    return amf_assoc_get_value_idx_arr( target->associative.members, idx, key, key_len );
+}
+
+size_t amf_assoc_get_count( const amf_value_t target ){
+    return amf_assoc_get_count_arr( target->associative.members );
+}
+
+amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
+    return amf_assoc_get_value_arr( target->object.members, key );
+}
+amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
+    return amf_assoc_get_value_idx_arr( target->object.members, idx, key, key_len );
 }
 size_t amf_obj_get_count( const amf_value_t target ){
-    return VEC_SIZE(target->object.members);
+    return amf_assoc_get_count_arr( target->object.members );
 }
 
 amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key ){
-    for( size_t i = 0; i < VEC_SIZE(target->array.assoc); ++i ){
-        if( memcmp( key, VEC_AT(target->array.assoc, i).name, VEC_AT(target->array.assoc, i).length ) == 0 ){
-            return &VEC_AT(target->array.assoc, i).value;
-        }
-    }
-    return nullptr;
+    return amf_assoc_get_value_arr( target->array.assoc, key );
 }
 amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    if( target->type == AMF_TYPE_REFERENCE ){
-        target = target->reference.ref;
-    }
-    if( idx >= VEC_SIZE(target->array.assoc) ){
-        return nullptr;
-    }
-    if( key ){
-        *key = VEC_AT(target->array.assoc, idx).name;
-    }
-    if( key_len ){
-        *key_len = target->array.assoc[idx].length;
-    }
-    return &target->array.assoc[idx].value;
+    return amf_assoc_get_value_idx_arr( target->array.assoc, idx, key, key_len );
 }
 size_t amf_arr_get_assoc_count( const amf_value_t target ){
-    return VEC_SIZE(target->array.assoc);
+    return amf_assoc_get_count_arr( target->array.assoc );
 }
 
 amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key ){
-    for( size_t i = 0; i < VEC_SIZE(target->array.ordinal); ++i ){
-        if( memcmp( key, VEC_AT(target->array.ordinal, i).name, VEC_AT(target->array.ordinal, i).length ) == 0 ){
-            return &VEC_AT(target->array.ordinal, i).value;
-        }
-    }
-    return nullptr;
+    return amf_assoc_get_value_arr( target->array.ordinal, key );
 }
 amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
-    if( target->type == AMF_TYPE_REFERENCE ){
-        target = target->reference.ref;
-    }
-    if( idx >= VEC_SIZE(target->array.ordinal) ){
-        return nullptr;
-    }
-    if( key ){
-        *key = VEC_AT(target->array.ordinal, idx).name;
-    }
-    if( key_len ){
-        *key_len = target->array.ordinal[idx].length;
-    }
-    return &target->array.ordinal[idx].value;
+    return amf_assoc_get_value_idx_arr( target->array.ordinal, idx, key, key_len );
 }
 size_t amf_arr_get_ord_count( const amf_value_t target ){
-    return VEC_SIZE(target->array.ordinal);
+    return amf_assoc_get_count_arr( target->array.ordinal );
 }
+
+
 #include <stdio.h>
 
 void amf_print_value_internal( amf_value_t val, size_t depth ){

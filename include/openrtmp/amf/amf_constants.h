@@ -138,6 +138,7 @@ typedef enum AMF_TYPE {
     AMF_TYPE_ECMA_ARRAY_ASSOC_END,
     AMF_TYPE_INTEGER24,
     AMF_TYPE_INTEGER16,
+    AMF_TYPE_ASSOCIATIVE,
 } amf_type_t;
 
 #ifdef __cplusplus

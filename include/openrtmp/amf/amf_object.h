@@ -133,11 +133,16 @@ size_t amf_obj_get_count( amf_value_t target );
 amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key );
 amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
 size_t amf_arr_get_assoc_count( const amf_value_t target );
+
 //Ordinal values
 amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key );
 amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
 size_t amf_arr_get_ord_count( const amf_value_t target );
 
+//And then a generic version which can be used to fetch any associative data from an array or object.
+amf_value_t amf_assoc_get_value( amf_value_t target, const char *key );
+amf_value_t amf_assoc_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+size_t amf_assoc_get_count( const amf_value_t target );
 
 
 void amf_print_value( amf_value_t val );
