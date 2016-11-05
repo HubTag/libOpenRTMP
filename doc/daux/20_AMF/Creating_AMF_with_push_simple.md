@@ -1,0 +1,208 @@
+title: Creating AMF objects with amf_push_simple
+-------------------------------------------------------
+
+In order to provide a more convenient method for creating and appending to AMF objects, the function `amf_push_simple` was created. It is a variadic function which takes a series of AMF type names followed by associated values. To signal the end of an object, a type of `AMF_TYPE_NONE` is passed.
+
+The main benefit of this approach is that it's easier to write the structure of an AMF object in your code. While it enforces a rigid structure on the values being added, writing the code to push the values is significantly simpler.
+
+To illustrate, here are a few examples:
+
+#### An empty AMF object ####
+```c
+amf_t obj = amf_create( 0 );
+amf_push_simple( obj, AMF_TYPE_NONE );
+```
+
+Now, the `amf_push_simple` call doesn't really do anything in this example, since the AMF object is already empty when it was created. It's the shortest way to call `amf_push_function` which doesn't invoke undefined behavior, though.
+
+#### Pushing a few basic values ####
+```c
+amf_t obj = amf_create( 0 );
+int big = 100;
+amf_push_simple( obj, 
+	AMF_TYPE_INTEGER,  4, 
+	AMF_TYPE_DOUBLE,   3.201, 
+	AMF_TYPE_INTEGER,  big, 
+	AMF_TYPE_STRING,   "Hello World!",
+	AMF_TYPE_NULL,     "",
+	AMF_TYPE_NONE 
+);
+```
+
+It's important that the type matches the type of the data, as the underlying mechanism is varargs, which doesn't like to be surprised to say the least. Null types must also be followed with a dummy value, unless they're nested within an associative container (in which case, the dummy value is replaced with the key). 
+
+With that code though, running it through `amf_print` will show us:
+```
+Integer: 4
+Double: 3.201000
+Integer: 100
+String: Hello World!
+Null
+```
+
+#### Pushing an object ####
+```c
+amf_t obj = amf_create( 0 );
+amf_push_simple( obj, 
+	AMF_TYPE_OBJECT, 
+		AMF_TYPE_DOUBLE,   "count",       1234.56789, 
+		AMF_TYPE_NULL,     "not_dummy",
+		AMF_TYPE_INTEGER,  "hundred",     100,
+	AMF_TYPE_OBJECT_END, "", 
+	AMF_TYPE_NONE 
+);
+```
+
+As you can see, when you add an object, all values within it need to have a key associated with them, which come after the type name but precede the values themselves. Additionally, the object needs to be closed with an `AMF_TYPE_OBJECT_END` tag, which is itself considered a member of the object, thus should have a blank key value.
+
+Printing this object shows: 
+```
+Object: {
+    count: Double: 1234.567890
+    not_dummy: Null
+    hundred: Integer: 100
+}
+```
+
+
+#### Pushing an array ####
+```c
+amf_t obj = amf_create( 0 );
+amf_push_simple( obj, 
+	AMF_TYPE_ARRAY, 
+		AMF_TYPE_DOUBLE,   "count",    1234.56789, 
+		AMF_TYPE_INTEGER,  "hundred",  100,
+	AMF_TYPE_ECMA_ARRAY_ASSOC_END, "",
+		AMF_TYPE_INTEGER,  "0",  42,
+		AMF_TYPE_INTEGER,  "1",  300,
+	AMF_TYPE_OBJECT_END, "", 
+	AMF_TYPE_NONE 
+);
+```
+
+Pushing an array is very similar to pushing an object, except that there are two parts to an array: The associative part, and the ordinal part, which comes after the associative part. They behave almost entirely the same, though the ordinal part "should" only have keys with numeric values. The specification stronly suggests only using numeric values, however libOpenRTMP will not prevent you from using other strings. The ordinal part may also be omitted entirely if you skip right to the `AMF_TYPE_OBJECT_END`.
+
+Printing this object shows: 
+```
+Array: [
+    count: Double: 1234.567890
+    hundred: Integer: 100
+    End Assoc.
+    0: Integer: 42
+    1: Integer: 300
+]
+
+```
+
+#### Pushing Nested Objects ####
+
+```c
+amf_t obj = amf_create( 0 );
+amf_push_simple( obj, 
+	AMF_TYPE_OBJECT, 
+		AMF_TYPE_DOUBLE,   "in_first",    123.456, 
+		AMF_TYPE_OBJECT,   "second",
+			AMF_TYPE_INTEGER,   "in_second", 42,
+			AMF_TYPE_ARRAY, "third",
+				AMF_TYPE_STRING, "This", "is WAY too deep."
+			AMF_TYPE_OBJECT_END, "", 
+		AMF_TYPE_OBJECT_END, "", 
+	AMF_TYPE_OBJECT_END, "", 
+);
+```
+
+This is just to show that complex values can be nested within other complex values.
+
+Printing this yields:
+
+```
+Object: {
+    in_first: Double: 123.456000
+    second: Object: {
+        in_second: Integer: 42
+        third: Array: [
+            This: String: is WAY too deep.
+            End Assoc.
+        ]
+    }
+}
+```
+
+## Helper Macros ##
+In order to reduce the potential for errors when writing AMF objects using this method, a number of helper macros were defined to perform some of the easy-to-overlook things. These are:
+
+**`AMF([...])`** Wraps the entire set of AMF data. AMF data goes into `...`.
+
+**`AMF_BOOL([key,] value)`** Adds a boolean.
+
+**`AMF_INT([key,] value)`** Adds an integer.
+
+**`AMF_DBL([key,] value)`** Adds a double.
+
+**`AMF_STR([key,] value)`** Adds a string.
+
+**`AMF_NULL([key])`** Adds a null value.
+
+**`AMF_OBJ([key,] [...])`** Adds an object. Members go into `...`.
+
+**`AMF_ARR([key,] [...])`** Adds an array. Associative values go into `...`.
+
+**`AMF_ARR_ORD([key,] [...])`** When put in an array's list of values, it indicates that the contents of `...` are ordinal values.
+
+#### Pushing With Macros ####
+
+To illustrate the use of these macros, here is a large example:
+
+```c
+amf_t obj = amf_create( 0 );
+amf_push_simple( obj, 
+	AMF(
+		AMF_STR("Hello"),
+		AMF_NULL(),
+		AMF_INT(123),
+		AMF_OBJ(
+			AMF_STR("first", "This is the first item"),
+			AMF_DBL("second", 2.0),
+			AMF_OBJ("Nested",
+				AMF_STR("This", "is deep again!")
+			),
+			AMF_NULL("third"),
+			AMF_BOOL("fourth", true)
+		),
+		AMF_ARR(
+			AMF_INT("another", 100),
+			AMF_INT("and_another", 200),
+			AMF_ARR_ORD(
+				AMF_INT("1", 300),
+				AMF_STR("2", "Wow!"),
+				AMF_NULL("3")
+			)
+		)
+	)
+);
+```
+
+This behemoth, when printed, yields:
+
+```
+String: Hello
+Null
+Integer: 123
+Object: {
+    first: String: This is the first item
+    second: Double: 2.000000
+    Nested: Object: {
+        This: String: is deep again!
+    }
+    third: Null
+    fourth: Boolean: true
+}
+Array: [
+    another: Integer: 100
+    and_another: Integer: 200
+    End Assoc.
+    1: Integer: 300
+    2: String: Wow!
+    3: Null
+]
+```

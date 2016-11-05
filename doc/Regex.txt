@@ -1,6 +1,12 @@
 Replace enums with def stubs:
-*\([^ ,]*\).*
+^ *\([^ ,]*\).*$
 #### \1 ####\n> \n> \n
+
+Replace enums + sections with def stubs:
+^ *\([^ ,]*\).*Page \([^,]*\), \(.*\)$
+#### \1 ####\n> \n> \n> Defined in \3 on page \2.\n
+
+
  
  Replace 2 column tables with defs:
 \|`\([^`]*\)`\|\([^|]*\)\|.*
