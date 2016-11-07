@@ -1,0 +1,44 @@
+title: FCPublish
+--------------------------
+
+Used to validate the name of a stream prior to publishing.
+
+## Syntax ##
+
+```
+String: "FCPublish"
+Number: 0
+Null
+String: ... // Stream Name
+```
+
+## Parameters ##
+#### field[0] ####
+> **Type:** String
+>
+> The name of this command, which in this case is "FCPublish".
+
+#### field[1] ####
+> **Type:** Number
+>
+> The sequence number for this command, which is always 0.
+
+#### field[2] ####
+> **Type:** Null
+>
+> The command information object for this call, which doesn't exist and is always null.
+
+#### field[3] ####
+> **Type:** String
+>
+> The name of the stream to publish to.
+>
+> Example value: "live_123122314"
+
+## Return Value ##
+A modified `onStatus`. Instead of being called `onStatus`, it's called `onFCPublish`. The code is `NetStream.Publish.Start` on success, `NetStream.Publish.Failed` on failure.
+
+## Remarks ##
+Some servers require this to be sent in order to actually start the publishing of a live stream.
+
+This command follows slightly modified [NetStream calling conventions](/Reference/Common_RPC_Calls/NetStream/index.html), as noted in `Return Value`.

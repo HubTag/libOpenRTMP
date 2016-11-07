@@ -1,0 +1,68 @@
+title: play
+--------------------------
+
+Sends a request to the server to begin playing a stream. Subsequent calls to play may be used to queue up a playlist of streams to play.
+
+## Syntax ##
+
+```
+String: "play"
+Number: 0
+Null
+String: ... // Stream Name
+Number: ... // Start
+Number: ... // Duration
+Bool:   ... // Reset
+```
+
+## Parameters ##
+#### field[0] ####
+> **Type:**: String
+>
+> The name of the command. In this case, it's "play".
+
+#### field[1] ####
+> **Type:**: Number
+>
+> The sequence number for the command. Always 0 for NetStream commands.
+
+#### field[2] ####
+> **Type:**: Null
+>
+> The command information object. Always null for this command.
+
+#### field[3] ####
+> **Type:**: String
+>
+> The name of the stream to play. This defaults to FLV streams. If you wish to play a stream with a format other than FLV, you must prepend the name with the format followed by a colon. Common formats are "mp3:" and "mp4:".
+>
+> Example value: "mp4:test_stream"
+
+#### field[4] ####
+> **Type:**: Number
+>
+> An optional parameter which specifies how to begin playing the stream. The following values have distinct meanings:
+> * -2: Attempt to play the live stream whose name is given in `field[3]`. If the stream is not found, attempt to play a recorded stream of the same name. If no such stream exists, wait for a new stream with the given name to be published and play it when available.
+> * -1: Attempt to play the live stream whose name is given in `field[3]`. Fail if the stream is not available.
+> * 0 or higher: Play the recorded stream whose name is given in `field[3]`. If the stream is not found, go to the next item in the playlist.
+
+#### field[5] ####
+> **Type:**: Number
+>
+> Specifies the duration to play the stream for. If the value is -1, then the stream plays until the stream is completed, or until the client disconnects. Otherwise, the value given specifies the number of milliseconds to play the stream for.
+>
+> Example value: -1
+
+#### field[6] ####
+> **Type:**: Boolean
+>
+> Indicates whether or not to flush any existing playlist.
+>
+> Example value: false
+
+## Return Value ##
+Responds with an `onStatus` code of `NetStream.Play.Start` if successful.
+
+## Remarks ##
+This command follows standard [NetStream calling conventions.](/Reference/Common_RPC_Calls/NetStream/index.html)
+
