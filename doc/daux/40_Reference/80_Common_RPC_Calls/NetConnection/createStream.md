@@ -29,7 +29,7 @@ Object: ... // Command Parameters
 
 ## Return Value ##
 ```
-String: "createStream"
+String: "_result" or "_error"
 Number: ... // Sequence Number
 Object: ... // Command Info
 Number: ... // Stream ID

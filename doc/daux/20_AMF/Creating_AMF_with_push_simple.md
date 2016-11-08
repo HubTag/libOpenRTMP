@@ -147,7 +147,7 @@ In order to reduce the potential for errors when writing AMF objects using this 
 
 **`AMF_ARR([key,] [...])`** Adds an array. Associative values go into `...`.
 
-**`AMF_ARR_ORD([key,] [...])`** When put in an array's list of values, it indicates that the contents of `...` are ordinal values.
+**`AMF_ARR_ORD([...])`** When put in an array's list of values, it indicates that the contents of `...` are ordinal values.
 
 #### Pushing With Macros ####
 
