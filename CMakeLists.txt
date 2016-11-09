@@ -139,3 +139,17 @@ if( UNIX )
                                 GROUP_READ
                                 WORLD_READ )
 endif()
+
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+	set(doxyfile ${CMAKE_SOURCE_DIR}/doxy.conf)
+	make_directory(${CMAKE_BINARY_DIR}/doc)
+	add_custom_target(doc ALL
+                      COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+                      COMMENT "Generating API documentation with Doxygen"
+                      VERBATIM)
+else()
+	issue_warning( "${CMAKE_CURRENT_LIST_FILE}" "${CMAKE_CURRENT_LIST_LINE}" 2 "Doxygen needed to build documentation." )
+endif()
+

@@ -1,0 +1,31 @@
+/*!
+	\page structure_of_usage Structure of Usage
+	
+	libOpenRTMP was designed to be used with an asyncronous programming model. As such, pretty much everything is driven by event callbacks. The structure of a consuming server is roughly:
+*	 * Create a manager.
+*	 * Create an app list.
+*	 * Register an app with the app list and fill it with callbacks.
+*	 * Listen for connections using the manager.
+*	 * Repeatedly call `rtmp_service` on the manager.
+	 
+	The structure of a client is roughly:
+*	 * Create a manager.
+*	 * Create a client.
+*	 * Registed event callbacks with the client.
+*	 * Connect the client to the manager.
+*	 * Repeatedly call `rtmp_service` on the manager.
+
+	Of course, if you want a proxy server, the structure of that is roughly:
+*	 * Create a manager.
+*	 * Create an app list.
+*	 * Register an app with the app list and fill it with callbacks.
+*	     * On connect: 
+*	         * Create a client.
+*	         * Register callbacks with the client.
+*	         * Connect the client to the manager.
+*	 * Listen for connections using the manager.
+*	 * Repeatedly call `rtmp_service` on the manager.
+	 
+	Obviously there are quite a few omissions in these lists, but most of what was left out was the calling of various RPC methods and passing the associated callbacks around. Those are covered in-depth in the examples.
+
+*/

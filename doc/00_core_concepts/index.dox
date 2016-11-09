@@ -1,0 +1,12 @@
+/*!
+	\page core_concepts Core Concepts
+	
+	Here lies an overview of general terms and concepts which form a baseline of knowledge required to successfully use libOpenRTMP.
+	
+	Before attempting to make use of the library, at least give the following pages a look.
+	* * \subpage general_terms
+	* * \subpage structure_of_libopenrtmp
+	* * \subpage structure_of_usage
+	* * \subpage rpc_flow
+
+*/

@@ -1,0 +1,10 @@
+/*!
+	\page amf_main AMF
+	
+	Action Message Format (AMF) is the medium through which heterogenous data is transferred in various Adobe formats, including RTMP, FLV, and Flash.
+	
+	Information
+	* * \subpage creating_amf_push_simple
+
+
+*/

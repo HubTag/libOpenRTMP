@@ -69,7 +69,7 @@ typedef struct amf_v_reference{
 typedef struct amf_v_date{
     amf_type_t type;
     double timestamp;
-    signed char timezone;
+    int16_t timezone;
 } amf_v_date_t;
 
 typedef struct amf_v_member amf_v_member_t;
@@ -269,9 +269,9 @@ static amf_err_t amf_write_value_ecma(amf_value_t val, byte *dest, size_t size){
 #undef DO
 
 amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
-    signed char temp_b;
     double temp_d;
     size_t temp_lu;
+    int16_t temp_s;
     const char *temp_pc;
 
 
@@ -282,8 +282,8 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size ){
         case AMF_TYPE_BOOLEAN:
             return amf0_write_boolean( dest, size, amf_value_get_bool( value ) );
         case AMF_TYPE_DATE:
-            temp_d = amf_value_get_date( value, &temp_b );
-            return amf0_write_date( dest, size, temp_b, temp_d );
+            temp_d = amf_value_get_date( value, &temp_s );
+            return amf0_write_date( dest, size, temp_s, temp_d );
         case AMF_TYPE_MOVIECLIP:
             return amf0_write_movieclip( dest, size );
         case AMF_TYPE_NULL:
@@ -697,7 +697,7 @@ amf_err_t amf_push_assoc_end( amf_t amf ){
     }
     return AMF_ERR_INVALID_DATA;
 }
-amf_err_t amf_push_date( amf_t amf, double timestamp, char timezone ){
+amf_err_t amf_push_date( amf_t amf, double timestamp, int16_t timezone ){
     PUSH_PREP( amf, target );
     target->date.timestamp = timestamp;
     target->date.timezone = timezone;
@@ -851,7 +851,7 @@ size_t amf_value_get_ref( amf_value_t target ){
     return target->reference.ref_num;
 }
 
-double amf_value_get_date( amf_value_t target, signed char *timezone ){
+double amf_value_get_date( amf_value_t target, int16_t *timezone ){
     if( timezone ){
         *timezone = target->date.timezone;
     }
