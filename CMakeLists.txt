@@ -142,11 +142,15 @@ endif()
 
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-	set(doxyfile ${CMAKE_SOURCE_DIR}/doxy.conf)
-	make_directory(${CMAKE_BINARY_DIR}/doc)
-	add_custom_target(doc ALL
-                      COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+	set(DOXYFILE_IN "${PROJECT_SOURCE_DIR}/doxy.conf.in")
+	set(DOXYFILE    "${CMAKE_BINARY_DIR}/doxy.conf")
+	set(DOC_DEST    "${CMAKE_BINARY_DIR}/doc")
+    configure_file( "${DOXYFILE_IN}" "${DOXYFILE}" )
+
+	make_directory( "${DOC_DEST}" )
+	add_custom_target(doc
+                      COMMAND ${DOXYGEN_EXECUTABLE} "${DOXYFILE}"
+                      WORKING_DIRECTORY "${DOC_DEST}"
                       COMMENT "Generating API documentation with Doxygen"
                       VERBATIM)
 else()

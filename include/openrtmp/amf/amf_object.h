@@ -159,7 +159,7 @@ void amf_destroy( amf_t amf );
                 returned value is the number of bytes which would have been written, given an adequately large buffer.
     \return     On failure, the return value is an AMF error code.
     \memberof   amf_t
-    \sa amf_write_value
+    \sa         amf_write_value
  */
 amf_err_t amf_write( amf_t amf, byte *dest, size_t size, size_t *written );
 
@@ -188,7 +188,7 @@ amf_err_t amf_read( amf_t amf, const byte *src, size_t size, size_t *read );
     \return     On failure, the return value is an AMF error code.
     \remarks    `amf_write()` calls this function internally on all of its members. If you wish to shortcircuit `amf_write()`, this is how you do it.
     \memberof   amf_t
-    \sa amf_write
+    \sa         amf_write
  */
 amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size );
 
@@ -198,7 +198,7 @@ amf_err_t amf_write_value( amf_value_t value, byte *dest, size_t size );
     \return     An AMF error code.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_integer
+    \sa         amf_push_integer
  */
 amf_err_t amf_push_double( amf_t amf, double number );
 
@@ -208,7 +208,7 @@ amf_err_t amf_push_double( amf_t amf, double number );
     \return     An AMF error code.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_double
+    \sa         amf_push_double
  */
 amf_err_t amf_push_integer( amf_t amf, int32_t number );
 
@@ -230,7 +230,8 @@ amf_err_t amf_push_boolean( amf_t amf, char boolean );
     \return     An AMF error code.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_string_alloc amf_push_long_string
+    \sa         amf_push_string_alloc
+    \sa         amf_push_long_string
  */
 amf_err_t amf_push_string( amf_t amf, const void *str );
 
@@ -249,7 +250,8 @@ amf_err_t amf_push_object_start( amf_t amf );
     \return     An AMF error code.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_member amf_push_object_end
+    \sa         amf_push_member
+    \sa         amf_push_object_end
  */
 amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members );
 
@@ -264,7 +266,8 @@ amf_err_t amf_push_ecma_start( amf_t amf, uint32_t assoc_members );
                 for the next value.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_member amf_push_object_end
+    \sa         amf_push_member
+    \sa         amf_push_object_end
  */
 amf_err_t amf_push_member( amf_t amf, const void *str );
 
@@ -273,7 +276,9 @@ amf_err_t amf_push_member( amf_t amf, const void *str );
     \return     An AMF error code.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_string_alloc amf_push_object_start amf_push_ecma_start
+    \sa         amf_push_string_alloc
+    \sa         amf_push_object_start
+    \sa         amf_push_ecma_start
  */
 amf_err_t amf_push_null( amf_t amf );
 
@@ -340,7 +345,9 @@ amf_err_t amf_push_date( amf_t amf, double timestamp, int16_t timezone );
                 convert a normal string to a long string if needed, though.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_string_alloc amf_push_string amf_push_xml
+    \sa         amf_push_string_alloc
+    \sa         amf_push_string
+    \sa         amf_push_xml
  */
 amf_err_t amf_push_long_string( amf_t amf, const void *str );
 
@@ -355,7 +362,9 @@ amf_err_t amf_push_long_string( amf_t amf, const void *str );
                 exactly like a long string, just with a different name.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa amf_push_string_alloc amf_push_long_string amf_push_string
+    \sa         amf_push_string_alloc
+    \sa         amf_push_long_string
+    \sa         amf_push_string
  */
 amf_err_t amf_push_xml( amf_t amf, const void *xml );
 
@@ -391,7 +400,10 @@ amf_err_t amf_push_xml( amf_t amf, const void *xml );
                 will also invoke undefined behavior.
                 \endparblock
     \memberof   amf_t
-    \sa amf_push_string amf_push_member amf_push_long_string amf_push_xml
+    \sa         amf_push_string
+    \sa         amf_push_member
+    \sa         amf_push_long_string
+    \sa         amf_push_xml
  */
 amf_err_t amf_push_string_alloc( amf_t amf, void** destination, size_t length );
 
@@ -436,7 +448,8 @@ amf_value_t amf_get_item( amf_t amf, const size_t idx );
     \return     An AMF error code.
     \remarks    This is just the `va_list` variant of `amf_push_simple()`. See that page for more information.
     \memberof   amf_t
-    \sa \ref creating_amf_push_simple amf_push_simple
+    \sa         \ref creating_amf_push_simple
+    \sa         amf_push_simple
  */
 amf_err_t amf_push_simple_list( amf_t amf, va_list list );
 
@@ -448,7 +461,7 @@ amf_err_t amf_push_simple_list( amf_t amf, va_list list );
                 On that page, usage examples and helper macros are displayed and explained.
     \remarks    For more information about push locations, see `amf_t`.
     \memberof   amf_t
-    \sa \ref creating_amf_push_simple
+    \sa         \ref creating_amf_push_simple
  */
 amf_err_t amf_push_simple( amf_t amf, ... );
 

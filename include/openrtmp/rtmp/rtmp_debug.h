@@ -66,7 +66,8 @@ const char* rtmp_get_limit_type_name( rtmp_limit_t code );
     \param      flag     The sound codec support flag.
     \return     A human readable C string which corresponds to \a flag.
     \remarks    This function will only recognize individual flags. If you want to pass in a whole bitset, please use
-                `rtmp_get_snd_codec_flag_list()`.
+                \ref rtmp_get_snd_codec_flag_list.
+    \sa         rtmp_get_snd_codec_flag_list
  */
 const char* rtmp_get_snd_codec_flag_name( rtmp_support_codec_snd_t flag );
 
@@ -85,7 +86,8 @@ const char* rtmp_get_snd_codec_flag_list( rtmp_support_codec_snd_t bitset );
     \param      flag     The video codec support flag.
     \return     A human readable C string which corresponds to \a flag.
     \remarks    This function will only recognize individual flags. If you want to pass in a whole bitset, please use
-                `rtmp_get_vid_codec_flag_list()`.
+                \ref rtmp_get_vid_codec_flag_list.
+    \sa         rtmp_get_vid_codec_flag_list
  */
 const char* rtmp_get_vid_codec_flag_name( rtmp_support_codec_vid_t flag );
 
@@ -104,7 +106,8 @@ const char* rtmp_get_vid_codec_flag_list( rtmp_support_codec_vid_t bitset );
     \param      flag     The video function support flag.
     \return     A human readable C string which corresponds to \a flag.
     \remarks    This function will only recognize individual flags. If you want to pass in a whole bitset, please use
-                `rtmp_get_vid_func_flag_list()`.
+                \ref rtmp_get_vid_func_flag_list.
+    \sa         rtmp_get_vid_func_flag_list
  */
 const char* rtmp_get_vid_func_flag_name( rtmp_support_func_vid_t flag );
 

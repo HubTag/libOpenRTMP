@@ -70,12 +70,35 @@ typedef rtmp_cb_status_t (*rtmp_app_on_amf_proc)(
     amf_t args,
     void *user
 );
+
+/*! \brief      This callback is used by apps to indicate the receipt of an \ref rpc_fcpublish remote procedure call.
+    \param      stream  The stream that this callback was fired from.
+    \param      app     The app which this callback was registered with.
+    \param      name    The name of the stream. Often called the stream key.
+    \param      user    A user-defined pointer which was registered with the app.
+    \return     This callback follows the standard callback return semantics.
+    \memberof   rtmp_app_t
+*/
 typedef rtmp_cb_status_t (*rtmp_app_on_fcpub_proc)(
     rtmp_stream_t stream,
     rtmp_app_t app,
     const char * name,
     void *user
 );
+
+/*! \brief      This callback is used by apps to indicate the receipt of a \ref rpc_publish remote procedure call.
+    \param      stream  The stream that this callback was fired from.
+    \param      app     The app which this callback was registered with.
+    \param      name    The name of the stream. Often called the stream key.
+    \param      type    \parblock
+                        A string indicating the type of stream this is.
+
+                        Common values are "live", "record", and "append". See Publishing.
+                        \endparblock
+    \param      user    A user-defined pointer which was registered with the app.
+    \return     This callback follows the standard callback return semantics.
+    \memberof   rtmp_app_t
+*/
 typedef rtmp_cb_status_t (*rtmp_app_on_pub_proc)(
     rtmp_stream_t stream,
     rtmp_app_t app,
@@ -83,11 +106,27 @@ typedef rtmp_cb_status_t (*rtmp_app_on_pub_proc)(
     const char * type,
     void *user
 );
-typedef rtmp_cb_status_t (*rtmp_app_on_video_proc)(
-    rtmp_stream_t stream,
-    rtmp_app_t app,
-    void *user
-);
+
+/*! \brief      This callback is used by apps to indicate the receipt of audiovisual content.
+    \param      stream      The stream that this callback was fired from.
+    \param      app         The app which this callback was registered with.
+    \param      streamid    The message stream that originated this message.
+    \param      timestamp   The timestamp for this message.
+    \param      av_data     A buffer containing a raw payload of audiovisual content.
+    \param      av_length   The length of \a av_data.
+    \param      final_part  \parblock
+                            Indicates that this is the final part of a message.
+
+                            Messages are sometimes fragmented and returned over multiple calls to `rtmp_app_on_av_proc`.
+                            \a final_part is only set to true once the final fragment has been delivered to the relevant callback.
+
+                            If a message is small enough to not be fragmented, \a final_part is true on the first call of this callback
+                            for the message.
+                            \endparblock
+    \param      user    A user-defined pointer which was registered with the app.
+    \return     This callback follows the standard callback return semantics.
+    \memberof   rtmp_app_t
+*/
 typedef rtmp_cb_status_t (*rtmp_app_on_av_proc)(
     rtmp_stream_t stream,
     rtmp_app_t app,

@@ -1,0 +1,56 @@
+/*!
+	\page rpc_pause pause
+        
+    A message from the client to tell the server to pause or resume playback.
+
+    ## Syntax ##
+
+    \code
+    String: "pause"
+    Number: 0
+    Null
+    Bool:   ... // Pause / Resume
+    Number: ... // Timestamp
+    \endcode
+
+    ## Parameters ##
+    #### field[0] ####
+    > **Type:** String
+    >
+    > The name of this command, which in this case is "pause".
+
+    #### field[1] ####
+    > **Type:** Number
+    >
+    > The sequence number for this command, which is always 0.
+
+    #### field[2] ####
+    > **Type:** Null
+    >
+    > The command information object for this call, which doesn't exist and is always null.
+
+    #### field[3] ####
+    > **Type:** Boolean
+    >
+    > Indicates whether to pause or resume. True means pause, false means resume.
+    >
+    > Example value: `true`
+
+    #### field[4] ####
+    > **Type:** Number
+    >
+    > When pausing, this is the timestamp, in milliseconds, at which point the stream should be paused. This should match the current playback time of the client.
+    >
+    > When resuming, this is the timestamp, in milliseconds, at which point the stream was originally paused. The server will only send messages with timestamps greater than this value.
+    >
+    > Example value: `123456`
+
+
+    ## Return Value ##
+    On success, an `onStatus` message is returned with the `NetStream.Pause.Notify` code to indicate a successful pause, or `NetStream.Unpause.Notify` to indicate a successful unpause.
+
+    Returns an `_error` message on failure.
+    
+    See \ref rpc_netstream_convention for information about `onStatus`.
+
+*/

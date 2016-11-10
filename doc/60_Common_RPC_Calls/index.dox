@@ -1,0 +1,10 @@
+/*!
+	\page common_rpc_calls Common Remote Procedure Calls
+	
+	RTMP makes heavy use of remote procedure calls (RPC) to control the flow of data between endpoints. These RPCs fall into three broad categories:
+ 
+	* * \subpage rpc_cat_netconn
+	* * \subpage rpc_cat_netstream
+	* * \subpage rpc_cat_flv
+
+*/

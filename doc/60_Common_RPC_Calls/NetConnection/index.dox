@@ -1,0 +1,10 @@
+/*!
+	\page rpc_cat_netconn NetConnection RPCs
+	
+	NetConnection RPCs work to establish the low level flow of communication on the connection. This includes the negotiation of core RTMP parameters on the RTMP layer (above the RTMP chunk connection level).
+ 
+	These include:
+	* * \subpage rpc_connect
+	* * \subpage rpc_createstream
+
+*/

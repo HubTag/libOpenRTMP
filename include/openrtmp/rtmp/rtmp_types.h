@@ -31,8 +31,10 @@ extern "C" {
 
 /*! \addtogroup rtmp_ref RTMP
     @{ */
-/*! \addtogroup rtmp_types Types
+/*! \addtogroup rtmp_types Types and Constants
     @{ */
+
+/*! @{ */
 #include <stdint.h>
 #include <stddef.h>
 
@@ -74,6 +76,7 @@ typedef size_t rtmp_time_t;
     typedef int rtmp_sock_t;
 #endif
 
+/*! @} */
 /*! @} */
 /*! @} */
 

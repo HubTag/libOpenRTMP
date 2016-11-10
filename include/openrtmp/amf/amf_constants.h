@@ -77,24 +77,24 @@ typedef enum AMF_ERR {
     \remarks    These are mainly used internally by and to interface with the AMF0 codec.
 */
 typedef enum AMF0_TYPE {
-    AMF0_TYPE_NUMBER,               //!< Indicates an AMF0 number. \n Defined as `0` in §2.2 on page 5 of the AMF0 spec.
-    AMF0_TYPE_BOOLEAN,              //!< Indicates an AMF0 boolean. \n Defined as `1` in §2.3 on page 5 of the AMF0 spec.
-    AMF0_TYPE_STRING,               //!< Indicates an AMF0 string. \n Defined as `2` in §2.4 on page 5 of the AMF0 spec.
-    AMF0_TYPE_OBJECT,               //!< Indicates the beginning of an AMF0 object. \n Defined as `3` in §2.5 on page 5 of the AMF0 spec.
-    AMF0_TYPE_MOVIECLIP,            //!< Indicates an AMF0 movie clip. \n Defined as `4` in §2.6 on page 5 of the AMF0 spec.
-    AMF0_TYPE_NULL,                 //!< Indicates an AMF0 null value. \n Defined as `5` in §2.7 on page 6 of the AMF0 spec.
-    AMF0_TYPE_UNDEFINED,            //!< Indicates an AMF0 undefined value. \n Defined as `6` in §2.8 on page 6 of the AMF0 spec.
-    AMF0_TYPE_REFERENCE,            //!< Indicates an AMF0 reference. \n Defined as `7` in §2.9 on page 6 of the AMF0 spec.
-    AMF0_TYPE_ECMA_ARRAY,           //!< Indicates an AMF0 ECMA array, which has both associative and ordinal components. \n Defined as `8` in §2.10 on page 6 of the AMF0 spec.
-    AMF0_TYPE_OBJECT_END,           //!< Indicates the end of an AMF0 object. \n Defined as `9` in §2.11 on page 6 of the AMF0 spec.
-    AMF0_TYPE_STRICT_ARRAY,         //!< Indicates an AMF0 strict array, which contains only ordinal indices. \n Defined as `10` in §2.12 on page 7 of the AMF0 spec.
-    AMF0_TYPE_DATE,                 //!< Indicates an AMF0 date. \n Defined as `11` in §2.13 on page 7 of the AMF0 spec.
-    AMF0_TYPE_LONG_STRING,          //!< Indicates an AMF0 long string. \n Defined as `12` in §2.14 on page 7 of the AMF0 spec.
-    AMF0_TYPE_UNSUPPORTED,          //!< Indicates an unsupported type. \n Defined as `13` in §2.15 on page 7 of the AMF0 spec.
-    AMF0_TYPE_RECORDSET,            //!< Indicates an AMF0 record set. \n Defined as `14` in §2.16 on page 7 of the AMF0 spec.
-    AMF0_TYPE_XML_DOCUMENT,         //!< Indicates an AMF0 XML document, which is essentially a long string. \n Defined as `15` in §2.17 on page 7 of the AMF0 spec.
-    AMF0_TYPE_TYPED_OBJECT,         //!< Indicates an AMF0 alias name. \n Defined as `16` in §2.18 on page 8 of the AMF0 spec.
-    AMF0_TYPE_AVMPLUS,              //!< Indicates that the following object is actually formatted in the AMF3 format. \n Defined as `17` in §3.1 on page 8 of the AMF0 spec.
+    AMF0_TYPE_NUMBER,               //!< Indicates an AMF0 number. \n Defined as `0` in §2.2 on page 5 of the \ref amf0_spec
+    AMF0_TYPE_BOOLEAN,              //!< Indicates an AMF0 boolean. \n Defined as `1` in §2.3 on page 5 of the \ref amf0_spec
+    AMF0_TYPE_STRING,               //!< Indicates an AMF0 string. \n Defined as `2` in §2.4 on page 5 of the \ref amf0_spec
+    AMF0_TYPE_OBJECT,               //!< Indicates the beginning of an AMF0 object. \n Defined as `3` in §2.5 on page 5 of the \ref amf0_spec
+    AMF0_TYPE_MOVIECLIP,            //!< Indicates an AMF0 movie clip. \n Defined as `4` in §2.6 on page 5 of the \ref amf0_spec
+    AMF0_TYPE_NULL,                 //!< Indicates an AMF0 null value. \n Defined as `5` in §2.7 on page 6 of the \ref amf0_spec
+    AMF0_TYPE_UNDEFINED,            //!< Indicates an AMF0 undefined value. \n Defined as `6` in §2.8 on page 6 of the \ref amf0_spec
+    AMF0_TYPE_REFERENCE,            //!< Indicates an AMF0 reference. \n Defined as `7` in §2.9 on page 6 of the \ref amf0_spec
+    AMF0_TYPE_ECMA_ARRAY,           //!< Indicates an AMF0 ECMA array, which has both associative and ordinal components. \n Defined as `8` in §2.10 on page 6 of the \ref amf0_spec
+    AMF0_TYPE_OBJECT_END,           //!< Indicates the end of an AMF0 object. \n Defined as `9` in §2.11 on page 6 of the \ref amf0_spec
+    AMF0_TYPE_STRICT_ARRAY,         //!< Indicates an AMF0 strict array, which contains only ordinal indices. \n Defined as `10` in §2.12 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_DATE,                 //!< Indicates an AMF0 date. \n Defined as `11` in §2.13 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_LONG_STRING,          //!< Indicates an AMF0 long string. \n Defined as `12` in §2.14 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_UNSUPPORTED,          //!< Indicates an unsupported type. \n Defined as `13` in §2.15 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_RECORDSET,            //!< Indicates an AMF0 record set. \n Defined as `14` in §2.16 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_XML_DOCUMENT,         //!< Indicates an AMF0 XML document, which is essentially a long string. \n Defined as `15` in §2.17 on page 7 of the \ref amf0_spec
+    AMF0_TYPE_TYPED_OBJECT,         //!< Indicates an AMF0 alias name. \n Defined as `16` in §2.18 on page 8 of the \ref amf0_spec
+    AMF0_TYPE_AVMPLUS,              //!< Indicates that the following object is actually formatted in the AMF3 format. \n Defined as `17` in §3.1 on page 8 of the \ref amf0_spec
     AMF0_TYPE_NUMBER_INT,           //Not a part of the spec, for internal use
     AMF0_TYPE_NONE,
 } amf0_type_t;

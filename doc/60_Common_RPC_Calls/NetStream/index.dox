@@ -1,0 +1,20 @@
+/*!
+	\page rpc_cat_netstream NetStream RPCs
+	
+	NetStream RPCs are used to negotiate responsibilities between the endpoints of an RTMP connection. This is the layer where the client informs the server as to what role it will be playing during the connection, and how it will go about performing that role.
+	
+    NetStream commands all return an `onStatus` message. See \subpage rpc_netstream_convention for details.
+    
+	NetStream commands include:
+	* * \subpage rpc_deletestream
+	* * \subpage rpc_fcpublish
+	* * \subpage rpc_fcunpublish
+	* * \subpage rpc_pause
+	* * \subpage rpc_play
+	* * \subpage rpc_publish
+	* * \subpage rpc_receiveaudio
+	* * \subpage rpc_receivevideo
+	* * \subpage rpc_releasestream
+	* * \subpage rpc_seek
+	* * \subpage rpc_unpublish
+*/
