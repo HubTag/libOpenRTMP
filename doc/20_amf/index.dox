@@ -5,6 +5,6 @@
 	
 	Information
 	* * \subpage creating_amf_push_simple
-
+    * * \subpage amf_type_equivalence
 
 */

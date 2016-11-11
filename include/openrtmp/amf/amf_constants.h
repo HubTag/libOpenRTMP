@@ -77,24 +77,24 @@ typedef enum AMF_ERR {
     \remarks    These are mainly used internally by and to interface with the AMF0 codec.
 */
 typedef enum AMF0_TYPE {
-    AMF0_TYPE_NUMBER,               //!< Indicates an AMF0 number. \n Defined as `0` in §2.2 on page 5 of the \ref amf0_spec
-    AMF0_TYPE_BOOLEAN,              //!< Indicates an AMF0 boolean. \n Defined as `1` in §2.3 on page 5 of the \ref amf0_spec
-    AMF0_TYPE_STRING,               //!< Indicates an AMF0 string. \n Defined as `2` in §2.4 on page 5 of the \ref amf0_spec
-    AMF0_TYPE_OBJECT,               //!< Indicates the beginning of an AMF0 object. \n Defined as `3` in §2.5 on page 5 of the \ref amf0_spec
-    AMF0_TYPE_MOVIECLIP,            //!< Indicates an AMF0 movie clip. \n Defined as `4` in §2.6 on page 5 of the \ref amf0_spec
-    AMF0_TYPE_NULL,                 //!< Indicates an AMF0 null value. \n Defined as `5` in §2.7 on page 6 of the \ref amf0_spec
-    AMF0_TYPE_UNDEFINED,            //!< Indicates an AMF0 undefined value. \n Defined as `6` in §2.8 on page 6 of the \ref amf0_spec
-    AMF0_TYPE_REFERENCE,            //!< Indicates an AMF0 reference. \n Defined as `7` in §2.9 on page 6 of the \ref amf0_spec
-    AMF0_TYPE_ECMA_ARRAY,           //!< Indicates an AMF0 ECMA array, which has both associative and ordinal components. \n Defined as `8` in §2.10 on page 6 of the \ref amf0_spec
-    AMF0_TYPE_OBJECT_END,           //!< Indicates the end of an AMF0 object. \n Defined as `9` in §2.11 on page 6 of the \ref amf0_spec
-    AMF0_TYPE_STRICT_ARRAY,         //!< Indicates an AMF0 strict array, which contains only ordinal indices. \n Defined as `10` in §2.12 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_DATE,                 //!< Indicates an AMF0 date. \n Defined as `11` in §2.13 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_LONG_STRING,          //!< Indicates an AMF0 long string. \n Defined as `12` in §2.14 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_UNSUPPORTED,          //!< Indicates an unsupported type. \n Defined as `13` in §2.15 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_RECORDSET,            //!< Indicates an AMF0 record set. \n Defined as `14` in §2.16 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_XML_DOCUMENT,         //!< Indicates an AMF0 XML document, which is essentially a long string. \n Defined as `15` in §2.17 on page 7 of the \ref amf0_spec
-    AMF0_TYPE_TYPED_OBJECT,         //!< Indicates an AMF0 alias name. \n Defined as `16` in §2.18 on page 8 of the \ref amf0_spec
-    AMF0_TYPE_AVMPLUS,              //!< Indicates that the following object is actually formatted in the AMF3 format. \n Defined as `17` in §3.1 on page 8 of the \ref amf0_spec
+    AMF0_TYPE_NUMBER,               //!< Indicates an AMF0 number.                                                          \n \refdoc{amf0_spec,2.2,5,0}
+    AMF0_TYPE_BOOLEAN,              //!< Indicates an AMF0 boolean.                                                         \n \refdoc{amf0_spec,2.3,5,1}
+    AMF0_TYPE_STRING,               //!< Indicates an AMF0 string.                                                          \n \refdoc{amf0_spec,2.4,5,2}
+    AMF0_TYPE_OBJECT,               //!< Indicates the beginning of an AMF0 object.                                         \n \refdoc{amf0_spec,2.5,5,3}
+    AMF0_TYPE_MOVIECLIP,            //!< Indicates an AMF0 movie clip.                                                      \n \refdoc{amf0_spec,2.6,5,4}
+    AMF0_TYPE_NULL,                 //!< Indicates an AMF0 null value.                                                      \n \refdoc{amf0_spec,2.7,6,5}
+    AMF0_TYPE_UNDEFINED,            //!< Indicates an AMF0 undefined value.                                                 \n \refdoc{amf0_spec,2.8,6,6}
+    AMF0_TYPE_REFERENCE,            //!< Indicates an AMF0 reference.                                                       \n \refdoc{amf0_spec,2.9,6,7}
+    AMF0_TYPE_ECMA_ARRAY,           //!< Indicates an AMF0 ECMA array, which has both associative and ordinal components.   \n \refdoc{amf0_spec,2.10,6,8}
+    AMF0_TYPE_OBJECT_END,           //!< Indicates the end of an AMF0 object.                                               \n \refdoc{amf0_spec,2.11,6,9}
+    AMF0_TYPE_STRICT_ARRAY,         //!< Indicates an AMF0 strict array, which contains only ordinal indices.               \n \refdoc{amf0_spec,2.12,7,10}
+    AMF0_TYPE_DATE,                 //!< Indicates an AMF0 date.                                                            \n \refdoc{amf0_spec,2.13,7,11}
+    AMF0_TYPE_LONG_STRING,          //!< Indicates an AMF0 long string.                                                     \n \refdoc{amf0_spec,2.14,7,12}
+    AMF0_TYPE_UNSUPPORTED,          //!< Indicates an unsupported type.                                                     \n \refdoc{amf0_spec,2.15,7,13}
+    AMF0_TYPE_RECORDSET,            //!< Indicates an AMF0 record set.                                                      \n \refdoc{amf0_spec,2.16,7,14}
+    AMF0_TYPE_XML_DOCUMENT,         //!< Indicates an AMF0 XML document, which is essentially a long string.                \n \refdoc{amf0_spec,2.17,7,15}
+    AMF0_TYPE_TYPED_OBJECT,         //!< Indicates an AMF0 alias name.                                                      \n \refdoc{amf0_spec,2.18,8,16}
+    AMF0_TYPE_AVMPLUS,              //!< Indicates that the following object is actually formatted in the AMF3 format.      \n \refdoc{amf0_spec,3.1,8,17}
     AMF0_TYPE_NUMBER_INT,           //Not a part of the spec, for internal use
     AMF0_TYPE_NONE,
 } amf0_type_t;
@@ -158,23 +158,8 @@ typedef enum AMF_TYPE {
                                     //!< Only used when building AMF objects with `amf_push_simple()`.
     AMF_TYPE_INTEGER16,             //!< Refers to a 16 bit signed integer.
                                     //!< Only used when building AMF objects with `amf_push_simple()`.
-    AMF_TYPE_ASSOCIATIVE,           //!< Refers to a type with associative values.
-                                    //!< When used to check type equivalence, this will match any of the following types:
-                                    //!< * AMF_TYPE_OBJECT
-                                    //!< * AMF_TYPE_ARRAY
-                                    //!< * AMF_TYPE_TYPED_OBJECT
-    AMF_TYPE_COMPLEX,               //!< Refers to a complex type.
-                                    //!< When used to check type equivalence, this will match any of the following types:
-                                    //!< * AMF_TYPE_OBJECT
-                                    //!< * AMF_TYPE_ARRAY
-                                    //!< * AMF_TYPE_RECORDSET
-                                    //!< * AMF_TYPE_TYPED_OBJECT
-                                    //!< * AMF_TYPE_VECTOR_DOUBLE
-                                    //!< * AMF_TYPE_VECTOR_INT
-                                    //!< * AMF_TYPE_VECTOR_OBJECT
-                                    //!< * AMF_TYPE_VECTOR_UINT
-                                    //!< * AMF_TYPE_BYTE_ARRAY
-                                    //!< * AMF_TYPE_MOVIECLIP
+    AMF_TYPE_ASSOCIATIVE,           //!< Refers to a type with associative values. See the \ref amf_equiv_assoc "compatible associative types".
+    AMF_TYPE_COMPLEX,               //!< Refers to a complex type. See the \ref amf_equiv_complex "compatible complex types".
 } amf_type_t;
 
 /*! @} */

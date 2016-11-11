@@ -45,6 +45,7 @@ typedef struct rtmp_server * rtmp_server_t;
 
 
 /*! \brief      Creates an RTMP server object.
+    \noparam
     \return     If the function succeeds, the return value is an RTMP server object.
     \return     If the function fails, the return value is `nullptr`.
     \remarks    This is currently only really used internally.
@@ -55,7 +56,7 @@ rtmp_server_t rtmp_server_create( void );
 /*! \brief      Destroys an RTMP server connection object.
     \param      server  A valid server connection object to destroy. \n
                         Passing an invalid server connection, including `nullptr`, is undefined.
-    \return     This function does not return a value.
+    \noreturn
     \remarks    This is currently only really used internally. RTMP managers currently manage the lifetime of RTMP server connections.
     \memberof   rtmp_server_t
 */
@@ -79,7 +80,7 @@ rtmp_stream_t rtmp_server_stream( rtmp_server_t server );
 /*! \brief      Set the app list for a connection.
     \param      server  The target server connection object.
     \param      list    The app list which will replace `server`'s current app list.
-    \return     This function does not return a value.
+    \noreturn
     \remarks    The effects of this change are immediate. All subsequent actions on this connection will be run through the new app
                 list, even if events have already transpired under the logic of the old list. Take care when changing an app list in
                 the middle of an active connection.

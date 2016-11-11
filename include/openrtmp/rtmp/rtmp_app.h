@@ -59,7 +59,7 @@ typedef struct rtmp_app_list * rtmp_app_list_t;
     \param      app     The app which this callback was registered with.
     \param      args    An AMF object containing data for an AMF-based RTMP message.
     \param      user    A user-defined pointer which was registered with the app.
-    \return     This callback follows the standard callback return semantics.
+    \return     See \ref callback_semantics
     \remarks    This is the callback used for all AMF-based RTMP messages. No distinction is made between
                 shared object messages, command messages, or data messages.
     \memberof   rtmp_app_t
@@ -76,7 +76,7 @@ typedef rtmp_cb_status_t (*rtmp_app_on_amf_proc)(
     \param      app     The app which this callback was registered with.
     \param      name    The name of the stream. Often called the stream key.
     \param      user    A user-defined pointer which was registered with the app.
-    \return     This callback follows the standard callback return semantics.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 typedef rtmp_cb_status_t (*rtmp_app_on_fcpub_proc)(
@@ -96,7 +96,7 @@ typedef rtmp_cb_status_t (*rtmp_app_on_fcpub_proc)(
                         Common values are "live", "record", and "append". See Publishing.
                         \endparblock
     \param      user    A user-defined pointer which was registered with the app.
-    \return     This callback follows the standard callback return semantics.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 typedef rtmp_cb_status_t (*rtmp_app_on_pub_proc)(
@@ -124,7 +124,7 @@ typedef rtmp_cb_status_t (*rtmp_app_on_pub_proc)(
                             for the message.
                             \endparblock
     \param      user    A user-defined pointer which was registered with the app.
-    \return     This callback follows the standard callback return semantics.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 typedef rtmp_cb_status_t (*rtmp_app_on_av_proc)(
@@ -139,6 +139,7 @@ typedef rtmp_cb_status_t (*rtmp_app_on_av_proc)(
 );
 
 /*! \brief      Creates an app list.
+    \noparam
     \return     If the function succeeds, an app list is constructed and returned.
     \return     If the function fails, `nullptr` is returned.
     \memberof   rtmp_app_list_t
@@ -150,7 +151,7 @@ rtmp_app_list_t rtmp_app_list_create( void );
                         A valid list object.
                         Passing an invalid list object, including `nullptr`, is undefined behavior.
                         \endparblock
-    \return     This function does not return a value.
+    \noreturn
     \remarks    Be very careful when destroying app lists. There is currently no reference counting on app lists,
                 so any outstanding connections must not have their app lists deleted. Make sure you've disconnected
                 all connections which make use of the app list before destroying the list.
@@ -182,7 +183,7 @@ rtmp_app_t rtmp_app_list_get( rtmp_app_list_t list, const char *appname );
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user );
@@ -191,7 +192,7 @@ void rtmp_app_set_connect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user );
@@ -200,7 +201,7 @@ void rtmp_app_set_disconnect( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *u
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user );
@@ -209,7 +210,7 @@ void rtmp_app_set_release( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *user );
@@ -218,7 +219,7 @@ void rtmp_app_set_fcpublish( rtmp_app_t app, rtmp_app_on_fcpub_proc proc, void *
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user );
@@ -227,7 +228,7 @@ void rtmp_app_set_publish( rtmp_app_t app, rtmp_app_on_pub_proc proc, void *user
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *user );
@@ -236,7 +237,7 @@ void rtmp_app_set_metadata( rtmp_app_t app, rtmp_app_on_amf_proc proc, void *use
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_video( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user );
@@ -245,7 +246,7 @@ void rtmp_app_set_video( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user );
     \param      app     The app to register the callback with.
     \param      proc    The callback procedure to register.
     \param      user    An optional pointer to pass into the callback.
-    \return     This function does not return a value.
+    \noreturn
     \memberof   rtmp_app_t
 */
 void rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user );
@@ -257,6 +258,7 @@ void rtmp_app_set_audio( rtmp_app_t app, rtmp_app_on_av_proc proc, void *user );
     \param      params  The AMF parameters.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_connect( rtmp_stream_t stream, rtmp_app_t app, amf_t params );
@@ -267,6 +269,7 @@ rtmp_cb_status_t rtmp_app_connect( rtmp_stream_t stream, rtmp_app_t app, amf_t p
     \param      params  The AMF parameters.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_disconnect( rtmp_stream_t stream, rtmp_app_t app, amf_t params  );
@@ -277,6 +280,7 @@ rtmp_cb_status_t rtmp_app_disconnect( rtmp_stream_t stream, rtmp_app_t app, amf_
     \param      params  The AMF parameters.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_t params  );
@@ -287,6 +291,7 @@ rtmp_cb_status_t rtmp_app_release( rtmp_stream_t stream, rtmp_app_t app, amf_t p
     \param      name    The name of the stream. Also referred to as the stream key.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const char * name );
@@ -299,6 +304,7 @@ rtmp_cb_status_t rtmp_app_fcpublish( rtmp_stream_t stream, rtmp_app_t app, const
                         Common values are "live", "record", and "append". See Publishing.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const char * name, const char * type );
@@ -309,6 +315,7 @@ rtmp_cb_status_t rtmp_app_publish( rtmp_stream_t stream, rtmp_app_t app, const c
     \param      params  The AMF parameters.
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t params  );
@@ -331,6 +338,7 @@ rtmp_cb_status_t rtmp_app_metadata( rtmp_stream_t stream, rtmp_app_t app, amf_t 
                             \endparblock
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part );
@@ -353,6 +361,7 @@ rtmp_cb_status_t rtmp_app_video( rtmp_stream_t stream, rtmp_app_t app, size_t st
                             \endparblock
     \return     This function returns the result of the callback.
     \return     If no callback was specified, the return value is `RTMP_CB_CONTINUE`.
+    \return     See \ref callback_semantics
     \memberof   rtmp_app_t
 */
 rtmp_cb_status_t rtmp_app_audio( rtmp_stream_t stream, rtmp_app_t app, size_t streamid, rtmp_time_t timestamp, const void * av_data, size_t av_length, bool final_part );

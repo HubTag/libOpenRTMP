@@ -1,0 +1,22 @@
+/*!
+    \page callback_semantics libOpenRTMP Callback Semantics
+    
+    The return value of most callbacks throughout libOpenRTMP is a \ref rtmp_cb_status_t value, which may be used to control the flow of execution for the stream which originated the callback. While there are other ways to signal changes to the underlying stream, the returned codes have immediate effect, wheras other methods might not take effect for a service iteration or two.
+    
+    \anchor callback_semantics_continue
+    \par RTMP_CB_CONTINUE
+    Most of the time, callbacks should return \ref RTMP_CB_CONTINUE. It signals that everything is okay, and that processing should continue as normal on the stream.
+    
+    \anchor callback_semantics_error
+    \par RTMP_CB_ERROR
+    When a callback returns \ref RTMP_CB_ERROR, the underlying stream will back out of processing the current message and return an error code through \ref rtmp_service. The stream will still be considered active, and will continue to be processed. The message will remain in the message queue though, and the stream will not continue until the message is successfully processed.
+
+    \anchor callback_semantics_pause
+    \par RTMP_CB_DEFER_PAUSE
+    When a callback returns \ref RTMP_CB_DEFER_PAUSE, the process is almost identical to the way that \ref RTMP_CB_ERROR is processed. However, rather than continuing to process the stream, the stream will be paused at the end of the current service iteration. The only events which will be called on a paused stream are \ref RTMP_EVENT_REFRESH events. In order to resume operation, the stream must be explicitly unpaused.
+    
+    \anchor callback_semantics_abort
+    \par RTMP_CB_ABORT
+    When a callback returns \ref RTMP_CB_ABORT, the underlying stream will immediately back out of processing the current message and close the stream. This can be used by callbacks for RPCs like \ref rpc_connect, \ref rpc_publish, or \ref rpc_setdataframe in order to deny access to a certain user based on their stream parameters.
+    
+*/

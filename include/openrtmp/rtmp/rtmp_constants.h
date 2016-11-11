@@ -50,18 +50,18 @@ extern "C" {
 /*! @{ */
 //Nonce size specified on page 8, §5.2.3
 /// \brief      The size of handshake nonces.
-/// \details    Defined in §5.2.3 on page 8 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.2.3,8}
 #define RTMP_NONCE_SIZE                     1528
 
 /// \brief      The RTMP version.
-/// \details    Defined in §5.2.2 on page 7 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.2.2,7}
 #define RTMP_VERSION                        3
 
 /// \brief      The ID of the aggregate chunk cache (used internally)
 #define RTMP_CACHE_AGGREGATE                0
 
 /// \brief      The maximum size of a message header.
-/// \details    Defined in §5.3.1 on page 12 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.3.1,12}
 #define RTMP_MESSAGE_HEADER_SIZE            (1 + 3 + 4 + 3)
 
 /// \brief      When specifying a stream event, this will indicate that the callback should fire for any event of the given class.
@@ -77,15 +77,15 @@ extern "C" {
 #define RTMP_ADDR_ANY                       "0.0.0.0"
 
 /// \brief      The default size of a chunk.
-/// \details    Defined in §5.4.1 on page 19 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.4.1,19}
 #define RTMP_DEFAULT_CHUNK_SIZE             128
 
 /// \brief      The message stream ID of the control stream.
-/// \details    Defined in §5.4 on page 18 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.4,18}
 #define RTMP_CONTROL_MSG_STREAM 0
 
 /// \brief      The chunk stream ID of the control stream.
-/// \details    Defined in §5.4 on page 18 of the \ref rtmp_spec.
+/// \details    \refdoc{rtmp_spec,5.4,18}
 #define RTMP_CONTROL_CHUNK_STREAM 2
 
 /*! @} */
@@ -137,7 +137,7 @@ typedef enum {
                 When used by the server, the client flags indicate that the specified client messages were received,
                 and the server messages indicate that the specified server messages were sent.
 
-                For more information about the RTMP handshake, see §5.2 on page 7 of the \ref rtmp_spec.
+                For more information about the RTMP handshake, see §5.2 on page 7 of the \ref rtmp_spec
                 \endparblock
 */
 typedef enum {
@@ -154,7 +154,7 @@ typedef enum {
 
 //Set Peer Bandwidth Limit Type         //Page 21, §5.4.5
 /*! \brief      Provides names to indicate how the strategy a peer should use to change their window size after a \ref RTMP_MSG_SET_PEER_BWIDTH call.
-    \remarks    These values are defined in §5.4.5 on page 21 of the \ref rtmp_spec.
+    \remarks    \refdoc{rtmp_spec,5.4.5,21}
     \sa         rtmp_get_limit_type_name
 */
 typedef enum {
@@ -183,29 +183,29 @@ typedef enum {
 */
 typedef enum {
     //Chunk Control Messages
-    RTMP_MSG_SET_CHUNK_SIZE = 1,        //!< A chunk control message indicating a new chunk size which the sender will use from now on. \n Defined in §5.4.1 on page 19 of the \ref rtmp_spec.
-    RTMP_MSG_ABORT = 2,                 //!< A chunk control message that requests the peer abort processing of a message prematurely. \n Defined in §5.4.2 on page 19 of the \ref rtmp_spec.
-    RTMP_MSG_ACK = 3,                   //!< A chunk control message which acknowledges the number of bytes received so far. \n Defined in §5.4.3 on page 20 of the \ref rtmp_spec.
-    RTMP_MSG_WIN_ACK_SIZE = 5,          //!< A chunk control message indicating the window size of the sender. \n Defined in §5.4.4 on page 20 of the \ref rtmp_spec.
-    RTMP_MSG_SET_PEER_BWIDTH = 6,       //!< A chunk control message indicating to the peer that the sender wishes the peer to change their window size. \n Defined in §5.4.5 on page 21 of the \ref rtmp_spec.
+    RTMP_MSG_SET_CHUNK_SIZE = 1,        //!< A chunk control message indicating a new chunk size which the sender will use from now on. \n \refdoc{rtmp_spec,5.4.1,19}
+    RTMP_MSG_ABORT = 2,                 //!< A chunk control message that requests the peer abort processing of a message prematurely. \n \refdoc{rtmp_spec,5.4.2,19}
+    RTMP_MSG_ACK = 3,                   //!< A chunk control message which acknowledges the number of bytes received so far. \n \refdoc{rtmp_spec,5.4.3,20}
+    RTMP_MSG_WIN_ACK_SIZE = 5,          //!< A chunk control message indicating the window size of the sender. \n \refdoc{rtmp_spec,5.4.4,20}
+    RTMP_MSG_SET_PEER_BWIDTH = 6,       //!< A chunk control message indicating to the peer that the sender wishes the peer to change their window size. \n \refdoc{rtmp_spec,5.4.5,21}
     //User Control Messages
-    RTMP_MSG_USER_CTL = 4,              //!< Indicates that this is a user control message. \n Defined in §6.2 on page 23 of the \ref rtmp_spec.
+    RTMP_MSG_USER_CTL = 4,              //!< Indicates that this is a user control message. \n \refdoc{rtmp_spec,6.2,23}
 
     //RTMP Command Messages
-    RTMP_MSG_AUDIO = 8,                 //!< An RTMP command message which indicates that the payload contains audio. \n Defined in §7.1.4 on page 26 of the \ref rtmp_spec.
-    RTMP_MSG_VIDEO = 9,                 //!< An RTMP command message which indicates that the payload contains video. \n Defined in §7.1.5 on page 26 of the \ref rtmp_spec.
-    RTMP_MSG_AGGREGATE = 22,            //!< An RTMP command message which indicates that this is an aggregate RTMP message. Aggregate RTMP messages are currently not supported. \n Defined in §7.1.6 on page 26 of the \ref rtmp_spec.
-    RTMP_MSG_AMF3_DAT = 15,             //!< Indicates that the payload of this message is AMF3 information. \n Defined in §7.1.2 on page 24 of the \ref rtmp_spec.
-    RTMP_MSG_AMF3_SO = 16,              //!< An RTMP command message which indicates that the payload is a serialized shared object in AMF3 format. \n Defined in §7.1.3 on page 24 of the \ref rtmp_spec.
-    RTMP_MSG_AMF3_CMD = 17,             //!< An RTMP command message which indicates that the payload is a RPC call in AMF3 format. \n Defined in §7.1.1 on page 24 of the \ref rtmp_spec.
-    RTMP_MSG_AMF0_DAT = 18,             //!< An RTMP command message which indicates that the payload is AMF0 information. \n Defined in §7.1.2 on page 24 of the \ref rtmp_spec.
-    RTMP_MSG_AMF0_SO = 19,              //!< An RTMP command message which indicates that the payload is a serialized shared object in AMF0 format. \n Defined in §7.1.3 on page 24 of the \ref rtmp_spec.
-    RTMP_MSG_AMF0_CMD = 20              //!< An RTMP command message which indicates that the payload is a RPC call in AMF0 format. \n Defined in §7.1.1 on page 24 of the \ref rtmp_spec.
+    RTMP_MSG_AUDIO = 8,                 //!< An RTMP command message which indicates that the payload contains audio. \n \refdoc{rtmp_spec,7.1.4,26}
+    RTMP_MSG_VIDEO = 9,                 //!< An RTMP command message which indicates that the payload contains video. \n \refdoc{rtmp_spec,7.1.5,26}
+    RTMP_MSG_AGGREGATE = 22,            //!< An RTMP command message which indicates that this is an aggregate RTMP message. Aggregate RTMP messages are currently not supported. \n \refdoc{rtmp_spec,7.1.6,26}
+    RTMP_MSG_AMF3_DAT = 15,             //!< An RTMP command message which indicates that the payload of this message is AMF3 information. \n \refdoc{rtmp_spec,7.1.2,24}
+    RTMP_MSG_AMF3_SO = 16,              //!< An RTMP command message which indicates that the payload is a serialized shared object in AMF3 format. \n \refdoc{rtmp_spec,7.1.3,24}
+    RTMP_MSG_AMF3_CMD = 17,             //!< An RTMP command message which indicates that the payload is a RPC call in AMF3 format. \n \refdoc{rtmp_spec,7.1.1,24}
+    RTMP_MSG_AMF0_DAT = 18,             //!< An RTMP command message which indicates that the payload is AMF0 information. \n \refdoc{rtmp_spec,7.1.2,24}
+    RTMP_MSG_AMF0_SO = 19,              //!< An RTMP command message which indicates that the payload is a serialized shared object in AMF0 format. \n \refdoc{rtmp_spec,7.1.3,24}
+    RTMP_MSG_AMF0_CMD = 20              //!< An RTMP command message which indicates that the payload is a RPC call in AMF0 format. \n \refdoc{rtmp_spec,7.1.1,24}
 } rtmp_message_type_t;
 
 //Audio Codec Support Bitflags          //Page 31
 /*! \brief      A set of bitflags which are used to indicate to the peer what sort of audio codecs are supported.
-    \remarks    These values are defined in §7.2.1.1 on page 31 of the \ref rtmp_spec.
+    \remarks    \refdoc{rtmp_spec,7.2.1.1,31}
     \sa         rtmp_get_snd_codec_flag_name
     \sa         rtmp_get_snd_codec_flag_list
 */
@@ -227,7 +227,7 @@ typedef enum {
 
 //Video Codec Support Bitflags          //Page 32
 /*! \brief      A set of bitflags which are used to indicate to the peer what sort of video codecs are supported.
-    \remarks    These values are defined in §7.2.1.1 on page 32 of the \ref rtmp_spec.
+    \remarks    \refdoc{rtmp_spec,7.2.1.1,32}
     \sa         rtmp_get_vid_codec_flag_name
     \sa         rtmp_get_vid_codec_flag_list
 */
@@ -245,7 +245,7 @@ typedef enum {
 
 //Video Function Bitflags               //Page 32
 /*! \brief      A bitflag indicating whether a client supports various video functions.
-    \remarks    This value is defined in §7.2.1.1 on page 32 of the \ref rtmp_spec.
+    \remarks    \refdoc{rtmp_spec,7.2.1.1,32}
     \sa         rtmp_get_vid_func_flag_name
     \sa         rtmp_get_vid_func_flag_list
 */

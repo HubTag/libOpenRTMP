@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "My Project"
+PROJECT_NAME           = "libOpenRTMP"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -228,7 +228,11 @@ TAB_SIZE               = 4
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES                =
+ALIASES                 =   noparam="\par Parameters\nThis function takes no parameters." 
+ALIASES                 +=  noreturn="\returns This function does not return a value."
+ALIASES                 +=  refdoc{2}="Defined in \ref \1 §\2"
+ALIASES                 +=  refdoc{3}="Defined in \ref \1 §\2 page \3"
+ALIASES                 +=  refdoc{4}="Defined as `\4` in \ref \1 §\2 page \3"
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"
@@ -1374,7 +1378,7 @@ GENERATE_TREEVIEW      = YES
 # Minimum value: 0, maximum value: 20, default value: 4.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-ENUM_VALUES_PER_LINE   = 4
+ENUM_VALUES_PER_LINE   = 0
 
 # If the treeview is enabled (see GENERATE_TREEVIEW) then this tag can be used
 # to set the initial width (in pixels) of the frame in which the tree is shown.

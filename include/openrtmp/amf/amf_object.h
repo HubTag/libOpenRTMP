@@ -139,7 +139,7 @@ amf_t amf_reference( amf_t other );
 
 /*! \brief      Decreases the reference count and/or destroys an AMF object.
     \param      amf     The AMF object which should be destroyed.
-    \return     This function returns no value.
+    \noreturn
     \remarks    If the AMF object has been referenced, an additional call to `amf_destroy()` must be made for every time
                 it was referenced before it will actually be destroyed.
     \memberof   amf_t
@@ -467,74 +467,268 @@ amf_err_t amf_push_simple( amf_t amf, ... );
 
 
 
+/*! \brief      Dereferences an AMF value.
+    \param      target  The AMF value to dereference.
+    \param      recurse If true, this function will repeatedly dereference the value until a non-reference value,
+                        an invalid reference, or a cyclic reference is discovered.
+    \return     The dereferenced value.
+    \return     If the final reference was invalid, \ref nullptr will be returned.
+    \return     If the reference is cyclic, then \a target will be returned.
+    \memberof   amf_value_t
+ */
+amf_value_t amf_dereference(amf_value_t target, bool recurse);
+
 //Returns true if the given value is of the specified type.
-//Reference values will return true if the type is reference
-//or if the type matches the referenced value's type.
+/*! \brief      Returns true if the given AMF value is of the specified type.
+    \param      value   The AMF value to check.
+    \param      type    The type to check the value against.
+    \return     `true`, if the types match. `false` otherwise.
+    \remarks    \parblock
+                This will only return if the match is exact, unless \a type is either \ref AMF_TYPE_ASSOCIATIVE or \ref AMF_TYPE_COMPLEX.
+
+                For more information on AMF type equivalence, see \ref amf_value_equiv_is.
+                \endparblock
+    \memberof   amf_value_t
+ */
 bool amf_value_is( amf_value_t value, const amf_type_t type );
 
 //Returns true if the type of the specified value is compatible
-//with the given type. Compatibility means that the given value
-//may be read as the given type.
-//Compatibility is specified by the following table. Types are
-//automatically compatible with themselves.
-//
-// Actual Type      | Compatible Types
-//------------------|--------------------------------------------
-// number           | date
-// boolean          |
-// string           | long string, xml document
-// object           | typed object
-// movieclip        |
-// null             | number, boolean, object
-// undefined        |
-// reference        | based on type of referenced value
-// ECMA array       | strict array
-// strict array     | ECMA array
-// date             | number
-// long string      | string, xml document
-// unsupported      |
-// recordset        |
-// XML document     | string, long string
-// typed object     | object
-//
+//with the given type.
+
+/*! \brief      Returns true if the given AMF value is compatible with the specified type.
+    \param      value   The AMF value to check.
+    \param      type    The type to check the value against.
+    \return     `true`, if the types are compatible. `false` otherwise.
+    \remarks    \parblock
+                This will return true if the types are considered compatible.
+
+                For more information on AMF type compatibility, see \ref amf_value_equiv_like.
+                \endparblock
+    \memberof   amf_value_t
+ */
 bool amf_value_is_like( amf_value_t value, const amf_type_t type );
 
+/*! \brief      Extracts a double from an AMF value.
+    \param      target  An AMF value.
+    \return     A double whose value is representative of \a target.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 double amf_value_get_double( amf_value_t target );
+
+/*! \brief      Extracts an integer from an AMF value.
+    \param      target  An AMF value.
+    \return     An integer whose value is representative of \a target.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 int32_t amf_value_get_integer( amf_value_t target );
+
+/*! \brief      Extracts a boolean from an AMF value.
+    \param      target  An AMF value.
+    \return     A boolean whose value is representative of \a target.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 bool amf_value_get_bool( amf_value_t target );
+
+/*! \brief      Extracts a string from an AMF value.
+    \param      target  An AMF value.
+    \param[out] length  (Optional) Receives the length of the returned character buffer.
+    \return     A character buffer whose contents are representative of \a target.
+                Upon success, \a length is filled with the length of the returned character buffer.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 const char* amf_value_get_string( amf_value_t target, size_t *length );
+
+/*! \brief      Extracts a reference offset from an AMF value.
+    \param      target  An AMF value.
+    \return     An index representing the offset of to member which \a target represents.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 size_t amf_value_get_ref( amf_value_t target );
+
+/*! \brief      Extracts a date from an AMF value.
+    \param      target      An AMF value.
+    \param[out] timezone    (Optional) Receives the timezone parameter.
+    \return     A Unix timestamp representative of \a target.
+                Upon success, \a timezone is filled with the timezone offset. This should almost always be zero.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 double amf_value_get_date( amf_value_t target, int16_t *timezone );
+
+/*! \brief      Extracts an XML document from an AMF value.
+    \param      target  An AMF value.
+    \param[out] length  (Optional) Receives the length of the returned character buffer.
+    \return     A character buffer whose contents are representative of \a target.
+                Upon success, \a length is filled with the length of the returned character buffer.
+    \remarks    See \ref amf_value_equiv_like for information on which types you may use this function on.
+    \memberof   amf_value_t
+ */
 const char* amf_value_get_xml( amf_value_t target, size_t *length );
 
 
 //Get member from object by key.
+/*! \brief      Fetches a member from an object by key.
+    \param      target  An AMF value.
+    \param      key     The name of the member to fetch.
+    \return     Upon success, the member associated with \a key. \ref nullptr on failure.
+    \remarks    Should only be used on \ref AMF_TYPE_OBJECT values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_value
+ */
 amf_value_t amf_obj_get_value( amf_value_t target, const char *key );
 
 //Get member from object by index. Key is returned if the arguments are not null.
+/*! \brief      Fetches a member from an object by index.
+    \param      target  An AMF value.
+    \param      idx     The index from which to fetch the member.
+    \param[out] key     (Optional) Receives the name of the member.
+    \param[out] key_len (Optional) Receives the length of \a key
+    \return     Upon success, the member stored at offset \a idx. \ref nullptr on failure.
+    \remarks    This is meant for iterating over all the members within an object. The ordering of members is undefined.
+    \remarks    Should only be used on \ref AMF_TYPE_OBJECT values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_count
+    \sa         amf_assoc_get_value_idx
+    \sa         amf_obj_get_count
+ */
 amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
 
 //Get the number of members in object
+/*! \brief      Gets the number of items in an object.
+    \param      target  An AMF value.
+    \return     Returns the number of items in an object.
+    \remarks    Should only be used on \ref AMF_TYPE_OBJECT values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_count
+    \sa         amf_assoc_get_value_idx
+    \sa         amf_obj_get_value_idx
+ */
 size_t amf_obj_get_count( amf_value_t target );
 
 //Same as with the obj functions, but with arrays
 //Associative values
+/*! \brief      Fetches a member from the associative portion of an array by key.
+    \param      target  An AMF value.
+    \param      key     The name of the member to fetch.
+    \return     Upon success, the member associated with \a key. \ref nullptr on failure.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_value
+ */
 amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key );
+
+/*! \brief      Fetches a member from the associative portion of an array by index.
+    \param      target  An AMF value.
+    \param      idx     The index from which to fetch the member.
+    \param[out] key     (Optional) Receives the name of the member.
+    \param[out] key_len (Optional) Receives the length of \a key
+    \return     Upon success, the member stored at offset \a idx. \ref nullptr on failure.
+    \remarks    This is meant for iterating over all the members within an object. The ordering of members is undefined.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_count
+    \sa         amf_assoc_get_value_idx
+    \sa         amf_arr_get_assoc_count
+ */
 amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+/*! \brief      Gets the number of items in the associative portion of an array.
+    \param      target  An AMF value.
+    \return     Returns the number of items in an object.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_count
+    \sa         amf_assoc_get_value_idx
+    \sa         amf_arr_get_assoc_value_idx
+ */
 size_t amf_arr_get_assoc_count( const amf_value_t target );
 
 //Ordinal values
+/*! \brief      Fetches a member from the ordinal portion of an array by key.
+    \param      target  An AMF value.
+    \param      key     The name of the member to fetch.
+    \return     Upon success, the member associated with \a key. \ref nullptr on failure.
+    \remarks    The ordinal portion of an array still uses string keys internally,
+                so this library makes no effort to hide that from the caller.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+ */
 amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key );
+
+/*! \brief      Fetches a member from ordinal portion of an array by index.
+    \param      target  An AMF value.
+    \param      idx     The index from which to fetch the member.
+    \param[out] key     (Optional) Receives the name of the member.
+    \param[out] key_len (Optional) Receives the length of \a key
+    \return     Upon success, the member stored at offset \a idx. \ref nullptr on failure.
+    \remarks    The ordinal portion of an array still uses string keys internally,
+                so this library makes no effort to hide that from the caller.
+    \remarks    This is meant for iterating over all the members within an object. The ordering of members is undefined.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+    \sa         amf_arr_get_ord_count
+ */
 amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+/*! \brief      Gets the number of items in the ordinal portion of an array .
+    \param      target  An AMF value.
+    \return     Returns the number of items in an object.
+    \remarks    The ordinal portion of an array still uses string keys internally,
+                so this library makes no effort to hide that from the caller.
+    \remarks    Should only be used on \ref AMF_TYPE_ARRAY values.
+    \memberof   amf_value_t
+    \sa         amf_arr_get_ord_value_idx
+ */
 size_t amf_arr_get_ord_count( const amf_value_t target );
 
 //And then a generic version which can be used to fetch any associative data from an array or object.
+/*! \brief      Fetches a member from an associative value by key.
+    \param      target  An AMF value.
+    \param      key     The name of the member to fetch.
+    \return     Upon success, the member associated with \a key. \ref nullptr on failure.
+    \remarks    Should be used on values which fall under the \ref AMF_TYPE_ASSOCIATIVE class.
+    \memberof   amf_value_t
+ */
 amf_value_t amf_assoc_get_value( amf_value_t target, const char *key );
+
+/*! \brief      Fetches a member from an associative value by index.
+    \param      target  An AMF value.
+    \param      idx     The index from which to fetch the member.
+    \param[out] key     (Optional) Receives the name of the member.
+    \param[out] key_len (Optional) Receives the length of \a key
+    \return     Upon success, the member stored at offset \a idx. \ref nullptr on failure.
+    \remarks    This is meant for iterating over all the members within an object. The ordering of members is undefined.
+    \remarks    Should be used on values which fall under the \ref AMF_TYPE_ASSOCIATIVE class.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_count
+ */
 amf_value_t amf_assoc_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len );
+/*! \brief      Gets the number of items in an associative value.
+    \param      target  An AMF value.
+    \return     Returns the number of items in an object.
+    \remarks    Should be used on values which fall under the \ref AMF_TYPE_ASSOCIATIVE class.
+    \memberof   amf_value_t
+    \sa         amf_assoc_get_value_idx
+ */
 size_t amf_assoc_get_count( const amf_value_t target );
 
-
+/*! \brief      Prints a single AMF value for debugging purposes.
+    \param      val     An AMF value to print.
+    \noreturn
+    \memberof   amf_value_t
+    \sa         amf_print
+ */
 void amf_print_value( amf_value_t val );
+
+/*! \brief      Prints a full AMF object for debugging purposes.
+    \param      val     An AMF object to print.
+    \noreturn
+    \memberof   amf_t
+    \sa         amf_print_value
+ */
 void amf_print( amf_t val );
 
 

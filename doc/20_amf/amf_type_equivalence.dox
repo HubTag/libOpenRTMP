@@ -1,0 +1,112 @@
+/*!
+    \page amf_type_equivalence AMF Type Equivalence
+    
+    When dealing with AMF values, you frequently need to know about the type which a given \ref amf_value_t is representing. The two functions for doing so are \ref amf_value_is and \ref amf_value_is_like.
+    
+    \section amf_value_equiv_is Type Equivalence for amf_value_is
+    
+    \ref amf_value_is employs a strict definition of equivalence. A passed type must exactly match the underlying value for the function to return true, with the exception of \ref AMF_TYPE_ASSOCIATIVE and \ref AMF_TYPE_COMPLEX, which are metatypes which may be used to determine the class of an object more trivially.
+    
+    To make things simple, here is a full type equivalence table for \ref amf_value_is
+    
+    <table>
+    <tr><th>         Passed Type             <th>        Equivalent Type
+    
+    <tr><td>    \ref AMF_TYPE_UNDEFINED      <td>   \ref AMF_TYPE_UNDEFINED        
+    <tr><td>    \ref AMF_TYPE_NULL           <td>   \ref AMF_TYPE_NULL             
+    <tr><td>    \ref AMF_TYPE_BOOLEAN        <td>   \ref AMF_TYPE_BOOLEAN          
+    <tr><td>    \ref AMF_TYPE_INTEGER        <td>   \ref AMF_TYPE_INTEGER          
+    <tr><td>    \ref AMF_TYPE_DOUBLE         <td>   \ref AMF_TYPE_DOUBLE           
+    <tr><td>    \ref AMF_TYPE_DATE           <td>   \ref AMF_TYPE_DATE             
+    <tr><td>    \ref AMF_TYPE_STRING         <td>   \ref AMF_TYPE_STRING           
+    <tr><td>    \ref AMF_TYPE_XML_DOCUMENT   <td>   \ref AMF_TYPE_XML_DOCUMENT     
+    <tr><td>    \ref AMF_TYPE_OBJECT         <td>   \ref AMF_TYPE_OBJECT           
+    <tr><td>    \ref AMF_TYPE_TYPED_OBJECT   <td>   \ref AMF_TYPE_TYPED_OBJECT     
+    <tr><td>    \ref AMF_TYPE_ARRAY          <td>   \ref AMF_TYPE_ARRAY            
+    <tr><td>    \ref AMF_TYPE_VECTOR_INT     <td>   \ref AMF_TYPE_VECTOR_INT       
+    <tr><td>    \ref AMF_TYPE_VECTOR_UINT    <td>   \ref AMF_TYPE_VECTOR_UINT      
+    <tr><td>    \ref AMF_TYPE_VECTOR_DOUBLE  <td>   \ref AMF_TYPE_VECTOR_DOUBLE    
+    <tr><td>    \ref AMF_TYPE_VECTOR_OBJECT  <td>   \ref AMF_TYPE_VECTOR_OBJECT    
+    <tr><td>    \ref AMF_TYPE_BYTE_ARRAY     <td>   \ref AMF_TYPE_BYTE_ARRAY       
+    <tr><td>    \ref AMF_TYPE_MOVIECLIP      <td>   \ref AMF_TYPE_MOVIECLIP        
+    <tr><td>    \ref AMF_TYPE_RECORDSET      <td>   \ref AMF_TYPE_RECORDSET        
+    <tr><td>    \ref AMF_TYPE_REFERENCE      <td>   \ref AMF_TYPE_REFERENCE        
+    <tr><td>    \ref AMF_TYPE_UNSUPPORTED    <td>   \ref AMF_TYPE_UNSUPPORTED      
+    <tr><td>    \ref AMF_TYPE_AVMPLUS        <td>   \ref AMF_TYPE_AVMPLUS          
+    <tr><td>    \ref AMF_TYPE_ASSOCIATIVE    <td>   \anchor amf_equiv_assoc
+                                                    \ref AMF_TYPE_OBJECT           \n        
+                                                    \ref AMF_TYPE_ARRAY            \n         
+                                                    \ref AMF_TYPE_TYPED_OBJECT        
+    <tr><td>    \ref AMF_TYPE_COMPLEX        <td>   \anchor amf_equiv_complex
+                                                    \ref AMF_TYPE_OBJECT           \n        
+                                                    \ref AMF_TYPE_ARRAY            \n         
+                                                    \ref AMF_TYPE_RECORDSET        \n     
+                                                    \ref AMF_TYPE_TYPED_OBJECT     \n  
+                                                    \ref AMF_TYPE_VECTOR_DOUBLE    \n 
+                                                    \ref AMF_TYPE_VECTOR_INT       \n    
+                                                    \ref AMF_TYPE_VECTOR_OBJECT    \n 
+                                                    \ref AMF_TYPE_VECTOR_UINT      \n   
+                                                    \ref AMF_TYPE_BYTE_ARRAY       \n    
+                                                    \ref AMF_TYPE_MOVIECLIP        
+    </table>
+    
+    \section amf_value_equiv_like Type Compatibility for amf_value_is_like
+    
+    \ref amf_value_is_like is a bit more loose with type equivalence. It doesn't force that the type matches exactly, however it will only return true if the types are "compatible," which means that the values may be accessed in a coherent manner using function which are intended for values of the specified type (unless the metatype \ref AMF_TYPE_ASSOCIATIVE or \ref AMF_TYPE_COMPLEX is passed in). XML documents and strings are "compatible," Which means an XML document may be accessed with string functions, and vice versa. 
+    
+    \ref amf_value_is_like calls \ref amf_value_is internally, so it inherits all of the conversions as listed above, in addition to a few more.
+    
+    Here is a full compatibility table for \ref amf_value_is_like
+    
+    <table>
+    <tr><th>         Passed Type             <th>        Equivalent Type \n (May be read as)
+    
+    <tr><td>    \ref AMF_TYPE_UNDEFINED      <td>   \ref AMF_TYPE_UNDEFINED             
+    <tr><td>    \ref AMF_TYPE_NULL           <td>   \ref AMF_TYPE_NULL                  
+    <tr><td>    \ref AMF_TYPE_BOOLEAN        <td>   \ref AMF_TYPE_BOOLEAN               
+    <tr><td>    \ref AMF_TYPE_INTEGER        <td>   \ref AMF_TYPE_INTEGER        \n
+                                                    \ref AMF_TYPE_DOUBLE         \n
+                                                    \ref AMF_TYPE_DATE           
+    <tr><td>    \ref AMF_TYPE_DOUBLE         <td>   \ref AMF_TYPE_DOUBLE         \n
+                                                    \ref AMF_TYPE_INTEGER        \n
+                                                    \ref AMF_TYPE_DATE           
+    <tr><td>    \ref AMF_TYPE_DATE           <td>   \ref AMF_TYPE_DATE           
+    <tr><td>    \ref AMF_TYPE_STRING         <td>   \ref AMF_TYPE_STRING         \n
+                                                    \ref AMF_TYPE_XML_DOCUMENT   
+    <tr><td>    \ref AMF_TYPE_XML_DOCUMENT   <td>   \ref AMF_TYPE_XML_DOCUMENT   \n
+                                                    \ref AMF_TYPE_STRING         
+    <tr><td>    \ref AMF_TYPE_OBJECT         <td>   \ref AMF_TYPE_OBJECT         \n
+                                                    \ref AMF_TYPE_TYPED_OBJECT   \n
+                                                    \ref AMF_TYPE_NULL           \ref amf_equiv_footnote "*"
+    <tr><td>    \ref AMF_TYPE_TYPED_OBJECT   <td>   \ref AMF_TYPE_TYPED_OBJECT   \n         
+                                                    \ref AMF_TYPE_OBJECT         
+    <tr><td>    \ref AMF_TYPE_ARRAY          <td>   \ref AMF_TYPE_ARRAY          \n                
+                                                    \ref AMF_TYPE_NULL           \ref amf_equiv_footnote "*"
+    <tr><td>    \ref AMF_TYPE_VECTOR_INT     <td>   \ref AMF_TYPE_VECTOR_INT            
+    <tr><td>    \ref AMF_TYPE_VECTOR_UINT    <td>   \ref AMF_TYPE_VECTOR_UINT           
+    <tr><td>    \ref AMF_TYPE_VECTOR_DOUBLE  <td>   \ref AMF_TYPE_VECTOR_DOUBLE         
+    <tr><td>    \ref AMF_TYPE_VECTOR_OBJECT  <td>   \ref AMF_TYPE_VECTOR_OBJECT         
+    <tr><td>    \ref AMF_TYPE_BYTE_ARRAY     <td>   \ref AMF_TYPE_BYTE_ARRAY            
+    <tr><td>    \ref AMF_TYPE_MOVIECLIP      <td>   \ref AMF_TYPE_MOVIECLIP             
+    <tr><td>    \ref AMF_TYPE_RECORDSET      <td>   \ref AMF_TYPE_RECORDSET             
+    <tr><td>    \ref AMF_TYPE_REFERENCE      <td>   \ref AMF_TYPE_REFERENCE             
+    <tr><td>    \ref AMF_TYPE_UNSUPPORTED    <td>   \ref AMF_TYPE_UNSUPPORTED           
+    <tr><td>    \ref AMF_TYPE_AVMPLUS        <td>   \ref AMF_TYPE_AVMPLUS                
+    <tr><td>    \ref AMF_TYPE_ASSOCIATIVE    <td>   \ref AMF_TYPE_OBJECT         \n
+                                                    \ref AMF_TYPE_ARRAY          \n
+                                                    \ref AMF_TYPE_TYPED_OBJECT
+    <tr><td>    \ref AMF_TYPE_COMPLEX        <td>   \ref AMF_TYPE_OBJECT         \n              
+                                                    \ref AMF_TYPE_ARRAY          \n
+                                                    \ref AMF_TYPE_RECORDSET      \n
+                                                    \ref AMF_TYPE_TYPED_OBJECT   \n
+                                                    \ref AMF_TYPE_VECTOR_DOUBLE  \n
+                                                    \ref AMF_TYPE_VECTOR_INT     \n
+                                                    \ref AMF_TYPE_VECTOR_OBJECT  \n
+                                                    \ref AMF_TYPE_VECTOR_UINT    \n
+                                                    \ref AMF_TYPE_BYTE_ARRAY     \n
+                                                    \ref AMF_TYPE_MOVIECLIP
+    </table>
+    
+    \anchor amf_equiv_footnote * If the value is null, it will be considered compatible with \ref AMF_TYPE_OBJECT and \ref AMF_TYPE_ARRAY, since there are frequently null values passed for these types. Nowever, if the value is an \ref AMF_TYPE_OBJECT or \ref AMF_TYPE_ARRAY, they are not considered compatible with null, since usually checking for null is intentionally done to avoid an attempt to access a value.
+    
+*/

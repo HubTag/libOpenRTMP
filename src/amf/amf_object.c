@@ -169,15 +169,6 @@ void amf_free_value( amf_value_t val){
     }
 }
 
-static inline amf_value_t amf_dereference(amf_value_t target) {
-    while( target->type == AMF_TYPE_REFERENCE ){
-        target = target->reference.ref;
-        if( !target ){
-            break;
-        }
-    }
-    return target;
-}
 
 amf_t amf_create( char type ){
     amf_t ret = ezalloc( ret );
@@ -718,6 +709,18 @@ size_t amf_get_count( amf_t amf ){
 amf_value_t amf_get_item( amf_t amf, size_t idx ){
     return amf->items + idx;
 }
+
+amf_value_t amf_dereference(amf_value_t target, bool recurse) {
+    amf_value_t iter = target;
+    while( iter->type == AMF_TYPE_REFERENCE ){
+        iter = iter->reference.ref;
+        if( !iter || iter == target || !recurse ){
+            break;
+        }
+    }
+    return iter;
+}
+
 bool amf_value_is( amf_value_t value, amf_type_t type ){
     if( type == value->type ){
         return true;
@@ -749,11 +752,11 @@ bool amf_value_is( amf_value_t value, amf_type_t type ){
                 break;
         }
     }
-    if( value->type == AMF_TYPE_REFERENCE ){
+    /*if( value->type == AMF_TYPE_REFERENCE ){
         if( value->reference.ref->type != AMF_TYPE_REFERENCE ){
             return amf_value_is( value->reference.ref, type );
         }
-    }
+    }*/
     return false;
 }
 
@@ -905,32 +908,59 @@ size_t amf_assoc_get_count( const amf_value_t target ){
 }
 
 amf_value_t amf_obj_get_value( amf_value_t target, const char *key ){
+    if( target->type == AMF_TYPE_NULL ){
+        return target;
+    }
     return amf_assoc_get_value_arr( target->object.members, key );
 }
 amf_value_t amf_obj_get_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
+    if( target->type == AMF_TYPE_NULL ){
+        return target;
+    }
     return amf_assoc_get_value_idx_arr( target->object.members, idx, key, key_len );
 }
 size_t amf_obj_get_count( const amf_value_t target ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_count_arr( target->object.members );
 }
 
 amf_value_t amf_arr_get_assoc_value( amf_value_t target, const char *key ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_value_arr( target->array.assoc, key );
 }
 amf_value_t amf_arr_get_assoc_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_value_idx_arr( target->array.assoc, idx, key, key_len );
 }
 size_t amf_arr_get_assoc_count( const amf_value_t target ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_count_arr( target->array.assoc );
 }
 
 amf_value_t amf_arr_get_ord_value( amf_value_t target, const char *key ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_value_arr( target->array.ordinal, key );
 }
 amf_value_t amf_arr_get_ord_value_idx( amf_value_t target, size_t idx, char **key, size_t *key_len ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_value_idx_arr( target->array.ordinal, idx, key, key_len );
 }
 size_t amf_arr_get_ord_count( const amf_value_t target ){
+    if( target->type == AMF_TYPE_NULL ){
+        return 0;
+    }
     return amf_assoc_get_count_arr( target->array.ordinal );
 }
 
