@@ -9,6 +9,8 @@
     String: "@setDataFrame"
     String: "onMetaData"
     Assoc:  {
+    Number:     duration:        ... // Video Duration
+    Number:     fileSize:        ... // File Size
     Number:     width:           ... // Frame Width
     Number:     height:          ... // Frame Height
     Number:     videodatarate:   ... // Video Bitrate
@@ -37,6 +39,20 @@
     > **Type:** Associative, either Object or Array
     > 
     > Indicates the actual contents of the data frame.
+    >
+    > #### duration ####
+    > > **Type:** Number
+    > >
+    > > Indicates the length of the video. For livestreams, `0` is fine.
+    > >
+    > > Example value: `1234567`
+    >
+    > #### fileSize ####
+    > > **Type:** Number
+    > >
+    > > Indicates the size of the video file. For live streams, `0` is fine.
+    > >
+    > > Example value: `123456789`
     >
     > #### width ####
     > > **Type:** Number

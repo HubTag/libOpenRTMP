@@ -32,11 +32,19 @@
 	\subsection rpc Remote Procedure Call (RPC)
 	>  A request over a connection which indicates that the sender wishes to invoke some functionality on the recipient machine.
 
+	\subsection rtmp_url RTMP URL
+    >  An RTMP URL looks something like this:
+    >    `rtmp://host[:port]/app[/playpath]`
+    >
+    > If a \ref rtmp_playpath is not provided alongside the URL, most applications assume that the \ref rtmp_playpath follows the last slash of the URL.
+    >
+    > The default port is 1935. 
 
-	\section live_stream_terms Live Streaming Terms
-
-	\subsection playpath Playpath
+	\subsection rtmp_playpath Playpath
 	>  The name of a stream. When broadcasting, this is the stream key. When consuming, this is the stream name.
+
+	\subsection rtmp_app App
+	>  An RTMP server application which handles RTMP connections.
 
 
 	\section libopenrtmp_terms libOpenRTMP Terms

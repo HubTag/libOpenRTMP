@@ -28,27 +28,79 @@
 extern "C" {
 #endif
 
-
+/*! \addtogroup rtmp_ref RTMP
+    @{ */
+/*! \struct     rtmp_client_t
+    \brief      The interface for creating RTMP client connections
+    \remarks    This is the interface for creating connections to other RTMP servers.
+ */
 typedef struct rtmp_client * rtmp_client_t;
+/*! @} */
 
 #include <openrtmp/rtmp/rtmp_types.h>
 #include <openrtmp/rtmp/rtmp_stream.h>
 #include <openrtmp/rtmp.h>
 
 
+/*! \brief      Creates an RTMP client object.
+    \param      url         The \ref rtmp_url "RTMP URL" which this client will connect to.
+    \param      playpath    The \ref rtmp_playpath "stream name" which will be used by the client.
+    \return     If the function succeeds, the return value is an RTMP client object.
+    \return     If the function fails, the return value is `nullptr`.
+    \remarks    Before this object will do anything, it needs to be connected to a \ref rtmp_t with \ref rtmp_connect
+    \memberof   rtmp_client_t
+*/
 rtmp_client_t rtmp_client_create( const char * url, const char * playpath );
+
+/*! \brief      Destroys an RTMP client object.
+    \param      client      The client to destroy.
+    \noreturn
+    \remarks    Be sure to disconnect the client from the \ref rtmp_t with \ref rtmp_disconnect prior to destroying it.
+    \memberof   rtmp_client_t
+*/
 void rtmp_client_destroy( rtmp_client_t client );
 
 rtmp_err_t rtmp_client_disconnect( rtmp_client_t client );
 bool rtmp_client_connected( rtmp_client_t client );
 
+/*! \brief      Get the underlying RTMP stream for an RTMP client object.
+    \param      client  The target RTMP client object.
+    \return     The return value is the underlying RTMP stream object for \a client.
+    \memberof   rtmp_client_t
+*/
 rtmp_stream_t rtmp_client_stream( rtmp_client_t client );
 
+/*! \brief      Returns information about the destination URL for an RTMP client.
+    \param      client  The target RTMP client object.
+    \param[out] host    Receives the host portion of the destination URL.
+    \param[out] port    Receives the port portion of the destination URL.
+    \return     Returns a \ref rtmp_err_t code.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_get_conninfo( rtmp_client_t client, const char **host, uint16_t * port );
+
+/*! \brief      Returns the \ref rtmp_playpath "playpath" for an RTMP client object.
+    \param      client  The target RTMP client object.
+    \return     Returns the \ref rtmp_playpath "playpath" for an RTMP client object, if available.
+    \memberof   rtmp_client_t
+*/
 const char * rtmp_client_get_playpath( rtmp_client_t client );
 
 //See NetConnect documentation for usage
 
+/*! \brief      Issues a \ref rpc_connect remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      app         The \ref rtmp_app "RTMP app" to connect to.
+    \param      swfUrl      Indicates the SWF URL to indicate this connection originates from.
+    \param      tcUrl       The page URL to indicate this connection originates from.
+    \param      audioCodecs A \ref rtmp_support_codec_snd_t bitset indicating supported sound codecs.
+    \param      videoCodecs A \ref rtmp_support_codec_vid_t bitset indicating supported sound codecs.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_connect for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_connect(
     rtmp_client_t client,
     const char * restrict app,
@@ -60,6 +112,15 @@ rtmp_err_t rtmp_client_connect(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_releasestream remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      path        The \ref rtmp_playpath "playpath" which should be freed.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_releasestream for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_releasestream(
     rtmp_client_t client,
     const char * path,
@@ -67,6 +128,15 @@ rtmp_err_t rtmp_client_releasestream(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_fcpublish remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      path        The \ref rtmp_playpath "playpath" which should be published to.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_fcpublish for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_fcpublish(
     rtmp_client_t client,
     const char * path,
@@ -74,12 +144,29 @@ rtmp_err_t rtmp_client_fcpublish(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_createstream remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_createstream for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_createstream(
     rtmp_client_t client,
     rtmp_stream_amf_proc proc,
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_deletestream remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      stream_id   The message stream to delete.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_deletestream for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_deletestream(
     rtmp_client_t client,
     size_t stream_id,
@@ -87,6 +174,17 @@ rtmp_err_t rtmp_client_deletestream(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_publish remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      streamid    The message stream to publish on.
+    \param      path        The \ref rtmp_playpath "playpath" which should be published to.
+    \param      type        The type of stream this will be.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_publish for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_publish(
     rtmp_client_t client,
     size_t streamid,
@@ -96,6 +194,16 @@ rtmp_err_t rtmp_client_publish(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_unpublish remote procedure call.
+    \param      client      The RTMP client to issue the call with.
+    \param      streamid    The message stream to stop publishing on.
+    \param      path        The \ref rtmp_playpath "playpath" which should be unpublished.
+    \param      proc        A \ref rtmp_stream_amf_proc which will be called upon the receipt of a response to this command.
+    \param      userdata    An optional pointer to pass in with the \a proc callback.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_unpublish for usage.
+    \memberof   rtmp_client_t
+*/
 rtmp_err_t rtmp_client_unpublish(
     rtmp_client_t client,
     size_t streamid,
@@ -104,6 +212,28 @@ rtmp_err_t rtmp_client_unpublish(
     void *userdata
 );
 
+/*! \brief      Issues a \ref rpc_setdataframe remote procedure call.
+    \param      client          The RTMP client to issue the call with.
+    \param      streamid        The message stream to send this metadata on.
+    \param      frame_name      The name to give the data frame. Should be `onMetaData` for FLV.
+    \param      duration        The length of the video.
+    \param      size            The size of the video file.
+    \param      width           The width of the video frame.
+    \param      height          The height of the video frame.
+    \param      vid_codecid     The codec used for the video.
+    \param      vid_data_rate   The bitrate in kbps of the video.
+    \param      framerate       The video framerate.
+    \param      aud_codecid     The codec used for the audio.
+    \param      aud_data_rate   The bitrate in kbps of the audio.
+    \param      aud_sample_rate The sample rate of the audio.
+    \param      aud_sample_size The sample size of each audio sample.
+    \param      aud_channels    The number of audio channels.
+    \param      encoder         The name of the encoder used to provide the stream.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_setdataframe for usage.
+    \memberof   rtmp_client_t
+    \sa         rtmp_client_setdataframe_amf
+*/
 rtmp_err_t rtmp_client_setdataframe(
     rtmp_client_t client,
     size_t streamid,
@@ -123,6 +253,16 @@ rtmp_err_t rtmp_client_setdataframe(
     const char * encoder
 );
 
+/*! \brief      Issues a \ref rpc_setdataframe remote procedure call using a premade AMF object.
+    \param      client      The RTMP client to issue the call with.
+    \param      streamid    The message stream to send this metadata on.
+    \param      object      A premade AMF object to send for this message.
+    \return     Returns a \ref rtmp_err_t code.
+    \remarks    See \ref rpc_setdataframe for usage.
+    \remarks    This is a simplified version of \ref rtmp_client_setdataframe intended to simplify the process of proxying RTMP connections.
+    \memberof   rtmp_client_t
+    \sa         rtmp_client_setdataframe
+*/
 rtmp_err_t rtmp_client_setdataframe_amf(
     rtmp_client_t client,
     size_t streamid,
