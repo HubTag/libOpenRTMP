@@ -444,9 +444,28 @@ static amf_value_t amf_v_get_object( amf_t amf ){
     if( VEC_SIZE(amf->items) > 0 ){
         size_t depth = 1;
         amf_value_t obj = &VEC_BACK(amf->items);
-        while( amf_value_is( obj, AMF_TYPE_COMPLEX ) && VEC_SIZE(obj->object.members) > 0 && depth < amf->depth ){
-            obj = &VEC_BACK(obj->object.members).value;
-            ++depth;
+        while( amf_value_is( obj, AMF_TYPE_COMPLEX ) && depth < amf->depth ){
+            if( amf_value_is(obj, AMF_TYPE_OBJECT ) ){
+                if( VEC_SIZE(obj->object.members) == 0 ){
+                    break;
+                }
+                obj = &VEC_BACK(obj->object.members).value;
+                ++depth;
+            }
+            if( amf_value_is(obj, AMF_TYPE_ARRAY ) ){
+                size_t size = VEC_SIZE(obj->array.ordinal) + VEC_SIZE(obj->array.assoc);
+                if( size == 0 ){
+                    break;
+                }
+                if( size <= obj->array.assoc_len ){
+                    obj = &VEC_BACK(obj->array.assoc).value;
+                }
+                else{
+                    obj = &VEC_BACK(obj->array.ordinal).value;
+                }
+                ++depth;
+            }
+
         }
         if( depth != amf->depth ){
             return nullptr;
