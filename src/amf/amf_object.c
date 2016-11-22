@@ -464,7 +464,7 @@ static amf_v_member_t * amf_v_push_member( amf_t amf ){
         return VEC_PUSH( obj->object.members );
     }
     if( amf_value_is( obj, AMF_TYPE_ARRAY ) ){
-        if( obj->array.assoc_len > VEC_SIZE( obj->array.assoc ) ){
+        if( VEC_SIZE( obj->array.assoc ) < obj->array.assoc_len ){
             return VEC_PUSH( obj->array.assoc );
         }
         return VEC_PUSH( obj->array.ordinal );
@@ -493,7 +493,7 @@ static amf_value_t amf_push_item( amf_t amf ){
             return &VEC_BACK(obj->object.members).value;
         }
         else if( obj && amf_value_is( obj, AMF_TYPE_ARRAY ) ){
-            if( obj->array.assoc_len > VEC_SIZE( obj->array.assoc ) ){
+            if( VEC_SIZE( obj->array.assoc ) + VEC_SIZE( obj->array.ordinal ) <= obj->array.assoc_len ){
                 return &VEC_BACK( obj->array.assoc ).value;
             }
             return &VEC_BACK( obj->array.ordinal ).value;
@@ -592,11 +592,23 @@ amf_err_t amf_push_member( amf_t amf, const void *str ){
     }
     amf_v_member_t* mem = amf_v_push_member( amf );
     if( mem ){
-        mem->length = amf->allocation_len;
-        mem->name = (char*) amf->allocation;
+        if( str == amf->allocation ){
+            mem->length = amf->allocation_len;
+            mem->name = (char*) amf->allocation;
+            mem->value.type = AMF_TYPE_UNDEFINED;
+            amf->allocation_len = 0;
+            amf->allocation = nullptr;
+            amf->member_ready = true;
+            return AMF_ERR_NONE;
+        }
+        size_t len = strlen( str );
+        mem->name = malloc( len );
+        if( mem->name == nullptr ){
+            return AMF_ERR_OOM;
+        }
+        mem->length = len;
         mem->value.type = AMF_TYPE_UNDEFINED;
-        amf->allocation_len = 0;
-        amf->allocation = nullptr;
+        memcpy( mem->name, str, len );
         amf->member_ready = true;
         return AMF_ERR_NONE;
     }
