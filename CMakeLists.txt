@@ -124,7 +124,7 @@ install(    TARGETS openrtmp
                             GROUP_READ
                             WORLD_READ )
 
-install(    DIRECTORY "include/openrtmp"
+install(    DIRECTORY "${PROJECT_SOURCE_DIR}/include/openrtmp"
             DESTINATION "${INSTALL_DIR_INCLUDE}"
             PATTERN "*private*" EXCLUDE
             PATTERN "*.h"

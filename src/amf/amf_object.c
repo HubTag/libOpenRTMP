@@ -721,12 +721,25 @@ amf_value_t amf_dereference(amf_value_t target, bool recurse) {
     return iter;
 }
 
+amf_type_t amf_value_type( amf_value_t value ){
+    return value->type;
+}
+
 bool amf_value_is( amf_value_t value, amf_type_t type ){
-    if( type == value->type ){
-        return true;
+    return amf_type_compare(value->type, type) >= 2;
+}
+
+bool amf_value_is_like( amf_value_t value, amf_type_t type ){
+    return amf_type_compare(value->type, type) >= 1;
+}
+
+int amf_type_compare(const amf_type_t type1, const amf_type_t type2){
+    // check for exact equivalence
+    if( type2 == type1 ){
+        return 2;
     }
-    if( type == AMF_TYPE_COMPLEX ){
-        switch( value->type ){
+    if( type2 == AMF_TYPE_COMPLEX ){
+        switch( type1 ){
             case AMF_TYPE_OBJECT:
             case AMF_TYPE_ARRAY:
             case AMF_TYPE_RECORDSET:
@@ -737,52 +750,40 @@ bool amf_value_is( amf_value_t value, amf_type_t type ){
             case AMF_TYPE_VECTOR_UINT:
             case AMF_TYPE_BYTE_ARRAY:
             case AMF_TYPE_MOVIECLIP:
-                return true;
+                return 2;
             default:
                 break;
         }
     }
-    if( type == AMF_TYPE_ASSOCIATIVE ){
-        switch( value->type ){
+    if( type2 == AMF_TYPE_ASSOCIATIVE ){
+        switch( type1 ){
             case AMF_TYPE_OBJECT:
             case AMF_TYPE_ARRAY:
             case AMF_TYPE_TYPED_OBJECT:
-                return true;
+                return 2;
             default:
                 break;
         }
     }
-    /*if( value->type == AMF_TYPE_REFERENCE ){
-        if( value->reference.ref->type != AMF_TYPE_REFERENCE ){
-            return amf_value_is( value->reference.ref, type );
-        }
-    }*/
-    return false;
-}
 
-bool amf_value_is_like( amf_value_t value, amf_type_t type ){
-    if( amf_value_is( value, type ) ){
-        return true;
-    }
-    if( value->type == AMF_TYPE_REFERENCE ){
-        value = value->reference.ref;
-    }
-    switch( value->type ){
+
+    // checking for type compatibility
+    switch( type1 ){
         //Numerics
         case AMF_TYPE_NULL:
-        switch( type ){
+        switch( type2 ){
             case AMF_TYPE_OBJECT:
-            return true;
+            return 1;
             default: break;
         }
         case AMF_TYPE_DOUBLE:
         case AMF_TYPE_INTEGER:
         case AMF_TYPE_DATE:
-        switch( type ){
+        switch( type2 ){
             case AMF_TYPE_DOUBLE:
             case AMF_TYPE_INTEGER:
             case AMF_TYPE_DATE:
-            return true;
+            return 1;
             default: break;
         }
         break;
@@ -790,10 +791,10 @@ bool amf_value_is_like( amf_value_t value, amf_type_t type ){
         //Strings
         case AMF_TYPE_STRING:
         case AMF_TYPE_XML_DOCUMENT:
-        switch( type ){
+        switch( type2 ){
             case AMF_TYPE_STRING:
             case AMF_TYPE_XML_DOCUMENT:
-            return true;
+            return 1;
             default: break;
         }
         break;
@@ -801,27 +802,27 @@ bool amf_value_is_like( amf_value_t value, amf_type_t type ){
         //Objects
         case AMF_TYPE_OBJECT:
         case AMF_TYPE_TYPED_OBJECT:
-        switch( type ){
+        switch( type2 ){
             case AMF_TYPE_OBJECT:
             case AMF_TYPE_TYPED_OBJECT:
             case AMF_TYPE_ASSOCIATIVE:
-            return true;
+            return 1;
             default: break;
         }
         break;
 
         //Arrays
         case AMF_TYPE_ARRAY:
-        switch( type ){
+        switch( type2 ){
             case AMF_TYPE_ARRAY:
             case AMF_TYPE_ASSOCIATIVE:
-            return true;
+            return 1;
             default: break;
         }
         default:
         break;
     }
-    return false;
+    return 0;
 }
 
 double amf_value_get_double( amf_value_t target ){

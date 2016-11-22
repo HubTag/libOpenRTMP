@@ -478,6 +478,13 @@ amf_err_t amf_push_simple( amf_t amf, ... );
  */
 amf_value_t amf_dereference(amf_value_t target, bool recurse);
 
+/*! \brief      Returns the AMF type.
+    \param      value   The AMF value to check.
+    \return     Returns the type of the value.
+    \memberof   amf_value_t
+ */
+amf_type_t amf_value_type( amf_value_t value );
+
 //Returns true if the given value is of the specified type.
 /*! \brief      Returns true if the given AMF value is of the specified type.
     \param      value   The AMF value to check.
@@ -491,6 +498,22 @@ amf_value_t amf_dereference(amf_value_t target, bool recurse);
     \memberof   amf_value_t
  */
 bool amf_value_is( amf_value_t value, const amf_type_t type );
+
+/*! \addtogroup amf_ref AMF
+    @{
+*/
+/*! \brief      Compares two AMF types.
+    \param      type1   First AMF type.
+    \param      type2   Second AMF type.
+    \return     `0`, if the types do not match. `1`, if the types are compatible, '2' if they are an exact match.
+    \remarks    \parblock
+                For more information on AMF type equivalence, see \ref amf_value_equiv_is.
+                \endparblock
+ */
+int amf_type_compare(const amf_type_t type1, const amf_type_t type2);
+/*!
+    @}
+*/
 
 //Returns true if the type of the specified value is compatible
 //with the given type.
