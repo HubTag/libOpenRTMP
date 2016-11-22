@@ -452,7 +452,7 @@ static amf_value_t amf_v_get_object( amf_t amf ){
                 obj = &VEC_BACK(obj->object.members).value;
                 ++depth;
             }
-            if( amf_value_is(obj, AMF_TYPE_ARRAY ) ){
+            else if( amf_value_is(obj, AMF_TYPE_ARRAY ) ){
                 size_t size = VEC_SIZE(obj->array.ordinal) + VEC_SIZE(obj->array.assoc);
                 if( size == 0 ){
                     break;
@@ -902,7 +902,11 @@ const char* amf_value_get_xml( amf_value_t target, size_t *length ){
 
 
 static amf_value_t amf_assoc_get_value_arr( VEC_DECLARE(amf_v_member_t) arr, const char *key ){
+    size_t key_len = strlen(key);
     for( size_t i = 0; i < VEC_SIZE(arr); ++i ){
+        if( VEC_AT(arr, i).length != key_len ){
+            continue;
+        }
         if( memcmp( key, VEC_AT(arr, i).name, VEC_AT(arr, i).length ) == 0 ){
             return &VEC_AT(arr, i).value;
         }
