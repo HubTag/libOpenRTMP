@@ -52,10 +52,25 @@ typedef struct rtmp_client * rtmp_client_t;
 */
 rtmp_client_t rtmp_client_create( const char * url, const char * playpath );
 
+/*! \brief      References an RTMP client object
+    \param      client      The client to reference
+    \return     Returns \a client.
+    \remarks    Calling this function increases an internal reference count for the client. Subsequent calls to
+    \remarks    \ref rtmp_client_destroy will only decrement the reference count until it hits zero, at which point
+    \remarks    the client will actually be destroyed.
+    \memberof   rtmp_client_t
+*/
+rtmp_client_t rtmp_client_reference( rtmp_client_t client );
+
 /*! \brief      Destroys an RTMP client object.
     \param      client      The client to destroy.
     \noreturn
-    \remarks    Be sure to disconnect the client from the \ref rtmp_t with \ref rtmp_disconnect prior to destroying it.
+    \remarks    \parblock
+                Be sure to disconnect the client from the \ref rtmp_t with \ref rtmp_disconnect prior to destroying it.
+
+                This function will decrement the reference count for the client. If the reference count hits zero, then
+                the client will be destroyed.
+                \endparblock
     \memberof   rtmp_client_t
 */
 void rtmp_client_destroy( rtmp_client_t client );

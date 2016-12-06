@@ -38,6 +38,7 @@ struct rtmp_client{
     parseurl_t url;
     char * playpath;
     rtmp_fmt_t fmt;
+    size_t references;
 };
 
 #include <openrtmp/rtmp/rtmp_types.h>
@@ -57,6 +58,7 @@ static rtmp_fmt_t mem_to_fmt( const char * start, const char * end ){
 
 rtmp_client_t rtmp_client_create( const char * url, const char * playpath ){
     rtmp_client_t client = ezalloc( client );
+    client->references = 1;
 
     client->url = parseurl_create();
     parseurl_set( client->url, PARSEURL_SCHEME, "rtmp" );
@@ -109,11 +111,20 @@ rtmp_client_t rtmp_client_create( const char * url, const char * playpath ){
     free( client );
     return nullptr;
 }
+
+rtmp_client_t rtmp_client_reference( rtmp_client_t client ){
+    client->references++;
+    return client;
+}
+
 void rtmp_client_destroy( rtmp_client_t client ){
-    rtmp_stream_destroy_at( &client->stream );
-    free( client->playpath);
-    parseurl_destroy( client->url );
-    free( client );
+    client->references--;
+    if( client->references == 0 ){
+        rtmp_stream_destroy_at( &client->stream );
+        free( client->playpath);
+        parseurl_destroy( client->url );
+        free( client );
+    }
 }
 
 rtmp_err_t rtmp_client_disconnect( rtmp_client_t client );
