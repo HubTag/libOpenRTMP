@@ -17,7 +17,7 @@ set( INSTALL_DIR_INCLUDE "${INSTALL_DIR_INCLUDE_DEF}" CACHE STRING "Include file
 
 
 
-include_directories( "$(PROJECT_SOURCE_DIR)/include" )
+include_directories( "${PROJECT_SOURCE_DIR}/include" )
 
 
 

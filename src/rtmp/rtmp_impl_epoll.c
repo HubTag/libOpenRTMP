@@ -281,6 +281,9 @@ rtmp_err_t rtmp_service( rtmp_t mgr, int timeout ){
     struct epoll_event events[RTMP_EPOLL_MAX];
     rtmp_err_t err = RTMP_ERR_NONE;
     int fd_count = epoll_wait( mgr->epoll_args.epollfd, events, RTMP_EPOLL_MAX, timeout );
+    if( fd_count < 0 ){
+        return RTMP_ERR_POLL_FAIL;
+    }
     for( size_t i = 0; i < (size_t)fd_count; ++i ){
         rtmp_t_t * type = events[i].data.ptr;
         switch( *type ){
