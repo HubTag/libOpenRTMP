@@ -341,7 +341,7 @@ rtmp_err_t rtmp_connect( rtmp_t mgr, rtmp_client_t client ){
 
     host = gethostbyname( hostname );
     if( !host || !host->h_addr_list || !host->h_addr_list[0] ){
-        rtmp_client_destroy( client );
+        //rtmp_client_destroy( client );
         return RTMP_GEN_ERROR(RTMP_ERR_DNS_FAIL);
     }
 

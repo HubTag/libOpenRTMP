@@ -138,6 +138,9 @@ unsigned long ringbuffer_commit_read( ringbuffer_t buffer, unsigned long len ){
         buffer->start = (buffer->start + len) % buffer->size;
         buffer->len -= len;
     }
+    if( buffer->len == 0 ){
+        ringbuffer_clear( buffer );
+    }
     return len;
 }
 

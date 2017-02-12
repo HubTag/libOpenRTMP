@@ -51,6 +51,7 @@
 
 //Protocol defaults. These may all be negotiated at runtime.
 //! The default requested window size.
+//#define RTMP_DEFAULT_WINDOW_SIZE            0x00FFFFFF
 #define RTMP_DEFAULT_WINDOW_SIZE            0x00FFFFFF
 // Doesn't really mean anything
 #define RTMP_DEFAULT_PEER_WINDOW_SIZE       0x0
@@ -59,16 +60,16 @@
 
 
 //! The max chunk size this implementation will allow to be used. The peer may still use a larger chunk size than this.
-#define RTMP_MAX_CHUNK_SIZE                 0x0004FFFF
+#define RTMP_MAX_CHUNK_SIZE                 10000
 
 //! The desired chunk size.
-#define RTMP_DESIRED_CHUNK_SIZE             0x005FFFFF
+#define RTMP_DESIRED_CHUNK_SIZE             4096
 
 //! \brief The default number of bytes allocated for input/output buffers.
 //!
 //! It may be desireable to be able to store a few seconds worth of data in these buffers.
 //! At minimum, the buffer must be 1600 bytes to hold handshake messages.
-#define RTMP_DEFAULT_IO_BUFFER_SIZE         0x00FFFFFF
+#define RTMP_DEFAULT_IO_BUFFER_SIZE         30000000
 
 #define RTMP_DEFAULT_PROXY_V_BUFFER_SIZE    0x05FFFFFF
 #define RTMP_DEFAULT_PROXY_A_BUFFER_SIZE    0x05FFFFFF

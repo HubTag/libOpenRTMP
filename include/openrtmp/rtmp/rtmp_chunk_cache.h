@@ -47,6 +47,7 @@ typedef struct rtmp_chunk_stream_cache *rtmp_chunk_stream_cache_t;
 rtmp_chunk_stream_cache_t rtmp_cache_create( void );
 
 void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache );
+void rtmp_cache_reset( rtmp_chunk_stream_cache_t cache );
 
 //Get a cached message header by chunk stream ID
 rtmp_chunk_stream_message_internal_t * rtmp_cache_get( rtmp_chunk_stream_cache_t cache, size_t chunk_id );

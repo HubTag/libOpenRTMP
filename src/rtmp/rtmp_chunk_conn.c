@@ -630,6 +630,9 @@ rtmp_err_t rtmp_chunk_conn_service( rtmp_chunk_conn_t conn ){
             if( commit && committed > 0 ){
                 ret = rtmp_chunk_conn_call_event( conn, RTMP_EVENT_FILLED );
             }
+            if( !commit ){
+                rtmp_cache_reset( conn->stream_cache_out );
+            }
         }
         if( ret == RTMP_ERR_PAUSE ){
             conn->paused = true;
@@ -773,6 +776,7 @@ rtmp_chunk_conn_send_message(
     size_t length,
     size_t *written_out
 ){
+    //rtmp_cache_reset( conn->stream_cache_out );
     rtmp_err_t ret = RTMP_ERR_NONE;
     if( !rtmp_chunk_conn_connected( conn ) ){
         return RTMP_GEN_ERROR(RTMP_ERR_AGAIN);

@@ -40,6 +40,18 @@ void rtmp_cache_destroy( rtmp_chunk_stream_cache_t cache ){
     free( cache );
 }
 
+void rtmp_cache_reset( rtmp_chunk_stream_cache_t cache ){
+    memset( cache->static_cache, 0, sizeof( cache->static_cache ) );
+    for( size_t i = 0; i < RTMP_STREAM_STATIC_CACHE_SIZE; ++i ){
+        cache->static_cache[i].msg.chunk_stream_id = i;
+    }
+    for( size_t i = 0; i < cache->dynamic_cache_size; ++i ){
+        size_t id = cache->dynamic_cache[i].msg.chunk_stream_id;
+        memset( &cache->dynamic_cache[i], 0, sizeof( cache->dynamic_cache[i] ) );
+        cache->dynamic_cache[i].msg.chunk_stream_id = id;
+    }
+}
+
 //Compare the chunk stream IDs for ordering
 static bool rtmp_chunk_stream_message_less_than( const void * restrict a, const void * restrict b ){
     return *(const size_t*)a < ((const rtmp_chunk_stream_message_internal_t*)b)->msg.chunk_stream_id;
